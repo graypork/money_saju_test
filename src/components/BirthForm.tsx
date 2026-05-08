@@ -1,11 +1,114 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+
+type PickerOption = {
+  label: string;
+  value: string;
+};
+
+type PickerKey = "year" | "month" | "day" | "time" | null;
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
   return new Date(Number(year), Number(month), 0).getDate();
+}
+
+function PickerButton({
+  label,
+  value,
+  placeholder,
+  onClick,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-left text-base font-semibold text-gray-900 outline-none transition active:scale-[0.98]"
+    >
+      <span className={value ? "text-gray-950" : "text-gray-400"}>
+        {value ? label : placeholder}
+      </span>
+    </button>
+  );
+}
+
+function PickerSheet({
+  title,
+  options,
+  selectedValue,
+  onSelect,
+  onClose,
+}: {
+  title: string;
+  options: PickerOption[];
+  selectedValue: string;
+  onSelect: (value: string) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-50">
+      <button
+        type="button"
+        aria-label="닫기"
+        onClick={onClose}
+        className="absolute inset-0 bg-black/40"
+      />
+
+      <div className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-[2rem] bg-white shadow-2xl">
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <h3 className="text-lg font-black text-gray-950">{title}</h3>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-gray-100 px-4 py-2 text-sm font-bold text-gray-700"
+          >
+            닫기
+          </button>
+        </div>
+
+        <div className="max-h-[55vh] overflow-y-auto px-5 py-3">
+          {options.map((option) => {
+            const isSelected = option.value === selectedValue;
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => {
+                  onSelect(option.value);
+                  onClose();
+                }}
+                className={`mb-2 w-full rounded-2xl px-4 py-4 text-left text-base font-bold transition ${
+                  isSelected
+                    ? "bg-gray-950 text-white"
+                    : "bg-gray-50 text-gray-800"
+                }`}
+              >
+                {option.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function BirthForm() {
@@ -13,32 +116,75 @@ export default function BirthForm() {
 
   const currentYear = new Date().getFullYear();
 
-  const years = Array.from(
-    { length: currentYear - 1939 },
-    (_, index) => String(currentYear - index)
-  );
-
-  const months = Array.from({ length: 12 }, (_, index) =>
-    String(index + 1).padStart(2, "0")
-  );
-
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
   const [birthTime, setBirthTime] = useState("0");
   const [gender, setGender] = useState("unknown");
+  const [openPicker, setOpenPicker] = useState<PickerKey>(null);
 
   const maxDay = getDaysInMonth(year, month);
 
-  const days = Array.from({ length: maxDay }, (_, index) =>
-    String(index + 1).padStart(2, "0")
+  const yearOptions = useMemo<PickerOption[]>(
+    () =>
+      Array.from({ length: currentYear - 1939 }, (_, index) => {
+        const value = String(currentYear - index);
+        return {
+          label: `${value}년`,
+          value,
+        };
+      }),
+    [currentYear]
   );
+
+  const monthOptions = useMemo<PickerOption[]>(
+    () =>
+      Array.from({ length: 12 }, (_, index) => {
+        const value = String(index + 1).padStart(2, "0");
+        return {
+          label: `${index + 1}월`,
+          value,
+        };
+      }),
+    []
+  );
+
+  const dayOptions = useMemo<PickerOption[]>(
+    () =>
+      Array.from({ length: maxDay }, (_, index) => {
+        const value = String(index + 1).padStart(2, "0");
+        return {
+          label: `${index + 1}일`,
+          value,
+        };
+      }),
+    [maxDay]
+  );
+
+  const timeOptions: PickerOption[] = [
+    { label: "모름", value: "0" },
+    { label: "자시 / 23:00~01:00", value: "1" },
+    { label: "축시 / 01:00~03:00", value: "2" },
+    { label: "인시 / 03:00~05:00", value: "3" },
+    { label: "묘시 / 05:00~07:00", value: "4" },
+    { label: "진시 / 07:00~09:00", value: "5" },
+    { label: "사시 / 09:00~11:00", value: "6" },
+    { label: "오시 / 11:00~13:00", value: "7" },
+    { label: "미시 / 13:00~15:00", value: "8" },
+    { label: "신시 / 15:00~17:00", value: "9" },
+    { label: "유시 / 17:00~19:00", value: "10" },
+    { label: "술시 / 19:00~21:00", value: "11" },
+    { label: "해시 / 21:00~23:00", value: "12" },
+  ];
 
   useEffect(() => {
     if (day && Number(day) > maxDay) {
       setDay("");
     }
   }, [day, maxDay]);
+
+  const selectedTimeLabel =
+    timeOptions.find((option) => option.value === birthTime)?.label || "모름";
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -59,121 +205,130 @@ export default function BirthForm() {
     router.push(`/result?${params.toString()}`);
   };
 
+  const pickerConfig =
+    openPicker === "year"
+      ? {
+          title: "태어난 년도 선택",
+          options: yearOptions,
+          selectedValue: year,
+          onSelect: setYear,
+        }
+      : openPicker === "month"
+      ? {
+          title: "태어난 월 선택",
+          options: monthOptions,
+          selectedValue: month,
+          onSelect: setMonth,
+        }
+      : openPicker === "day"
+      ? {
+          title: "태어난 일 선택",
+          options: dayOptions,
+          selectedValue: day,
+          onSelect: setDay,
+        }
+      : openPicker === "time"
+      ? {
+          title: "태어난 시간 선택",
+          options: timeOptions,
+          selectedValue: birthTime,
+          onSelect: setBirthTime,
+        }
+      : null;
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label className="mb-2 block text-sm font-bold text-gray-900">
-          생년월일
-        </label>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="mb-2 block text-sm font-bold text-gray-900">
+            생년월일
+          </label>
 
-        <div className="grid grid-cols-3 gap-2">
-          <select
-            required
-            value={year}
-            onChange={(event) => setYear(event.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
-          >
-            <option value="">년도</option>
-            {years.map((item) => (
-              <option key={item} value={item}>
-                {item}년
-              </option>
-            ))}
-          </select>
+          <div className="grid grid-cols-3 gap-2">
+            <PickerButton
+              label={`${year}년`}
+              value={year}
+              placeholder="년도"
+              onClick={() => setOpenPicker("year")}
+            />
 
-          <select
-            required
-            value={month}
-            onChange={(event) => setMonth(event.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
-          >
-            <option value="">월</option>
-            {months.map((item) => (
-              <option key={item} value={item}>
-                {Number(item)}월
-              </option>
-            ))}
-          </select>
+            <PickerButton
+              label={`${Number(month)}월`}
+              value={month}
+              placeholder="월"
+              onClick={() => setOpenPicker("month")}
+            />
 
-          <select
-            required
-            value={day}
-            onChange={(event) => setDay(event.target.value)}
-            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
-          >
-            <option value="">일</option>
-            {days.map((item) => (
-              <option key={item} value={item}>
-                {Number(item)}일
-              </option>
-            ))}
-          </select>
+            <PickerButton
+              label={`${Number(day)}일`}
+              value={day}
+              placeholder="일"
+              onClick={() => setOpenPicker("day")}
+            />
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-bold text-gray-900">
-          태어난 시간
-        </label>
+        <div>
+          <label className="mb-2 block text-sm font-bold text-gray-900">
+            태어난 시간
+          </label>
 
-        <select
-          value={birthTime}
-          onChange={(event) => setBirthTime(event.target.value)}
-          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
+          <PickerButton
+            label={selectedTimeLabel}
+            value={birthTime}
+            placeholder="태어난 시간 선택"
+            onClick={() => setOpenPicker("time")}
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-bold text-gray-900">
+            성별
+          </label>
+
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { label: "선택 안 함", value: "unknown" },
+              { label: "남성", value: "male" },
+              { label: "여성", value: "female" },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setGender(item.value)}
+                className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
+                  gender === item.value
+                    ? "bg-gray-950 text-white"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full rounded-2xl bg-gray-950 px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
         >
-          <option value="0">모름</option>
-          <option value="1">자시 / 23:00~01:00</option>
-          <option value="2">축시 / 01:00~03:00</option>
-          <option value="3">인시 / 03:00~05:00</option>
-          <option value="4">묘시 / 05:00~07:00</option>
-          <option value="5">진시 / 07:00~09:00</option>
-          <option value="6">사시 / 09:00~11:00</option>
-          <option value="7">오시 / 11:00~13:00</option>
-          <option value="8">미시 / 13:00~15:00</option>
-          <option value="9">신시 / 15:00~17:00</option>
-          <option value="10">유시 / 17:00~19:00</option>
-          <option value="11">술시 / 19:00~21:00</option>
-          <option value="12">해시 / 21:00~23:00</option>
-        </select>
-      </div>
+          내 재물 포텐셜 확인하기
+        </button>
 
-      <div>
-        <label className="mb-2 block text-sm font-bold text-gray-900">
-          성별
-        </label>
+        <p className="text-center text-xs leading-5 text-gray-400">
+          입력한 정보는 현재 MVP 단계에서 저장하지 않습니다.
+        </p>
+      </form>
 
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: "선택 안 함", value: "unknown" },
-            { label: "남성", value: "male" },
-            { label: "여성", value: "female" },
-          ].map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => setGender(item.value)}
-              className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
-                gender === item.value
-                  ? "bg-gray-950 text-white"
-                  : "bg-gray-100 text-gray-600"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button
-        type="submit"
-        className="w-full rounded-2xl bg-gray-950 px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
-      >
-        내 재물 포텐셜 확인하기
-      </button>
-
-      <p className="text-center text-xs leading-5 text-gray-400">
-        입력한 정보는 현재 MVP 단계에서 저장하지 않습니다.
-      </p>
-    </form>
+      {pickerConfig && (
+        <PickerSheet
+          title={pickerConfig.title}
+          options={pickerConfig.options}
+          selectedValue={pickerConfig.selectedValue}
+          onSelect={pickerConfig.onSelect}
+          onClose={() => setOpenPicker(null)}
+        />
+      )}
+    </>
   );
 }
