@@ -1,17 +1,54 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+function getDaysInMonth(year: string, month: string) {
+  if (!year || !month) return 31;
+  return new Date(Number(year), Number(month), 0).getDate();
+}
 
 export default function BirthForm() {
   const router = useRouter();
 
-  const [birthDate, setBirthDate] = useState("");
+  const currentYear = new Date().getFullYear();
+
+  const years = Array.from(
+    { length: currentYear - 1939 },
+    (_, index) => String(currentYear - index)
+  );
+
+  const months = Array.from({ length: 12 }, (_, index) =>
+    String(index + 1).padStart(2, "0")
+  );
+
+  const [year, setYear] = useState("");
+  const [month, setMonth] = useState("");
+  const [day, setDay] = useState("");
   const [birthTime, setBirthTime] = useState("0");
   const [gender, setGender] = useState("unknown");
 
+  const maxDay = getDaysInMonth(year, month);
+
+  const days = Array.from({ length: maxDay }, (_, index) =>
+    String(index + 1).padStart(2, "0")
+  );
+
+  useEffect(() => {
+    if (day && Number(day) > maxDay) {
+      setDay("");
+    }
+  }, [day, maxDay]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!year || !month || !day) {
+      alert("생년월일을 모두 선택해주세요.");
+      return;
+    }
+
+    const birthDate = `${year}-${month}-${day}`;
 
     const params = new URLSearchParams({
       birthDate,
@@ -29,13 +66,49 @@ export default function BirthForm() {
           생년월일
         </label>
 
-        <input
-          type="date"
-          required
-          value={birthDate}
-          onChange={(event) => setBirthDate(event.target.value)}
-          className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
-        />
+        <div className="grid grid-cols-3 gap-2">
+          <select
+            required
+            value={year}
+            onChange={(event) => setYear(event.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
+          >
+            <option value="">년도</option>
+            {years.map((item) => (
+              <option key={item} value={item}>
+                {item}년
+              </option>
+            ))}
+          </select>
+
+          <select
+            required
+            value={month}
+            onChange={(event) => setMonth(event.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
+          >
+            <option value="">월</option>
+            {months.map((item) => (
+              <option key={item} value={item}>
+                {Number(item)}월
+              </option>
+            ))}
+          </select>
+
+          <select
+            required
+            value={day}
+            onChange={(event) => setDay(event.target.value)}
+            className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-base font-semibold text-gray-900 outline-none transition focus:border-gray-900 focus:bg-white"
+          >
+            <option value="">일</option>
+            {days.map((item) => (
+              <option key={item} value={item}>
+                {Number(item)}일
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div>
