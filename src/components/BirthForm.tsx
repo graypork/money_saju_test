@@ -143,41 +143,24 @@ export default function BirthForm() {
         </label>
 
         <div className="grid grid-cols-3 gap-2">
-          <button
-            type="button"
-            onClick={() => setGender("unknown")}
-            className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
-              gender === "unknown"
-                ? "bg-gray-950 text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            선택 안 함
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setGender("male")}
-            className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
-              gender === "male"
-                ? "bg-gray-950 text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            남성
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setGender("female")}
-            className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
-              gender === "female"
-                ? "bg-gray-950 text-white"
-                : "bg-gray-100 text-gray-600"
-            }`}
-          >
-            여성
-          </button>
+          {[
+            { label: "선택 안 함", value: "unknown" },
+            { label: "남성", value: "male" },
+            { label: "여성", value: "female" },
+          ].map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setGender(item.value)}
+              className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
+                gender === item.value
+                  ? "bg-gray-950 text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
       </div>
 

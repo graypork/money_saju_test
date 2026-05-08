@@ -186,7 +186,7 @@ function ResultContent() {
             type="button"
             className="mt-6 w-full rounded-2xl bg-[#15110d] px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
           >
-            전체 리포트 보기 ₩4,900
+            출시 기념 전체 리포트 보기 ₩2,500
           </button>
 
           <p className="mt-3 text-center text-xs leading-5 text-gray-500">
@@ -248,7 +248,7 @@ function ResultContent() {
               type="button"
               className="w-2/3 rounded-2xl bg-[#15110d] px-3 py-4 text-sm font-black text-white"
             >
-              전체 리포트 보기
+              전체 리포트 보기 ₩2,500
             </button>
           </div>
         </div>
