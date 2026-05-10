@@ -19,7 +19,7 @@ function ResultContent() {
   });
 
   const handleCopy = async () => {
-    const text = `나는 "${result.type.title}", 재물 포텐셜 상위 ${result.score}%가 나왔어요. 내 사주 속 돈그릇도 확인해보세요.`;
+    const text = `나는 "${result.type.title}", 재물 포텐셜 상위 ${result.topPercent}%가 나왔어요. 내 사주 속 돈그릇도 확인해보세요.`;
 
     try {
       await navigator.clipboard.writeText(text);
@@ -44,7 +44,7 @@ function ResultContent() {
 
             <div className="mt-4 flex items-end gap-2">
               <span className="text-7xl font-black tracking-tight">
-                상위 {result.score}
+                상위 {result.topPercent}
               </span>
               <span className="mb-3 text-2xl font-black text-white/70">
                 %
@@ -54,7 +54,7 @@ function ResultContent() {
             <div className="mt-6 h-3 overflow-hidden rounded-full bg-white/10">
               <div
                 className="h-full rounded-full bg-[#f5e7c6]"
-                style={{ width: `${result.score}%` }}
+                style={{ width: `${result.topPercent}%` }}
               />
             </div>
 
@@ -211,7 +211,7 @@ function ResultContent() {
               <br />
               재물 포텐셜{" "}
               <strong className="font-black text-gray-950">
-                상위 {result.score}%
+                상위 {result.topPercent}%
               </strong>
               가 나왔어요.
             </p>

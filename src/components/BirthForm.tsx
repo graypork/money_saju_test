@@ -54,10 +54,17 @@ function PickerSheet({
 }) {
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
+    const originalPosition = document.body.style.position;
+    const originalWidth = document.body.style.width;
+
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
 
     return () => {
       document.body.style.overflow = originalOverflow;
+      document.body.style.position = originalPosition;
+      document.body.style.width = originalWidth;
     };
   }, []);
 
@@ -70,8 +77,8 @@ function PickerSheet({
         className="absolute inset-0 bg-black/40"
       />
 
-      <div className="absolute inset-x-0 bottom-0 mx-auto max-w-md rounded-t-[2rem] bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[430px] max-h-[calc(100svh-24px)] max-w-md flex-col overflow-hidden rounded-t-[2rem] bg-white shadow-2xl">
+        <div className="shrink-0 flex items-center justify-between border-b border-gray-100 px-5 py-4">
           <h3 className="text-lg font-black text-gray-950">{title}</h3>
 
           <button
@@ -83,7 +90,7 @@ function PickerSheet({
           </button>
         </div>
 
-        <div className="max-h-[55vh] overflow-y-auto px-5 py-3">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-3">
           {options.map((option) => {
             const isSelected = option.value === selectedValue;
 
