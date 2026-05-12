@@ -317,14 +317,6 @@ function ResultContent() {
             <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">
               {subtype.description}
             </p>
-            <div className="mt-4 space-y-2">
-              <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-6 text-gray-700">
-                {subtype.strengthAngle}
-              </p>
-              <p className="rounded-2xl bg-white px-4 py-3 text-sm font-semibold leading-6 text-gray-700">
-                {subtype.weaknessAngle}
-              </p>
-            </div>
           </div>
         </section>
 
