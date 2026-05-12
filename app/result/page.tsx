@@ -246,7 +246,7 @@ function ResultContent() {
 
             <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3">
               <p className="text-[11px] font-bold tracking-widest text-white/40">
-                SUBTYPE
+                세부 유형
               </p>
               <p className="mt-1 text-sm font-black leading-6 text-white">
                 {subtype.title}
@@ -256,7 +256,7 @@ function ResultContent() {
         </div>
 
         <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-xl">
-          <p className="text-sm font-bold text-gray-400">SUMMARY</p>
+          <p className="text-sm font-bold text-gray-400">결과 요약</p>
 
           <p className="mt-3 text-sm font-black leading-6 text-[#9a6a1d]">
             {type.hook}
@@ -276,7 +276,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-[#21160f] p-6 text-white shadow-xl">
-          <p className="text-sm font-bold text-[#f6d58b]">CORE MESSAGE</p>
+          <p className="text-sm font-bold text-[#f6d58b]">중심 메시지</p>
 
           <h2 className="mt-2 text-2xl font-black leading-tight">핵심 해석</h2>
 
@@ -290,7 +290,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">WHY THIS RESULT</p>
+          <p className="text-sm font-bold text-gray-400">해석 근거</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">
             왜 이런 결과가 나왔을까?
@@ -309,7 +309,7 @@ function ResultContent() {
 
           <div className="mt-5 rounded-2xl bg-[#f7f1e8] p-4">
             <p className="text-xs font-black tracking-widest text-gray-400">
-              SUBTYPE ANGLE
+              세부 성향
             </p>
             <h3 className="mt-2 text-lg font-black text-gray-950">
               {subtype.title}
@@ -329,7 +329,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">ELEMENT BALANCE</p>
+          <p className="text-sm font-bold text-gray-400">오행 밸런스</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">
             재물 성향 오행 분석
@@ -360,7 +360,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">STRENGTH</p>
+          <p className="text-sm font-bold text-gray-400">강점</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">
             돈으로 바뀌기 쉬운 강점
@@ -379,7 +379,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">CAUTION</p>
+          <p className="text-sm font-bold text-gray-400">주의 패턴</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">
             돈이 새기 쉬운 패턴
@@ -399,7 +399,7 @@ function ResultContent() {
 
         <section className="mt-5 rounded-[2rem] border border-[#e0c58d] bg-[#fff8e9] p-6 shadow-lg">
           <div className="inline-flex rounded-full bg-[#21160f] px-4 py-2 text-xs font-bold text-[#f6d58b]">
-            LOCKED REPORT
+            전체 리포트
           </div>
 
           <h2 className="mt-4 text-2xl font-black leading-tight text-gray-950">
@@ -448,7 +448,7 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">SHARE</p>
+          <p className="text-sm font-bold text-gray-400">공유하기</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">
             친구에게 결과 공유하기

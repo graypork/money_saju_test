@@ -10,10 +10,61 @@ type PickerOption = {
 
 type PickerKey = "year" | "month" | "day" | "time" | null;
 type CalendarType = "solar" | "lunar";
+type ParsedBirthDate = {
+  year: string;
+  month: string;
+  day: string;
+  normalized: string;
+};
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
   return new Date(Number(year), Number(month), 0).getDate();
+}
+
+function formatBirthDate(year: string, month: string, day: string) {
+  if (!year || !month || !day) return "";
+  return `${year}-${month}-${day}`;
+}
+
+function parseBirthDateInput(
+  value: string,
+  currentYear: number
+): ParsedBirthDate | null {
+  const cleaned = value
+    .trim()
+    .replace(/[./\s]+/g, "-")
+    .replace(/[년월]/g, "-")
+    .replace(/일/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+
+  const compactMatch = cleaned.match(/^(\d{4})(\d{2})(\d{2})$/);
+  const separatedMatch = cleaned.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const match = compactMatch || separatedMatch;
+
+  if (!match) return null;
+
+  const parsedYear = Number(match[1]);
+  const parsedMonth = Number(match[2]);
+  const parsedDay = Number(match[3]);
+
+  if (parsedYear < 1940 || parsedYear > currentYear) return null;
+  if (parsedMonth < 1 || parsedMonth > 12) return null;
+  if (parsedDay < 1) return null;
+
+  const year = String(parsedYear);
+  const month = String(parsedMonth).padStart(2, "0");
+  const day = String(parsedDay).padStart(2, "0");
+
+  if (parsedDay > getDaysInMonth(year, month)) return null;
+
+  return {
+    year,
+    month,
+    day,
+    normalized: formatBirthDate(year, month, day),
+  };
 }
 
 function PickerButton({
@@ -127,6 +178,8 @@ export default function BirthForm() {
   const [year, setYear] = useState("");
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
+  const [birthDateText, setBirthDateText] = useState("");
+  const [birthDateError, setBirthDateError] = useState("");
   const [birthTime, setBirthTime] = useState("0");
   const [gender, setGender] = useState("unknown");
   const [calendarType, setCalendarType] = useState<CalendarType>("solar");
@@ -189,31 +242,71 @@ export default function BirthForm() {
   const selectedTimeLabel =
     timeOptions.find((option) => option.value === birthTime)?.label || "모름";
 
+  const syncBirthDateText = (
+    nextYear: string,
+    nextMonth: string,
+    nextDay: string
+  ) => {
+    setBirthDateText(formatBirthDate(nextYear, nextMonth, nextDay));
+    setBirthDateError("");
+  };
+
   const updateYear = (value: string) => {
     setYear(value);
 
-    if (day && Number(day) > getDaysInMonth(value, month)) {
-      setDay("");
-    }
+    const nextDay = day && Number(day) > getDaysInMonth(value, month) ? "" : day;
+    setDay(nextDay);
+    syncBirthDateText(value, month, nextDay);
   };
 
   const updateMonth = (value: string) => {
     setMonth(value);
 
-    if (day && Number(day) > getDaysInMonth(year, value)) {
-      setDay("");
-    }
+    const nextDay = day && Number(day) > getDaysInMonth(year, value) ? "" : day;
+    setDay(nextDay);
+    syncBirthDateText(year, value, nextDay);
+  };
+
+  const updateDay = (value: string) => {
+    setDay(value);
+    syncBirthDateText(year, month, value);
+  };
+
+  const updateBirthDateText = (value: string) => {
+    setBirthDateText(value);
+    setBirthDateError("");
+
+    const parsed = parseBirthDateInput(value, currentYear);
+    if (!parsed) return;
+
+    setYear(parsed.year);
+    setMonth(parsed.month);
+    setDay(parsed.day);
+    setBirthDateText(parsed.normalized);
   };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!year || !month || !day) {
+    const parsedText = birthDateText.trim()
+      ? parseBirthDateInput(birthDateText, currentYear)
+      : null;
+
+    if (birthDateText.trim() && !parsedText) {
+      setBirthDateError("생년월일을 1990-03-15 또는 19900315 형식으로 입력해주세요.");
+      return;
+    }
+
+    const submitYear = parsedText?.year ?? year;
+    const submitMonth = parsedText?.month ?? month;
+    const submitDay = parsedText?.day ?? day;
+
+    if (!submitYear || !submitMonth || !submitDay) {
       alert("생년월일을 모두 선택해주세요.");
       return;
     }
 
-    const birthDate = `${year}-${month}-${day}`;
+    const birthDate = formatBirthDate(submitYear, submitMonth, submitDay);
 
     const params = new URLSearchParams({
       birthDate,
@@ -245,7 +338,7 @@ export default function BirthForm() {
           title: "태어난 일 선택",
           options: dayOptions,
           selectedValue: day,
-          onSelect: setDay,
+          onSelect: updateDay,
         }
       : openPicker === "time"
       ? {
@@ -263,6 +356,35 @@ export default function BirthForm() {
           <label className="mb-2 block text-sm font-bold text-gray-900">
             생년월일
           </label>
+
+          <input
+            type="text"
+            inputMode="numeric"
+            value={birthDateText}
+            onChange={(event) => updateBirthDateText(event.target.value)}
+            onBlur={() => {
+              if (!birthDateText.trim()) return;
+
+              const parsed = parseBirthDateInput(birthDateText, currentYear);
+              if (!parsed) {
+                setBirthDateError(
+                  "생년월일을 1990-03-15 또는 19900315 형식으로 입력해주세요."
+                );
+                return;
+              }
+
+              updateBirthDateText(parsed.normalized);
+            }}
+            placeholder="예: 1990-03-15 / 19900315"
+            aria-invalid={birthDateError ? "true" : "false"}
+            className="mb-2 w-full rounded-2xl border border-[#eadfcf] bg-[#fbf7ef] px-4 py-4 text-base font-semibold text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-[#b4822f]"
+          />
+
+          {birthDateError && (
+            <p className="mb-2 text-xs font-semibold leading-5 text-[#9f2d2d]">
+              {birthDateError}
+            </p>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             <PickerButton

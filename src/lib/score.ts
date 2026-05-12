@@ -105,6 +105,14 @@ const RELATION_LABEL: Record<TenGodCategory, string> = {
   resource: "인성",
 };
 
+const RELATION_USER_LABEL: Record<TenGodCategory, string> = {
+  peer: "비겁(동료·경쟁·자기주도)",
+  output: "식상(표현·콘텐츠·결과물)",
+  wealth: "재성(돈·거래·고객)",
+  career: "관성(책임·규칙·신뢰)",
+  resource: "인성(지식·학습·기반)",
+};
+
 const TYPE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 function clamp(value: number, min = 0, max = 100) {
@@ -328,13 +336,9 @@ function calculateWealthScore(profile: WealthProfile) {
 function calculateDisplayWealthScore(rawScore: number) {
   const score = clamp(rawScore);
 
-  // 표시 점수는 낮은 결과의 이탈감을 줄이되, 고득점 구간으로 과하게 몰리지 않게 보정한다.
-  if (score < 60) return clamp(70 + (score - 50) * 0.25, 68, 72);
-  if (score < 70) return clamp(70 + (score - 60) * 0.45, 70, 74);
-  if (score < 80) return clamp(score + 5);
-  if (score < 90) return clamp(Math.min(Math.max(score + 3, 84), 90));
-
-  return score;
+  // 현재 원점수는 40~60대에 몰리므로, 표시 점수만 넓게 펼쳐 순위 체감을 만든다.
+  // 낮은 점수를 무조건 70점대로 올리던 이전 보정은 상위 20%대 결과를 과하게 만들었다.
+  return clamp(45 + (score - 43) * 2.4, 42, 92);
 }
 
 function interpolateTopPercent(
@@ -356,15 +360,17 @@ function interpolateTopPercent(
 function scoreToTopPercent(score: number) {
   const safeScore = clamp(score);
 
-  if (safeScore >= 90) return interpolateTopPercent(safeScore, 90, 100, 5, 3);
-  if (safeScore >= 85) return interpolateTopPercent(safeScore, 85, 89, 10, 7);
-  if (safeScore >= 80) return interpolateTopPercent(safeScore, 80, 84, 15, 12);
-  if (safeScore >= 75) return 18;
-  if (safeScore >= 70) return interpolateTopPercent(safeScore, 70, 74, 31, 24);
-  if (safeScore >= 65) return interpolateTopPercent(safeScore, 65, 69, 39, 31);
-  if (safeScore >= 60) return interpolateTopPercent(safeScore, 60, 64, 45, 39);
+  if (safeScore >= 90) return interpolateTopPercent(safeScore, 90, 100, 6, 3);
+  if (safeScore >= 85) return interpolateTopPercent(safeScore, 85, 89, 12, 7);
+  if (safeScore >= 80) return interpolateTopPercent(safeScore, 80, 84, 22, 13);
+  if (safeScore >= 75) return interpolateTopPercent(safeScore, 75, 79, 32, 23);
+  if (safeScore >= 70) return interpolateTopPercent(safeScore, 70, 74, 44, 33);
+  if (safeScore >= 65) return interpolateTopPercent(safeScore, 65, 69, 56, 45);
+  if (safeScore >= 60) return interpolateTopPercent(safeScore, 60, 64, 68, 57);
+  if (safeScore >= 55) return interpolateTopPercent(safeScore, 55, 59, 78, 69);
+  if (safeScore >= 50) return interpolateTopPercent(safeScore, 50, 54, 88, 79);
 
-  return interpolateTopPercent(safeScore, 0, 59, 55, 45);
+  return interpolateTopPercent(safeScore, 0, 49, 96, 89);
 }
 
 function weightedScore(factors: Array<[number, number]>) {
@@ -637,17 +643,17 @@ const DOMINANT_SUBTYPE_TRAITS: Record<
 > = {
   wood: {
     prefix: "확장형",
-    description: "확장, 성장, 기획과 시작 감각이 결과의 앞쪽에 서 있습니다.",
+    description: "확장, 성장, 기획과 시작 감각이 재물 성향의 앞부분에 놓입니다.",
     strengthAngle: "아이디어를 작게라도 시장에 던지면 돈이 될 실마리를 빨리 잡는 편입니다.",
   },
   fire: {
     prefix: "감각형",
-    description: "표현, 노출, 설득과 사람을 끌어당기는 힘이 강하게 작동합니다.",
+    description: "표현, 노출, 설득처럼 사람을 끌어당기는 힘이 비교적 강합니다.",
     strengthAngle: "말과 이미지, 분위기를 통해 가치를 팔 때 수익 가능성이 커집니다.",
   },
   earth: {
     prefix: "축적형",
-    description: "안정, 축적, 관리와 현실감각이 결과의 중심을 잡고 있습니다.",
+    description: "안정, 축적, 관리와 현실감각이 재물 성향의 중심을 잡습니다.",
     strengthAngle: "한 번 정한 구조를 꾸준히 유지하면서 돈을 남기는 힘이 강합니다.",
   },
   metal: {
@@ -671,11 +677,11 @@ const WEAK_SUBTYPE_TRAITS: Record<ElementKey, string> = {
 };
 
 const RELATION_SUBTYPE_TRAITS: Record<TenGodCategory, string> = {
-  peer: "비겁 흐름이 살아 있어 혼자만의 능력보다 경쟁, 동료, 커뮤니티 속에서 돈의 자극을 받습니다.",
-  output: "식상 흐름이 살아 있어 표현, 결과물, 콘텐츠처럼 밖으로 내보내는 행동이 수익과 연결됩니다.",
-  wealth: "재성 흐름이 살아 있어 돈, 거래, 고객, 시장 반응을 직접 의식할 때 감각이 선명해집니다.",
-  career: "관성 흐름이 살아 있어 규칙, 책임, 직함, 시스템 안에서 신뢰를 돈으로 바꾸기 쉽습니다.",
-  resource: "인성 흐름이 살아 있어 지식, 자격, 학습, 레퍼런스를 쌓을수록 돈의 기반이 단단해집니다.",
+  peer: "십성으로는 비겁(동료·경쟁·자기주도) 쪽이 살아 있어 사람들과 부딪히는 환경에서 돈의 자극을 받습니다.",
+  output: "십성으로는 식상(표현·콘텐츠·결과물) 쪽이 살아 있어 밖으로 보여주는 행동이 수익과 연결됩니다.",
+  wealth: "십성으로는 재성(돈·거래·고객) 쪽이 살아 있어 시장 반응을 직접 의식할 때 감각이 선명해집니다.",
+  career: "십성으로는 관성(책임·규칙·신뢰) 쪽이 살아 있어 시스템 안에서 신뢰를 돈으로 바꾸기 쉽습니다.",
+  resource: "십성으로는 인성(지식·학습·기반) 쪽이 살아 있어 공부와 레퍼런스가 돈의 바닥을 단단하게 만듭니다.",
 };
 
 function getSubtypeTitle(templateId: TemplateId, dominant: ElementKey, weak: ElementKey) {
@@ -741,17 +747,20 @@ function buildLogic(
   const weak = getWeakElement(elements);
   const dominantRelation = getDominantRelation(analysis);
   const weakRelation = getWeakRelation(analysis);
-  const monthPillar = analysis.pillars.month;
   const dayElement = analysis.dayElement as ElementKey;
 
   const logic: string[] = [];
 
   logic.push(
-    `일간은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})로 잡히고, 월주는 ${monthPillar} 흐름이라 계절감이 오행 점수에 크게 반영됩니다.`
+    `사주에서 나를 대표하는 기준을 일간이라고 보는데, 이번 입력값에서는 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]}) 성향으로 계산됩니다. 여기서는 전문 감정보다 기본 오행 톤을 잡는 기준으로만 사용했습니다.`
   );
 
   logic.push(
-    `${ELEMENT_LABEL[dominant]} 기운이 가장 강하게 잡혀 재물 성향의 중심축이 '${ELEMENT_LABEL[dominant]}' 쪽으로 기울어져 있습니다.`
+    `태어난 달의 기운은 월주 ${analysis.pillars.month}로 보고, 이 값은 계절에 따라 강해지는 오행을 보정하는 데 반영했습니다.`
+  );
+
+  logic.push(
+    `${ELEMENT_LABEL[dominant]} 기운이 가장 강하게 계산되어 재물 성향의 중심축이 ${ELEMENT_LABEL[dominant]} 쪽으로 기울어져 있습니다.`
   );
 
   logic.push(
@@ -759,7 +768,7 @@ function buildLogic(
   );
 
   logic.push(
-    `십성 흐름은 ${RELATION_LABEL[dominantRelation]}이 가장 두드러지고 ${RELATION_LABEL[weakRelation]}은 약해, 단순 오행 비율보다 '${RELATION_LABEL[dominantRelation]}' 성향을 더 크게 보정했습니다.`
+    `십성은 돈, 표현, 관계 같은 역할을 나누는 기준입니다. 여기서는 ${RELATION_USER_LABEL[dominantRelation]} 흐름이 가장 두드러지고 ${RELATION_USER_LABEL[weakRelation]} 쪽은 약해, 단순 오행 비율보다 ${RELATION_LABEL[dominantRelation]} 성향을 더 크게 반영했습니다.`
   );
 
   if (profile.moneySense >= 65) {
@@ -788,7 +797,7 @@ function buildLogic(
     logic.push("오행 균형이 비교적 고르게 잡혀 있어 큰 한 방보다 안정적인 누적과 조율에 강점이 있습니다.");
   }
 
-  logic.push(`이 흐름을 종합하면 '${getTemplateTitle(templateId)}' 결과가 가장 가깝습니다.`);
+  logic.push(`그래서 전체적으로는 ${getTemplateTitle(templateId)} 결과가 가장 가깝게 나왔습니다.`);
 
   return logic;
 }
