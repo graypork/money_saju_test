@@ -9,6 +9,7 @@ type PickerOption = {
 };
 
 type PickerKey = "year" | "month" | "day" | "time" | null;
+type CalendarType = "solar" | "lunar";
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
@@ -30,7 +31,7 @@ function PickerButton({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-3 py-4 text-left text-base font-semibold text-gray-900 outline-none transition active:scale-[0.98]"
+      className="w-full rounded-2xl border border-[#eadfcf] bg-[#fbf7ef] px-3 py-4 text-left text-base font-semibold text-gray-900 outline-none transition active:scale-[0.98]"
     >
       <span className={value ? "text-gray-950" : "text-gray-400"}>
         {value ? label : placeholder}
@@ -104,8 +105,8 @@ function PickerSheet({
                 }}
                 className={`mb-2 w-full rounded-2xl px-4 py-4 text-left text-base font-bold transition ${
                   isSelected
-                    ? "bg-gray-950 text-white"
-                    : "bg-gray-50 text-gray-800"
+                    ? "bg-[#21160f] text-white"
+                    : "bg-[#fbf7ef] text-gray-800"
                 }`}
               >
                 {option.label}
@@ -128,6 +129,7 @@ export default function BirthForm() {
   const [day, setDay] = useState("");
   const [birthTime, setBirthTime] = useState("0");
   const [gender, setGender] = useState("unknown");
+  const [calendarType, setCalendarType] = useState<CalendarType>("solar");
   const [openPicker, setOpenPicker] = useState<PickerKey>(null);
 
   const maxDay = getDaysInMonth(year, month);
@@ -184,14 +186,24 @@ export default function BirthForm() {
     { label: "해시 / 21:00~23:00", value: "12" },
   ];
 
-  useEffect(() => {
-    if (day && Number(day) > maxDay) {
-      setDay("");
-    }
-  }, [day, maxDay]);
-
   const selectedTimeLabel =
     timeOptions.find((option) => option.value === birthTime)?.label || "모름";
+
+  const updateYear = (value: string) => {
+    setYear(value);
+
+    if (day && Number(day) > getDaysInMonth(value, month)) {
+      setDay("");
+    }
+  };
+
+  const updateMonth = (value: string) => {
+    setMonth(value);
+
+    if (day && Number(day) > getDaysInMonth(year, value)) {
+      setDay("");
+    }
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -206,6 +218,7 @@ export default function BirthForm() {
     const params = new URLSearchParams({
       birthDate,
       birthTime,
+      calendarType,
       gender,
     });
 
@@ -218,14 +231,14 @@ export default function BirthForm() {
           title: "태어난 년도 선택",
           options: yearOptions,
           selectedValue: year,
-          onSelect: setYear,
+          onSelect: updateYear,
         }
       : openPicker === "month"
       ? {
           title: "태어난 월 선택",
           options: monthOptions,
           selectedValue: month,
-          onSelect: setMonth,
+          onSelect: updateMonth,
         }
       : openPicker === "day"
       ? {
@@ -277,6 +290,36 @@ export default function BirthForm() {
 
         <div>
           <label className="mb-2 block text-sm font-bold text-gray-900">
+            날짜 기준
+          </label>
+
+          <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#f7f1e8] p-1">
+            {[
+              { label: "양력", value: "solar" },
+              { label: "음력", value: "lunar" },
+            ].map((item) => (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setCalendarType(item.value as CalendarType)}
+                className={`rounded-xl px-3 py-3 text-sm font-black transition ${
+                  calendarType === item.value
+                    ? "bg-[#21160f] text-white shadow"
+                    : "text-gray-500"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          <p className="mt-2 text-xs leading-5 text-gray-400">
+            음력은 윤달을 제외한 일반 음력 날짜 기준으로 변환합니다.
+          </p>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-bold text-gray-900">
             태어난 시간
           </label>
 
@@ -305,8 +348,8 @@ export default function BirthForm() {
                 onClick={() => setGender(item.value)}
                 className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
                   gender === item.value
-                    ? "bg-gray-950 text-white"
-                    : "bg-gray-100 text-gray-600"
+                    ? "bg-[#21160f] text-white"
+                    : "bg-[#f7f1e8] text-gray-600"
                 }`}
               >
                 {item.label}
@@ -317,7 +360,7 @@ export default function BirthForm() {
 
         <button
           type="submit"
-          className="w-full rounded-2xl bg-gray-950 px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
+          className="w-full rounded-2xl bg-[#21160f] px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
         >
           내 재물 포텐셜 확인하기
         </button>
