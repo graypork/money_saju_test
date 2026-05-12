@@ -2,9 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { calculateWealthResult } from "../../src/lib/score";
-import { getPaidReportTemplate } from "../../src/lib/paidReportTemplates";
-import { getResultTemplate } from "../../src/lib/resultTemplates";
+import { calculateWealthResult, type WealthResult } from "../../src/lib/score";
 
 const ELEMENT_LABELS: Record<string, string> = {
   wood: "목",
@@ -72,6 +70,22 @@ async function copyTextToClipboard(text: string) {
   }
 
   return false;
+}
+
+function ResultDebugLogger({
+  debugKey,
+  debug,
+}: {
+  debugKey: string;
+  debug: WealthResult["debug"];
+}) {
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[money-saju result debug]", debug);
+    }
+  }, [debugKey, debug]);
+
+  return null;
 }
 
 function ResultContent() {
@@ -142,17 +156,14 @@ function ResultContent() {
         : "unknown",
   });
 
-  const type = getResultTemplate(result.templateId);
-  const paidReport = getPaidReportTemplate(result.templateId);
-  const lockedSections =
-    paidReport.previewSections.length > 0
-      ? paidReport.previewSections
-      : type.paidSections;
-  const subtype = result.subtype;
+  const copy = result.copy;
+  const animalType = result.animalType;
+  const lockedSections = copy.paidSections;
+  const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `${type.shareText} 세부 유형은 "${subtype.title}", 재물 포텐셜 상위 ${result.topPercent}%가 나왔어요.`;
+    const text = `${copy.shareText} 재물 포텐셜 상위 ${result.topPercent}%가 나왔어요.`;
     const textWithUrl = `${text}\n${url}`;
 
     try {
@@ -198,6 +209,8 @@ function ResultContent() {
 
   return (
     <main className="min-h-screen bg-[#f7f1e8] px-5 py-8 [word-break:keep-all]">
+      <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
+
       <section className="mx-auto max-w-md pb-28">
         <div className="overflow-hidden rounded-[2rem] bg-[#21160f] shadow-2xl">
           <div className="px-6 pb-7 pt-7 text-white">
@@ -206,7 +219,7 @@ function ResultContent() {
             </div>
 
             <p className="text-sm font-semibold text-white/60">
-              당신의 재물 포텐셜
+              재물 포텐셜
             </p>
 
             <div className="mt-4 flex items-center justify-between gap-5">
@@ -233,23 +246,23 @@ function ResultContent() {
 
           <div className="border-t border-white/10 px-6 py-5 text-white">
             <p className="text-sm font-semibold text-white/50">
-              당신의 재물 유형
+              재물 동물 유형
             </p>
 
             <h1 className="mt-3 text-3xl font-black leading-tight">
-              {type.title}
+              {copy.title}
             </h1>
 
             <p className="mt-3 text-base font-semibold leading-7 text-[#f6d58b]">
-              {type.subtitle}
+              {copy.subtitle}
             </p>
 
             <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3">
               <p className="text-[11px] font-bold tracking-widest text-white/40">
-                세부 유형
+                동물 판정
               </p>
               <p className="mt-1 text-sm font-black leading-6 text-white">
-                {subtype.title}
+                {animalType.name}
               </p>
             </div>
           </div>
@@ -259,33 +272,33 @@ function ResultContent() {
           <p className="text-sm font-bold text-gray-400">결과 요약</p>
 
           <p className="mt-3 text-sm font-black leading-6 text-[#9a6a1d]">
-            {type.hook}
+            {copy.hook}
           </p>
 
           <h2 className="mt-2 text-2xl font-black leading-tight text-gray-950">
-            {type.oneLineDiagnosis}
+            {copy.oneLineDiagnosis}
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-gray-700">
-            {type.summary}
+            {copy.summary}
           </p>
 
           <p className="mt-4 rounded-2xl bg-[#f7f1e8] px-4 py-3 text-sm font-bold leading-6 text-gray-800">
-            {type.freeAdvice}
+            {copy.moneyAttitude}
           </p>
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-[#21160f] p-6 text-white shadow-xl">
-          <p className="text-sm font-bold text-[#f6d58b]">중심 메시지</p>
+          <p className="text-sm font-bold text-[#f6d58b]">돈을 대하는 방식</p>
 
-          <h2 className="mt-2 text-2xl font-black leading-tight">핵심 해석</h2>
+          <h2 className="mt-2 text-2xl font-black leading-tight">핵심 판정</h2>
 
           <p className="mt-4 text-base font-bold leading-8 text-white/90">
-            {type.coreMessage}
+            {copy.strength}
           </p>
 
           <p className="mt-4 border-t border-white/10 pt-4 text-sm font-semibold leading-7 text-white/65">
-            {type.painPoint}
+            {copy.weakness}
           </p>
         </section>
 
@@ -309,13 +322,13 @@ function ResultContent() {
 
           <div className="mt-5 rounded-2xl bg-[#f7f1e8] p-4">
             <p className="text-xs font-black tracking-widest text-gray-400">
-              세부 성향
+              동물 비유
             </p>
             <h3 className="mt-2 text-lg font-black text-gray-950">
-              {subtype.title}
+              {animalType.name}
             </h3>
             <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">
-              {subtype.description}
+              {animalType.freeCopy.summary}
             </p>
           </div>
         </section>
@@ -359,7 +372,7 @@ function ResultContent() {
           </h2>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            {type.strengths.map((item) => (
+            {[copy.strength].map((item) => (
               <span
                 key={item}
                 className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-bold text-gray-800"
@@ -378,7 +391,7 @@ function ResultContent() {
           </h2>
 
           <ul className="mt-5 space-y-3">
-            {type.cautions.map((item) => (
+            {copy.cautions.map((item) => (
               <li
                 key={item}
                 className="rounded-2xl bg-gray-50 px-4 py-3 text-sm font-semibold leading-6 text-gray-700"
@@ -401,7 +414,7 @@ function ResultContent() {
           </h2>
 
           <p className="mt-4 text-sm leading-7 text-gray-700">
-            {type.paidPreview}
+            {copy.paidPreview}
           </p>
 
           <div className="mt-5 space-y-3">
@@ -449,11 +462,11 @@ function ResultContent() {
           <div className="mt-5 rounded-3xl bg-[#f7f1e8] p-5">
             <p className="text-sm leading-7 text-gray-700">
               나는{" "}
-              <strong className="font-black text-gray-950">{type.title}</strong>,
+              <strong className="font-black text-gray-950">{animalType.name}</strong>,
               <br />
-              세부 유형은{" "}
+              판정은{" "}
               <strong className="font-black text-gray-950">
-                {subtype.title}
+                {copy.title}
               </strong>
               이고,
               <br />

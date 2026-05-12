@@ -7,6 +7,16 @@ import {
   type TenGodCategory,
   type VisibleSajuCharacter,
 } from "./saju";
+import {
+  deriveResultSignals,
+  type ResultSignals,
+} from "./result/deriveResultSignals";
+import { selectAnimalType } from "./result/selectAnimalType";
+import type { AnimalType } from "./result/animalTypes";
+import {
+  renderResultCopy,
+  type RenderedResultCopy,
+} from "./result/renderResultCopy";
 
 export type Gender = "male" | "female" | "unknown";
 
@@ -91,6 +101,21 @@ export type WealthResult = {
   typeScores: TypeScores;
   subtype: ResultSubtype;
   saju: WealthSajuSummary;
+  animalType: AnimalType;
+  resultSignals: ResultSignals;
+  copy: RenderedResultCopy;
+  debug: {
+    pillars: WealthSajuSummary["pillars"];
+    elements: {
+      percentages: WealthElementScores;
+    };
+    strongest: ElementKey;
+    weakest: ElementKey;
+    balanceType: ResultSignals["balanceType"];
+    selectedAnimalType: string;
+    resultSignals: ResultSignals;
+    legacyLogic: string[];
+  };
   dominantElement: ElementKey;
   weakElement: ElementKey;
   logic: string[];
@@ -927,6 +952,16 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
   const dominantElement = getDominantElement(elements);
   const weakElement = getWeakElement(elements);
   const subtype = buildSubtype(templateId, dominantElement, weakElement, analysis);
+  const saju = buildSajuSummary(analysis);
+  const resultSignals = deriveResultSignals({
+    templateId,
+    elements,
+    profile,
+    saju,
+  });
+  const animalType = selectAnimalType(resultSignals);
+  const copy = renderResultCopy(animalType, resultSignals);
+  const legacyLogic = buildLogic(elements, profile, templateId, analysis);
 
   return {
     templateId,
@@ -935,14 +970,29 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     rawWealthScore,
     displayWealthScore,
     wealthScore: displayWealthScore,
-    title: getTemplateTitle(templateId),
+    title: copy.title,
     elements,
     profile,
     typeScores,
     subtype,
-    saju: buildSajuSummary(analysis),
+    saju,
+    animalType,
+    resultSignals,
+    copy,
+    debug: {
+      pillars: saju.pillars,
+      elements: {
+        percentages: elements,
+      },
+      strongest: dominantElement,
+      weakest: weakElement,
+      balanceType: resultSignals.balanceType,
+      selectedAnimalType: animalType.id,
+      resultSignals,
+      legacyLogic,
+    },
     dominantElement,
     weakElement,
-    logic: buildLogic(elements, profile, templateId, analysis),
+    logic: copy.logic,
   };
 }
