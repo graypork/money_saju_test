@@ -346,8 +346,8 @@ function ResultContent() {
           </div>
 
           <p className="mt-4 text-xs leading-5 text-gray-400">
-            오행 수치는 정통 만세력이나 전통 명리 해석을 그대로 단정하는
-            값이 아니라, 재물 성향을 설명하기 위한 콘텐츠형 변환 지표입니다.
+            오행 비율은 계산된 천간/지지 글자 기준이며, 재물 성향 점수는
+            해석용으로 별도 변환한 값입니다.
           </p>
         </section>
 

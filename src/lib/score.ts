@@ -3,7 +3,9 @@
 import {
   analyzeSajuLikeProfile,
   type CalendarType,
+  type KoreanBranch,
   type TenGodCategory,
+  type VisibleSajuCharacter,
 } from "./saju";
 
 export type Gender = "male" | "female" | "unknown";
@@ -58,6 +60,10 @@ export type WealthSajuSummary = {
     convertedFromLunar: boolean;
   };
   relationScores: Record<TenGodCategory, number>;
+  visibleCharacters: Array<
+    Omit<VisibleSajuCharacter, "element"> & { element: ElementKey }
+  >;
+  visibleCharacterCount: number;
   balanceScore: number;
   dayStrength: {
     score: number;
@@ -95,9 +101,12 @@ type CalculateInput = {
   month: number;
   day: number;
   hour?: number;
+  minute?: number;
   birthTime?: string;
+  timeBranch?: KoreanBranch;
   calendarType?: CalendarType;
   gender?: Gender;
+  timezone?: "Asia/Seoul";
 };
 
 const ELEMENT_LABEL: Record<ElementKey, string> = {
@@ -116,12 +125,12 @@ const RELATION_REASON: Record<TenGodCategory, string> = {
   resource: "지식, 학습, 레퍼런스를 쌓을수록 돈의 기반이 단단해집니다.",
 };
 
-const RELATION_SHORT_LABEL: Record<TenGodCategory, string> = {
-  peer: "비겁",
-  output: "식상",
-  wealth: "재성",
-  career: "관성",
-  resource: "인성",
+const RELATION_FLOW_LABEL: Record<TenGodCategory, string> = {
+  peer: "비겁(관계/경쟁)",
+  output: "식상(표현/결과물)",
+  wealth: "재성(거래/현금화)",
+  career: "관성(책임/신뢰)",
+  resource: "인성(학습/기반)",
 };
 
 const TYPE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
@@ -700,11 +709,11 @@ const WEAK_SUBTYPE_TRAITS: Record<ElementKey, string> = {
 };
 
 const RELATION_SUBTYPE_TRAITS: Record<TenGodCategory, string> = {
-  peer: "비겁 흐름이 있어 혼자보다 관계 속 자극에서 돈 감각이 살아납니다.",
-  output: "식상 흐름이 있어 표현과 결과물이 수익의 출발점이 됩니다.",
-  wealth: "재성 흐름이 있어 고객, 거래, 시장 반응에 민감한 편입니다.",
-  career: "관성 흐름이 있어 책임과 신뢰가 돈으로 바뀌기 쉽습니다.",
-  resource: "인성 흐름이 있어 지식과 레퍼런스가 돈의 기반이 됩니다.",
+  peer: "비겁(관계/경쟁) 흐름이 있어 관계 속 자극에서 돈 감각이 살아납니다.",
+  output: "식상(표현/결과물) 흐름이 있어 결과물이 수익의 출발점이 됩니다.",
+  wealth: "재성(거래/현금화) 흐름이 있어 고객과 시장 반응에 민감한 편입니다.",
+  career: "관성(책임/신뢰) 흐름이 있어 신뢰가 돈으로 바뀌기 쉽습니다.",
+  resource: "인성(학습/기반) 흐름이 있어 지식과 레퍼런스가 돈의 기반이 됩니다.",
 };
 
 function getSubtypeTitle(templateId: TemplateId, dominant: ElementKey, weak: ElementKey) {
@@ -750,6 +759,11 @@ function buildSajuSummary(analysis: SajuAnalysis): WealthSajuSummary {
     pillars: analysis.pillars,
     solarDate: analysis.solarDate,
     relationScores: analysis.relationScores,
+    visibleCharacters: analysis.visibleCharacters.map((character) => ({
+      ...character,
+      element: character.element as ElementKey,
+    })),
+    visibleCharacterCount: analysis.visibleCharacterCount,
     balanceScore: analysis.balanceScore,
     dayStrength: analysis.dayStrength,
     monthSeason: {
@@ -770,12 +784,17 @@ function buildDayStrengthReason(analysis: SajuAnalysis, dayElement: ElementKey) 
   const roots = analysis.dayStrength.rootBranches.slice(0, 2);
   const rootText =
     roots.length > 0
-      ? `${roots.join(", ")}에 뿌리가 ${
-          analysis.dayStrength.level === "weak" ? "있지만" : "있어"
+      ? `기준 기운을 받쳐주는 글자로 ${roots.join(", ")}가 ${
+          analysis.dayStrength.level === "weak" ? "보이지만" : "보입니다."
         }`
-      : "일간을 직접 받쳐주는 뿌리는 약해";
+      : "기준 기운을 직접 받쳐주는 글자는 적습니다.";
+  const strengthText: Record<SajuAnalysis["dayStrength"]["level"], string> = {
+    strong: "기준 기운이 받쳐주는 편입니다.",
+    balanced: "기준 기운이 균형권에 있습니다.",
+    weak: "기준 기운은 보완이 필요한 편입니다.",
+  };
 
-  return `일간은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})이고, 월주 ${analysis.pillars.month}의 계절 기운을 받습니다. ${rootText} ${analysis.dayStrength.label}으로 봅니다.`;
+  return `일간(기준 글자)은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})이고, 월지(태어난 달의 지지)는 ${analysis.monthSeason.branch}(${ELEMENT_LABEL[analysis.monthSeason.element as ElementKey]})입니다. ${rootText} ${strengthText[analysis.dayStrength.level]}`;
 }
 
 function buildWealthFlowReason(analysis: SajuAnalysis, profile: WealthProfile) {
@@ -786,27 +805,27 @@ function buildWealthFlowReason(analysis: SajuAnalysis, profile: WealthProfile) {
   const strengthLevel = analysis.dayStrength.level;
 
   if (wealthScore >= 24 && strengthLevel === "strong") {
-    return "재성 흐름을 받아낼 힘이 있어 거래, 고객, 현금화 판단이 비교적 직접적으로 작동합니다.";
+    return "재성(거래/현금화) 흐름을 받아낼 힘이 있어 고객 반응과 수익 판단이 비교적 직접적으로 작동합니다.";
   }
 
   if (wealthScore >= 24 && strengthLevel === "weak") {
-    return "재성은 보이지만 일간 힘이 약한 편이라, 빠른 확장보다 기반을 보강한 뒤 현금화하는 흐름이 맞습니다.";
+    return "재성(거래/현금화)은 보이지만 기준 기운이 약한 편이라, 기반을 보강한 뒤 현금화하는 흐름이 맞습니다.";
   }
 
   if (wealthScore >= 20) {
-    return "재성이 적당히 살아 있어 돈, 거래, 고객 반응을 의식할수록 재물 감각이 또렷해집니다.";
+    return "재성(거래/현금화)이 적당히 살아 있어 고객 반응을 의식할수록 재물 감각이 또렷해집니다.";
   }
 
   if (outputScore >= 24) {
-    return "재성보다 식상이 앞서므로, 바로 돈을 좇기보다 결과물과 표현을 먼저 만들 때 수익으로 이어지기 쉽습니다.";
+    return "식상(표현/결과물)이 앞서므로, 바로 돈을 좇기보다 결과물을 먼저 만들 때 수익으로 이어지기 쉽습니다.";
   }
 
   if (resourceScore >= 24) {
-    return "인성이 강해 지식, 자격, 레퍼런스를 쌓은 뒤 돈으로 바꾸는 순서가 안정적입니다.";
+    return "인성(학습/기반)이 강해 지식과 레퍼런스를 쌓은 뒤 돈으로 바꾸는 순서가 안정적입니다.";
   }
 
   if (careerScore >= 24) {
-    return "관성이 강해 책임, 직함, 시스템 안에서 신뢰를 쌓을 때 돈으로 연결되기 쉽습니다.";
+    return "관성(책임/신뢰)이 강해 시스템 안에서 신뢰를 쌓을 때 돈으로 연결되기 쉽습니다.";
   }
 
   if (profile.impulsiveness >= 65) {
@@ -814,6 +833,23 @@ function buildWealthFlowReason(analysis: SajuAnalysis, profile: WealthProfile) {
   }
 
   return "재성 자체가 과하게 튀기보다 여러 흐름이 섞여 있어, 한 방보다 꾸준한 구조화가 재물 체감을 키웁니다.";
+}
+
+function buildPillarReason(
+  analysis: SajuAnalysis,
+  dominant: ElementKey,
+  weak: ElementKey
+) {
+  const countText =
+    analysis.visibleCharacterCount === 8
+      ? "8글자"
+      : `${analysis.visibleCharacterCount}글자(태어난 시간 미입력)`;
+  const hourText =
+    analysis.pillars.hour === "모름"
+      ? "시주 미입력"
+      : `시주 ${analysis.pillars.hour}`;
+
+  return `사주는 연주 ${analysis.pillars.year}, 월주 ${analysis.pillars.month}, 일주 ${analysis.pillars.day}, ${hourText}입니다. 오행은 이 ${countText}만 세어 ${ELEMENT_LABEL[dominant]} 기운이 가장 많고 ${ELEMENT_LABEL[weak]} 기운이 가장 적게 나왔습니다.`;
 }
 
 function buildLogic(
@@ -843,9 +879,9 @@ function buildLogic(
       : "강점이 한쪽으로 과하게 치우치기보다 안정적으로 섞인 편입니다.";
 
   return [
+    buildPillarReason(analysis, dominant, weak),
     buildDayStrengthReason(analysis, dayElement),
-    `${ELEMENT_LABEL[dominant]} 기운이 가장 강하고 ${ELEMENT_LABEL[weak]} 기운이 약해, 돈을 벌고 지키는 방식이 ${ELEMENT_LABEL[dominant]} 쪽으로 기울어집니다.`,
-    `십성은 ${withAndParticle(RELATION_SHORT_LABEL[dominantRelation])} ${RELATION_SHORT_LABEL[secondRelation]}이 중심입니다. ${RELATION_REASON[dominantRelation]}`,
+    `십성(돈이 움직이는 관계 흐름)은 ${withAndParticle(RELATION_FLOW_LABEL[dominantRelation])} ${RELATION_FLOW_LABEL[secondRelation]}이 중심입니다. ${RELATION_REASON[dominantRelation]}`,
     buildWealthFlowReason(analysis, profile),
     `${profileSummary} 그래서 ${getTemplateTitle(templateId)} 결과가 가장 가깝게 나왔습니다.`,
   ];
@@ -857,9 +893,12 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     month: Number(input.month),
     day: Number(input.day),
     hour: input.hour === undefined ? undefined : Number(input.hour),
+    minute: input.minute === undefined ? undefined : Number(input.minute),
     birthTime: input.birthTime,
+    timeBranch: input.timeBranch,
     calendarType: input.calendarType ?? "solar",
     gender: input.gender ?? "unknown",
+    timezone: input.timezone ?? "Asia/Seoul",
   };
 
   const analysis = analyzeSajuLikeProfile({
@@ -867,8 +906,11 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     month: safeInput.month,
     day: safeInput.day,
     hour: safeInput.hour,
+    minute: safeInput.minute,
     birthTime: safeInput.birthTime,
+    timeBranch: safeInput.timeBranch,
     calendarType: safeInput.calendarType,
+    timezone: safeInput.timezone,
   });
   const elements = calculateElementsFromAnalysis(analysis);
   const profile = calculateProfile(elements, analysis);

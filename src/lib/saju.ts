@@ -1,5 +1,18 @@
 export type ElementType = "wood" | "fire" | "earth" | "metal" | "water";
 export type CalendarType = "solar" | "lunar";
+export type KoreanBranch =
+  | "자"
+  | "축"
+  | "인"
+  | "묘"
+  | "진"
+  | "사"
+  | "오"
+  | "미"
+  | "신"
+  | "유"
+  | "술"
+  | "해";
 
 export type TenGodCategory =
   | "peer"
@@ -11,15 +24,39 @@ export type TenGodCategory =
 export type ElementScoreMap = Record<ElementType, number>;
 export type RelationScoreMap = Record<TenGodCategory, number>;
 export type DayStrengthLevel = "weak" | "balanced" | "strong";
+export type SajuPillarRole = "year" | "month" | "day" | "hour";
+export type SajuCharacterRole =
+  | "yearStem"
+  | "yearBranch"
+  | "monthStem"
+  | "monthBranch"
+  | "dayStem"
+  | "dayBranch"
+  | "hourStem"
+  | "hourBranch";
+
+export type VisibleSajuCharacter = {
+  role: SajuCharacterRole;
+  pillar: SajuPillarRole;
+  kind: "stem" | "branch";
+  name: string;
+  element: ElementType;
+};
 
 export type SajuLikeInput = {
   year: number;
   month: number;
   day: number;
   hour?: number;
+  minute?: number;
   birthTime?: string;
+  timeBranch?: KoreanBranch;
+  gender?: "male" | "female";
   calendarType?: CalendarType;
+  timezone?: "Asia/Seoul";
 };
+
+export type BirthInput = SajuLikeInput;
 
 const heavenlyStems = [
   { name: "갑", element: "wood", yinYang: "yang" },
@@ -188,6 +225,10 @@ function getChineseCalendarParts(date: Date) {
   return { relatedYear, month, day, isLeapMonth };
 }
 
+function getBranchIndexByName(branch: KoreanBranch) {
+  return earthlyBranches.findIndex((item) => item.name === branch);
+}
+
 function resolveSolarDate(input: SajuLikeInput) {
   const calendarType = input.calendarType ?? "solar";
 
@@ -307,6 +348,11 @@ function getDayGanjiIndex(year: number, month: number, day: number) {
 }
 
 function getHourBranchIndex(input: SajuLikeInput) {
+  if (input.timeBranch) {
+    const branchIndex = getBranchIndexByName(input.timeBranch);
+    return branchIndex >= 0 ? branchIndex : null;
+  }
+
   if (input.birthTime === "0") return null;
 
   if (input.birthTime && input.birthTime !== "0") {
@@ -318,17 +364,20 @@ function getHourBranchIndex(input: SajuLikeInput) {
 
   if (input.hour === undefined || Number.isNaN(input.hour)) return null;
 
-  if (input.hour >= 23 || input.hour < 1) return 0;
-  if (input.hour < 3) return 1;
-  if (input.hour < 5) return 2;
-  if (input.hour < 7) return 3;
-  if (input.hour < 9) return 4;
-  if (input.hour < 11) return 5;
-  if (input.hour < 13) return 6;
-  if (input.hour < 15) return 7;
-  if (input.hour < 17) return 8;
-  if (input.hour < 19) return 9;
-  if (input.hour < 21) return 10;
+  const minute = Number.isFinite(input.minute) ? input.minute ?? 0 : 0;
+  const totalMinutes = input.hour * 60 + minute;
+
+  if (totalMinutes >= 23 * 60 || totalMinutes < 60) return 0;
+  if (totalMinutes < 3 * 60) return 1;
+  if (totalMinutes < 5 * 60) return 2;
+  if (totalMinutes < 7 * 60) return 3;
+  if (totalMinutes < 9 * 60) return 4;
+  if (totalMinutes < 11 * 60) return 5;
+  if (totalMinutes < 13 * 60) return 6;
+  if (totalMinutes < 15 * 60) return 7;
+  if (totalMinutes < 17 * 60) return 8;
+  if (totalMinutes < 19 * 60) return 9;
+  if (totalMinutes < 21 * 60) return 10;
   return 11;
 }
 
@@ -344,20 +393,6 @@ function addElementScore(
   scores[element] += value;
 }
 
-function addBranchScore(
-  scores: Record<ElementType, number>,
-  branchIndex: number,
-  mainWeight: number,
-  hiddenWeight: number
-) {
-  const branchElement = earthlyBranches[branchIndex].element as ElementType;
-  addElementScore(scores, branchElement, mainWeight);
-
-  branchHiddenElements[branchIndex].forEach(([element, ratio]) => {
-    addElementScore(scores, element, hiddenWeight * ratio);
-  });
-}
-
 function addRelationScore(
   scores: RelationScoreMap,
   dayElement: ElementType,
@@ -365,21 +400,6 @@ function addRelationScore(
   value: number
 ) {
   scores[getTenGodCategory(dayElement, targetElement)] += value;
-}
-
-function addBranchRelationScore(
-  scores: RelationScoreMap,
-  dayElement: ElementType,
-  branchIndex: number,
-  mainWeight: number,
-  hiddenWeight: number
-) {
-  const branchElement = earthlyBranches[branchIndex].element as ElementType;
-  addRelationScore(scores, dayElement, branchElement, mainWeight);
-
-  branchHiddenElements[branchIndex].forEach(([element, ratio]) => {
-    addRelationScore(scores, dayElement, element, hiddenWeight * ratio);
-  });
 }
 
 function getRelationStrengthImpact(category: TenGodCategory) {
@@ -401,12 +421,12 @@ function getDayStrengthLevel(score: number): DayStrengthLevel {
 }
 
 function getDayStrengthLabel(level: DayStrengthLevel) {
-  if (level === "strong") return "일간 기운이 받쳐주는 편";
-  if (level === "weak") return "일간 기운을 보완해야 하는 편";
-  return "일간 기운이 균형권에 있는 편";
+  if (level === "strong") return "기준 기운이 받쳐주는 편";
+  if (level === "weak") return "기준 기운을 보완해야 하는 편";
+  return "기준 기운이 균형권에 있는 편";
 }
 
-function getRoleLabel(role: "year" | "month" | "day" | "hour") {
+function getRoleLabel(role: SajuPillarRole) {
   const labels = {
     year: "연",
     month: "월",
@@ -421,7 +441,7 @@ function buildDayStrengthAnalysis(
   dayElement: ElementType,
   monthBranchIndex: number,
   pillars: Array<{
-    role: "year" | "month" | "day" | "hour";
+    role: SajuPillarRole;
     pillar: ReturnType<typeof getGanji>;
   }>
 ) {
@@ -553,6 +573,34 @@ function normalizeRelationScores(raw: RelationScoreMap) {
   return rounded;
 }
 
+function getCharacterRole(role: SajuPillarRole, kind: "stem" | "branch") {
+  return `${role}${kind === "stem" ? "Stem" : "Branch"}` as SajuCharacterRole;
+}
+
+function buildVisibleCharacters(
+  pillars: Array<{
+    role: SajuPillarRole;
+    pillar: ReturnType<typeof getGanji>;
+  }>
+): VisibleSajuCharacter[] {
+  return pillars.flatMap(({ role, pillar }) => [
+    {
+      role: getCharacterRole(role, "stem"),
+      pillar: role,
+      kind: "stem" as const,
+      name: pillar.stem.name,
+      element: pillar.stem.element as ElementType,
+    },
+    {
+      role: getCharacterRole(role, "branch"),
+      pillar: role,
+      kind: "branch" as const,
+      name: pillar.branch.name,
+      element: pillar.branch.element as ElementType,
+    },
+  ]);
+}
+
 export function analyzeSajuLikeProfile(input: SajuLikeInput) {
   const solarDate = resolveSolarDate(input);
   const sajuYear = getSajuYear(solarDate.year, solarDate.month, solarDate.day);
@@ -585,7 +633,7 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
       ? null
       : getGanji(getGanjiIndex(hourStemIndex, hourBranchIndex));
 
-  const elementRawScores: Record<ElementType, number> = {
+  const visibleElementRawScores: Record<ElementType, number> = {
     wood: 0,
     fire: 0,
     earth: 0,
@@ -610,54 +658,27 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
 
   const dayElement = dayPillar.stem.element as ElementType;
   const pillars = [
-    { role: "year" as const, pillar: yearPillar, stemWeight: 12, branchWeight: 8, hiddenWeight: 2 },
-    { role: "month" as const, pillar: monthPillar, stemWeight: 20, branchWeight: 16, hiddenWeight: 4 },
-    { role: "day" as const, pillar: dayPillar, stemWeight: 22, branchWeight: 10, hiddenWeight: 2 },
+    { role: "year" as const, pillar: yearPillar },
+    { role: "month" as const, pillar: monthPillar },
+    { role: "day" as const, pillar: dayPillar },
     hourPillar
-      ? { role: "hour" as const, pillar: hourPillar, stemWeight: 14, branchWeight: 8, hiddenWeight: 2 }
+      ? { role: "hour" as const, pillar: hourPillar }
       : null,
   ].filter(Boolean) as Array<{
-    role: "year" | "month" | "day" | "hour";
+    role: SajuPillarRole;
     pillar: ReturnType<typeof getGanji>;
-    stemWeight: number;
-    branchWeight: number;
-    hiddenWeight: number;
   }>;
+  const visibleCharacters = buildVisibleCharacters(pillars);
 
-  pillars.forEach(({ pillar, stemWeight, branchWeight, hiddenWeight }) => {
-    const stemElement = pillar.stem.element as ElementType;
-    const branchElement = pillar.branch.element as ElementType;
-
-    addElementScore(elementRawScores, stemElement, stemWeight);
-    addBranchScore(
-      elementRawScores,
-      pillar.branchIndex,
-      branchWeight,
-      hiddenWeight
-    );
-
-    addRelationScore(relationRawScores, dayElement, stemElement, stemWeight);
-    addBranchRelationScore(
-      relationRawScores,
-      dayElement,
-      pillar.branchIndex,
-      branchWeight,
-      hiddenWeight
-    );
-
-    relationCounts[getTenGodCategory(dayElement, stemElement)] += 1;
-    relationCounts[getTenGodCategory(dayElement, branchElement)] += 1;
+  visibleCharacters.forEach(({ element }) => {
+    addElementScore(visibleElementRawScores, element, 1);
+    addRelationScore(relationRawScores, dayElement, element, 1);
+    relationCounts[getTenGodCategory(dayElement, element)] += 1;
   });
 
   const seasonalSupport = getSeasonalSupport(monthBranchIndex);
-  (Object.entries(seasonalSupport) as Array<[ElementType, number]>).forEach(
-    ([element, value]) => {
-      addElementScore(elementRawScores, element, value);
-      addRelationScore(relationRawScores, dayElement, element, value);
-    }
-  );
 
-  const elementScores = normalizeElementScores(elementRawScores);
+  const elementScores = normalizeElementScores(visibleElementRawScores);
   const relationScores = normalizeRelationScores(relationRawScores);
   const values = Object.values(elementScores);
   const maxElement = Math.max(...values);
@@ -682,10 +703,13 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
         : "모름",
     },
     elementScores,
-    elementRawScores,
+    elementRawScores: visibleElementRawScores,
+    visibleElementRawScores,
     relationCounts,
     relationScores,
     relationRawScores,
+    visibleCharacters,
+    visibleCharacterCount: visibleCharacters.length,
     seasonalSupport,
     balanceScore,
     dayStrength,
