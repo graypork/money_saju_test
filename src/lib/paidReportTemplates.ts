@@ -84,7 +84,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["주간 정산 루틴을 만듭니다.", "관리 능력을 서비스 메뉴로 정리합니다.", "안전한 실험 예산을 한 달 단위로 배정합니다."],
     },
     warning: "안전이 강점이지만, 모든 위험을 피하면 수익의 크기도 같이 작아집니다.",
-    finalMessage: "당신은 무리할 필요가 없습니다. 다만 작게라도 열어둔 성장판은 필요합니다.",
+    finalMessage: "무리할 필요는 없습니다. 다만 작게라도 열어둔 성장판은 필요합니다.",
     previewSections: [
       { title: "안정 수익 구조", teaser: "관리력으로 돈이 남는 영역을 정리합니다." },
       { title: "기회 회피 지점", teaser: "너무 신중해서 놓치는 선택을 분석합니다." },
@@ -106,7 +106,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["가장 반응이 온 아이디어를 작은 유료 제안으로 만듭니다.", "초기 비용 상한선을 정합니다.", "반응 데이터를 보고 유지/중단을 결정합니다."],
     },
     warning: "빠른 실행은 강점이지만, 기준 없는 확장은 수익보다 지출을 먼저 키웁니다.",
-    finalMessage: "당신은 움직여야 돈이 붙습니다. 대신 움직이기 전에 기준을 하나 세워야 합니다.",
+    finalMessage: "움직여야 돈이 붙습니다. 대신 움직이기 전에 기준을 하나 세워야 합니다.",
     previewSections: [
       { title: "기회 검증표", teaser: "바로 밀어붙여도 되는 신호와 멈춰야 할 신호를 구분합니다." },
       { title: "확장 리스크", teaser: "초반 반응 뒤에 돈이 새는 지점을 봅니다." },
@@ -172,7 +172,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["수입 통장과 생활비 통장을 분리합니다.", "단기 수익 기회 2개를 실험합니다.", "새는 돈 상위 3개를 차단합니다."],
     },
     warning: "수입을 만드는 감각이 있어도 관리 구조가 없으면 계속 제자리처럼 느껴질 수 있습니다.",
-    finalMessage: "당신은 못 버는 타입이 아닙니다. 남기는 시스템이 붙을 때 체감이 달라집니다.",
+    finalMessage: "못 버는 타입이 아닙니다. 남기는 시스템이 붙을 때 체감이 달라집니다.",
     previewSections: [
       { title: "돈 새는 구멍", teaser: "수입이 생긴 뒤 어디서 사라지는지 추적합니다." },
       { title: "고수익 유지법", teaser: "변동성 있는 수입을 안정화하는 방식을 봅니다." },
@@ -238,7 +238,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["제안 10건을 보냅니다.", "거절 사유를 기록해 문장을 수정합니다.", "성공한 대화를 스크립트로 저장합니다."],
     },
     warning: "좋은 사람으로 보이려다 거래 조건을 흐리면 돈 받을 기회를 놓칩니다.",
-    finalMessage: "당신은 팔 수 있는 사람입니다. 이제 부탁이 아니라 제안으로 말하면 됩니다.",
+    finalMessage: "팔 수 있는 힘이 있습니다. 이제 부탁이 아니라 제안으로 말하면 됩니다.",
     previewSections: [
       { title: "팔리는 제안 문장", teaser: "당신에게 맞는 판매 문장 구조를 제안합니다." },
       { title: "가격 말하기", teaser: "돈 얘기에서 약해지는 지점을 봅니다." },
@@ -282,7 +282,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["첫 유료 제안 5건을 보냅니다.", "반복 업무를 템플릿화합니다.", "수익과 시간을 함께 기록해 남는 구조를 봅니다."],
     },
     warning: "독립성은 강점이지만, 시스템 없는 독립은 쉽게 지칩니다.",
-    finalMessage: "당신은 직접 만들 때 강합니다. 오래 가려면 감각보다 구조가 먼저입니다.",
+    finalMessage: "직접 만들 때 강합니다. 오래 가려면 감각보다 구조가 먼저입니다.",
     previewSections: [
       { title: "사업화 우선순위", teaser: "아이디어 중 먼저 팔아볼 것을 좁힙니다." },
       { title: "수익 모델 점검", teaser: "돈이 남는 구조인지, 바쁘기만 한 구조인지 봅니다." },

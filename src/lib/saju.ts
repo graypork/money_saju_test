@@ -10,6 +10,7 @@ export type TenGodCategory =
 
 export type ElementScoreMap = Record<ElementType, number>;
 export type RelationScoreMap = Record<TenGodCategory, number>;
+export type DayStrengthLevel = "weak" | "balanced" | "strong";
 
 export type SajuLikeInput = {
   year: number;
@@ -381,6 +382,103 @@ function addBranchRelationScore(
   });
 }
 
+function getRelationStrengthImpact(category: TenGodCategory) {
+  const impact: Record<TenGodCategory, number> = {
+    peer: 1,
+    resource: 0.82,
+    output: -0.36,
+    wealth: -0.62,
+    career: -0.72,
+  };
+
+  return impact[category];
+}
+
+function getDayStrengthLevel(score: number): DayStrengthLevel {
+  if (score >= 64) return "strong";
+  if (score <= 45) return "weak";
+  return "balanced";
+}
+
+function getDayStrengthLabel(level: DayStrengthLevel) {
+  if (level === "strong") return "일간 기운이 받쳐주는 편";
+  if (level === "weak") return "일간 기운을 보완해야 하는 편";
+  return "일간 기운이 균형권에 있는 편";
+}
+
+function getRoleLabel(role: "year" | "month" | "day" | "hour") {
+  const labels = {
+    year: "연",
+    month: "월",
+    day: "일",
+    hour: "시",
+  };
+
+  return labels[role];
+}
+
+function buildDayStrengthAnalysis(
+  dayElement: ElementType,
+  monthBranchIndex: number,
+  pillars: Array<{
+    role: "year" | "month" | "day" | "hour";
+    pillar: ReturnType<typeof getGanji>;
+  }>
+) {
+  let score = 50;
+  const rootBranches = new Set<string>();
+  const monthElement = earthlyBranches[monthBranchIndex].element as ElementType;
+  const monthRelation = getTenGodCategory(dayElement, monthElement);
+
+  score += getRelationStrengthImpact(monthRelation) * 18;
+
+  branchHiddenElements[monthBranchIndex].forEach(([element, ratio]) => {
+    const relation = getTenGodCategory(dayElement, element);
+    score += getRelationStrengthImpact(relation) * 7 * ratio;
+  });
+
+  pillars.forEach(({ role, pillar }) => {
+    if (role !== "day") {
+      const stemRelation = getTenGodCategory(
+        dayElement,
+        pillar.stem.element as ElementType
+      );
+      score += getRelationStrengthImpact(stemRelation) * 4;
+    }
+
+    const branchRelation = getTenGodCategory(
+      dayElement,
+      pillar.branch.element as ElementType
+    );
+    const branchWeight = role === "month" ? 8 : 4;
+    score += getRelationStrengthImpact(branchRelation) * branchWeight;
+
+    if (pillar.branch.element === dayElement) {
+      rootBranches.add(`${getRoleLabel(role)}지 ${pillar.branch.name}`);
+    }
+
+    branchHiddenElements[pillar.branchIndex].forEach(([element, ratio]) => {
+      const hiddenRelation = getTenGodCategory(dayElement, element);
+      score += getRelationStrengthImpact(hiddenRelation) * 3 * ratio;
+
+      if (element === dayElement) {
+        rootBranches.add(`${getRoleLabel(role)}지 ${pillar.branch.name}`);
+      }
+    });
+  });
+
+  const clampedScore = clamp(score);
+  const level = getDayStrengthLevel(clampedScore);
+
+  return {
+    score: clampedScore,
+    level,
+    label: getDayStrengthLabel(level),
+    rootBranches: Array.from(rootBranches),
+    monthRelation,
+  };
+}
+
 function normalizeElementScores(raw: Record<ElementType, number>) {
   const total = raw.wood + raw.fire + raw.earth + raw.metal + raw.water;
 
@@ -512,13 +610,14 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
 
   const dayElement = dayPillar.stem.element as ElementType;
   const pillars = [
-    { pillar: yearPillar, stemWeight: 12, branchWeight: 8, hiddenWeight: 2 },
-    { pillar: monthPillar, stemWeight: 20, branchWeight: 16, hiddenWeight: 4 },
-    { pillar: dayPillar, stemWeight: 22, branchWeight: 10, hiddenWeight: 2 },
+    { role: "year" as const, pillar: yearPillar, stemWeight: 12, branchWeight: 8, hiddenWeight: 2 },
+    { role: "month" as const, pillar: monthPillar, stemWeight: 20, branchWeight: 16, hiddenWeight: 4 },
+    { role: "day" as const, pillar: dayPillar, stemWeight: 22, branchWeight: 10, hiddenWeight: 2 },
     hourPillar
-      ? { pillar: hourPillar, stemWeight: 14, branchWeight: 8, hiddenWeight: 2 }
+      ? { role: "hour" as const, pillar: hourPillar, stemWeight: 14, branchWeight: 8, hiddenWeight: 2 }
       : null,
   ].filter(Boolean) as Array<{
+    role: "year" | "month" | "day" | "hour";
     pillar: ReturnType<typeof getGanji>;
     stemWeight: number;
     branchWeight: number;
@@ -564,6 +663,11 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
   const maxElement = Math.max(...values);
   const minElement = Math.min(...values);
   const balanceScore = Math.max(0, 10 - (maxElement - minElement) * 0.4);
+  const dayStrength = buildDayStrengthAnalysis(
+    dayElement,
+    monthBranchIndex,
+    pillars
+  );
 
   return {
     dayMaster: dayPillar.stem.name,
@@ -584,5 +688,11 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
     relationRawScores,
     seasonalSupport,
     balanceScore,
+    dayStrength,
+    monthSeason: {
+      branch: earthlyBranches[monthBranchIndex].name,
+      element: earthlyBranches[monthBranchIndex].element as ElementType,
+      relationToDayMaster: dayStrength.monthRelation,
+    },
   };
 }

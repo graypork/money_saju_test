@@ -59,6 +59,17 @@ export type WealthSajuSummary = {
   };
   relationScores: Record<TenGodCategory, number>;
   balanceScore: number;
+  dayStrength: {
+    score: number;
+    level: "weak" | "balanced" | "strong";
+    label: string;
+    rootBranches: string[];
+  };
+  monthSeason: {
+    branch: string;
+    element: ElementKey;
+    relationToDayMaster: TenGodCategory;
+  };
 };
 
 export type WealthResult = {
@@ -97,14 +108,6 @@ const ELEMENT_LABEL: Record<ElementKey, string> = {
   water: "수",
 };
 
-const RELATION_USER_LABEL: Record<TenGodCategory, string> = {
-  peer: "비겁(동료·경쟁·자기주도)",
-  output: "식상(표현·콘텐츠·결과물)",
-  wealth: "재성(돈·거래·고객)",
-  career: "관성(책임·규칙·신뢰)",
-  resource: "인성(지식·학습·기반)",
-};
-
 const RELATION_REASON: Record<TenGodCategory, string> = {
   peer: "사람들과 부딪히는 환경에서 돈 감각이 더 살아납니다.",
   output: "표현하거나 결과물을 보여줄 때 수익 실마리가 잘 생깁니다.",
@@ -113,10 +116,34 @@ const RELATION_REASON: Record<TenGodCategory, string> = {
   resource: "지식, 학습, 레퍼런스를 쌓을수록 돈의 기반이 단단해집니다.",
 };
 
+const RELATION_SHORT_LABEL: Record<TenGodCategory, string> = {
+  peer: "비겁",
+  output: "식상",
+  wealth: "재성",
+  career: "관성",
+  resource: "인성",
+};
+
 const TYPE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
+}
+
+function hasFinalConsonant(value: string) {
+  const chars = Array.from(value);
+  const lastHangul = chars.reverse().find((char) => {
+    const code = char.charCodeAt(0);
+    return code >= 0xac00 && code <= 0xd7a3;
+  });
+
+  if (!lastHangul) return false;
+
+  return (lastHangul.charCodeAt(0) - 0xac00) % 28 !== 0;
+}
+
+function withAndParticle(value: string) {
+  return `${value}${hasFinalConsonant(value) ? "과" : "와"}`;
 }
 
 function normalizeElements(raw: WealthElementScores): WealthElementScores {
@@ -665,11 +692,11 @@ const DOMINANT_SUBTYPE_TRAITS: Record<
 };
 
 const WEAK_SUBTYPE_TRAITS: Record<ElementKey, string> = {
-  wood: "다만 시작과 확장성이 약해, 기회를 봐도 판을 키우기 전에 멈출 수 있습니다.",
-  fire: "다만 드러내고 팔아야 할 때 소극적이면 실력보다 작게 보일 수 있습니다.",
-  earth: "다만 유지력과 관리력이 약해, 벌어도 돈이 오래 머무는 구조가 흔들릴 수 있습니다.",
-  metal: "다만 계산과 선별이 약하면 좋은 기회와 아닌 기회를 구분하는 데 시간이 걸릴 수 있습니다.",
-  water: "다만 흐름과 타이밍 감지가 약하면 움직여야 할 때 한 박자 늦어질 수 있습니다.",
+  wood: "시작과 확장성이 약하면 기회를 봐도 판을 키우기 전에 멈출 수 있습니다.",
+  fire: "드러내고 팔아야 할 때 소극적이면 실력보다 작게 보일 수 있습니다.",
+  earth: "유지력과 관리력이 약하면 벌어도 돈이 오래 머무는 구조가 흔들릴 수 있습니다.",
+  metal: "계산과 선별이 약하면 좋은 기회와 아닌 기회를 구분하는 데 시간이 걸릴 수 있습니다.",
+  water: "흐름과 타이밍 감지가 약하면 움직여야 할 때 한 박자 늦어질 수 있습니다.",
 };
 
 const RELATION_SUBTYPE_TRAITS: Record<TenGodCategory, string> = {
@@ -724,7 +751,69 @@ function buildSajuSummary(analysis: SajuAnalysis): WealthSajuSummary {
     solarDate: analysis.solarDate,
     relationScores: analysis.relationScores,
     balanceScore: analysis.balanceScore,
+    dayStrength: analysis.dayStrength,
+    monthSeason: {
+      branch: analysis.monthSeason.branch,
+      element: analysis.monthSeason.element as ElementKey,
+      relationToDayMaster: analysis.monthSeason.relationToDayMaster,
+    },
   };
+}
+
+function getTopRelations(analysis: SajuAnalysis) {
+  return Object.entries(analysis.relationScores)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2) as Array<[TenGodCategory, number]>;
+}
+
+function buildDayStrengthReason(analysis: SajuAnalysis, dayElement: ElementKey) {
+  const roots = analysis.dayStrength.rootBranches.slice(0, 2);
+  const rootText =
+    roots.length > 0
+      ? `${roots.join(", ")}에 뿌리가 ${
+          analysis.dayStrength.level === "weak" ? "있지만" : "있어"
+        }`
+      : "일간을 직접 받쳐주는 뿌리는 약해";
+
+  return `일간은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})이고, 월주 ${analysis.pillars.month}의 계절 기운을 받습니다. ${rootText} ${analysis.dayStrength.label}으로 봅니다.`;
+}
+
+function buildWealthFlowReason(analysis: SajuAnalysis, profile: WealthProfile) {
+  const wealthScore = analysis.relationScores.wealth;
+  const outputScore = analysis.relationScores.output;
+  const resourceScore = analysis.relationScores.resource;
+  const careerScore = analysis.relationScores.career;
+  const strengthLevel = analysis.dayStrength.level;
+
+  if (wealthScore >= 24 && strengthLevel === "strong") {
+    return "재성 흐름을 받아낼 힘이 있어 거래, 고객, 현금화 판단이 비교적 직접적으로 작동합니다.";
+  }
+
+  if (wealthScore >= 24 && strengthLevel === "weak") {
+    return "재성은 보이지만 일간 힘이 약한 편이라, 빠른 확장보다 기반을 보강한 뒤 현금화하는 흐름이 맞습니다.";
+  }
+
+  if (wealthScore >= 20) {
+    return "재성이 적당히 살아 있어 돈, 거래, 고객 반응을 의식할수록 재물 감각이 또렷해집니다.";
+  }
+
+  if (outputScore >= 24) {
+    return "재성보다 식상이 앞서므로, 바로 돈을 좇기보다 결과물과 표현을 먼저 만들 때 수익으로 이어지기 쉽습니다.";
+  }
+
+  if (resourceScore >= 24) {
+    return "인성이 강해 지식, 자격, 레퍼런스를 쌓은 뒤 돈으로 바꾸는 순서가 안정적입니다.";
+  }
+
+  if (careerScore >= 24) {
+    return "관성이 강해 책임, 직함, 시스템 안에서 신뢰를 쌓을 때 돈으로 연결되기 쉽습니다.";
+  }
+
+  if (profile.impulsiveness >= 65) {
+    return "수익 감각은 있어도 즉흥성이 같이 올라와, 버는 힘보다 남기는 구조가 더 중요합니다.";
+  }
+
+  return "재성 자체가 과하게 튀기보다 여러 흐름이 섞여 있어, 한 방보다 꾸준한 구조화가 재물 체감을 키웁니다.";
 }
 
 function buildLogic(
@@ -735,8 +824,10 @@ function buildLogic(
 ): string[] {
   const dominant = getDominantElement(elements);
   const weak = getWeakElement(elements);
-  const dominantRelation = getDominantRelation(analysis);
   const dayElement = analysis.dayElement as ElementKey;
+  const topRelations = getTopRelations(analysis);
+  const dominantRelation = topRelations[0][0];
+  const secondRelation = topRelations[1][0];
   const profileSignals: string[] = [];
 
   if (profile.moneySense >= 62) profileSignals.push("돈 흐름을 읽는 감각");
@@ -752,9 +843,10 @@ function buildLogic(
       : "강점이 한쪽으로 과하게 치우치기보다 안정적으로 섞인 편입니다.";
 
   return [
-    `일간 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})을 기준으로 기본 성향을 잡고, 월주 ${analysis.pillars.month}로 계절 기운을 보정했습니다.`,
-    `${ELEMENT_LABEL[dominant]} 기운이 강하고 ${ELEMENT_LABEL[weak]} 기운이 약해, 돈을 벌고 지키는 방식이 ${ELEMENT_LABEL[dominant]} 쪽으로 기울어집니다.`,
-    `십성으로는 ${RELATION_USER_LABEL[dominantRelation]} 흐름이 두드러집니다. ${RELATION_REASON[dominantRelation]}`,
+    buildDayStrengthReason(analysis, dayElement),
+    `${ELEMENT_LABEL[dominant]} 기운이 가장 강하고 ${ELEMENT_LABEL[weak]} 기운이 약해, 돈을 벌고 지키는 방식이 ${ELEMENT_LABEL[dominant]} 쪽으로 기울어집니다.`,
+    `십성은 ${withAndParticle(RELATION_SHORT_LABEL[dominantRelation])} ${RELATION_SHORT_LABEL[secondRelation]}이 중심입니다. ${RELATION_REASON[dominantRelation]}`,
+    buildWealthFlowReason(analysis, profile),
     `${profileSummary} 그래서 ${getTemplateTitle(templateId)} 결과가 가장 가깝게 나왔습니다.`,
   ];
 }
