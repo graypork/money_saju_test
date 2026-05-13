@@ -18,7 +18,7 @@ export type RenderedResultCopy = {
   strength: string;
   weakness: string;
   polarity: {
-    label: string;
+    modifier: string;
     badge: string;
     summary: string;
     strength: string;
@@ -98,7 +98,7 @@ const POLARITY_COPY: Record<
   RenderedResultCopy["polarity"]
 > = {
   masculine: {
-    label: "남성형 추진 에너지",
+    modifier: "돌파형",
     badge: "사람의 성별이 아니라 사주의 작동 방식",
     summary:
       "돈을 볼 때 먼저 밀고 들어가 확인하는 흐름입니다. 기회가 보이면 생각만 오래 하기보다 행동으로 판을 여는 쪽에 가깝습니다.",
@@ -106,7 +106,7 @@ const POLARITY_COPY: Record<
     caution: "속도가 기준보다 앞서면 수익보다 지출과 피로가 먼저 커질 수 있습니다.",
   },
   feminine: {
-    label: "여성형 축적 에너지",
+    modifier: "축적형",
     badge: "사람의 성별이 아니라 사주의 작동 방식",
     summary:
       "돈을 바로 밀어붙이기보다 상황을 읽고, 관계와 정보를 모아 구조로 바꾸는 흐름입니다. 겉으로 느려 보여도 쌓이면 오래 갑니다.",
@@ -114,8 +114,8 @@ const POLARITY_COPY: Record<
     caution: "너무 오래 지켜보면 팔아야 할 타이밍이나 제안해야 할 순간을 놓칠 수 있습니다.",
   },
   mixed: {
-    label: "혼합형 전환 에너지",
-    badge: "남성형/여성형 에너지가 같이 작동",
+    modifier: "전환형",
+    badge: "두 방향 에너지가 같이 작동",
     summary:
       "밀고 나가는 힘과 쌓아두는 힘이 같이 보입니다. 돈을 벌 때는 속도가 필요하지만, 오래 남기려면 중간에 구조를 세워야 합니다.",
     strength: "상황에 따라 공격적으로 움직이다가도 다시 정리하는 전환력이 있습니다.",
@@ -124,26 +124,55 @@ const POLARITY_COPY: Record<
 };
 
 function getPaidSections(animalType: AnimalType): ResultPaidPreviewSection[] {
+  const getBlurredKeyword = (teaser: string, candidates: string[]) =>
+    candidates.find((candidate) => teaser.includes(candidate)) ??
+    teaser.split(/[ ,,.]/).find((word) => word.length >= 2) ??
+    teaser.slice(0, 2);
+
   return [
     {
       title: "돈 버는 패턴",
       teaser: animalType.paidSections.moneyPattern,
-      blurredKeyword: "돈으로",
+      blurredKeyword: getBlurredKeyword(animalType.paidSections.moneyPattern, [
+        "돈으로",
+        "수익",
+        "기회",
+        "구조",
+        "돈",
+      ]),
     },
     {
       title: "돈 놓치는 패턴",
       teaser: animalType.paidSections.riskPattern,
-      blurredKeyword: "패턴",
+      blurredKeyword: getBlurredKeyword(animalType.paidSections.riskPattern, [
+        "패턴",
+        "습관",
+        "구간",
+        "지점",
+        "돈",
+      ]),
     },
     {
       title: "성장 전략",
       teaser: animalType.paidSections.growthStrategy,
-      blurredKeyword: "제안",
+      blurredKeyword: getBlurredKeyword(animalType.paidSections.growthStrategy, [
+        "제안",
+        "기준",
+        "순서",
+        "플랜",
+        "방식",
+      ]),
     },
     {
       title: "돈과의 관계",
       teaser: animalType.paidSections.relationshipWithMoney,
-      blurredKeyword: "돈",
+      blurredKeyword: getBlurredKeyword(animalType.paidSections.relationshipWithMoney, [
+        "돈",
+        "관계",
+        "구조",
+        "방식",
+        "기준",
+      ]),
     },
   ];
 }
@@ -179,21 +208,22 @@ export function renderResultCopy(
   signals: ResultSignals
 ): RenderedResultCopy {
   const weakTranslation = WEAK_TRANSLATION[signals.weakElement];
+  const polarity = POLARITY_COPY[signals.polarityStyle];
 
   return {
-    title: animalType.title,
-    subtitle: `${animalType.name} · ${ELEMENT_LABEL[signals.dominantElement]} 강세 / ${ELEMENT_LABEL[signals.weakElement]} 약세`,
+    title: `${polarity.modifier} ${animalType.name}`,
+    subtitle: `${animalType.title} · ${ELEMENT_LABEL[signals.dominantElement]} 강세 / ${ELEMENT_LABEL[signals.weakElement]} 약세`,
     hook: animalType.freeCopy.hook,
     oneLineDiagnosis: `${animalType.freeCopy.summary} ${weakTranslation}.`,
     summary: `${MONEY_ATTITUDE[signals.moneyPattern]} ${BALANCE_COPY[signals.balanceType]}`,
     moneyAttitude: MONEY_ATTITUDE[signals.moneyPattern],
     strength: animalType.freeCopy.strength,
     weakness: animalType.freeCopy.weakness,
-    polarity: POLARITY_COPY[signals.polarityStyle],
+    polarity,
     paidPreview: `${animalType.freeCopy.blurredTeaser} 능력 부족보다 반복되는 선택 패턴에 가까운 지점을 소비, 일, 인간관계에서 더 구체적으로 보여줍니다.`,
     paidSections: getPaidSections(animalType),
     cautions: [animalType.freeCopy.weakness, RISK_COPY[signals.riskPattern]],
     logic: buildLogic(animalType, signals),
-    shareText: `나는 ${animalType.name} 재물 타입이 나왔어요. ${animalType.freeCopy.hook}`,
+    shareText: `나는 ${polarity.modifier} ${animalType.name} 재물 타입이 나왔어요. ${animalType.freeCopy.hook}`,
   };
 }
