@@ -1,20 +1,166 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { calculateWealthResult, type WealthResult } from "../../src/lib/score";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  calculateWealthResult,
+  type ElementKey,
+  type WealthProfile,
+  type WealthResult,
+} from "../../src/lib/score";
+import { getPaidReportTemplate } from "../../src/lib/paidReportTemplates";
 
-const ELEMENT_LABELS: Record<string, string> = {
-  wood: "목",
-  fire: "화",
-  earth: "토",
-  metal: "금",
-  water: "수",
+const ELEMENT_KEYS = ["wood", "fire", "earth", "metal", "water"] as const;
+
+const ELEMENT_META: Record<
+  ElementKey,
+  {
+    label: string;
+    ability: string;
+    strong: string;
+    weak: string;
+    tone: string;
+  }
+> = {
+  wood: {
+    label: "목",
+    ability: "성장력 · 아이디어 · 확장성",
+    strong: "아이디어를 키우고 새 판을 여는 힘이 좋습니다.",
+    weak: "시작과 확장을 미루면 좋은 흐름을 작게 쓰기 쉽습니다.",
+    tone: "bg-emerald-500",
+  },
+  fire: {
+    label: "화",
+    ability: "표현력 · 브랜딩 · 영향력",
+    strong: "사람의 반응을 끌어내고 가치를 보여주는 힘이 좋습니다.",
+    weak: "드러내고 팔아야 할 때 뒤로 물러나면 실력보다 작게 보일 수 있습니다.",
+    tone: "bg-rose-500",
+  },
+  earth: {
+    label: "토",
+    ability: "안정성 · 축적 · 관리",
+    strong: "수익을 오래 남기고 루틴으로 관리하는 힘이 좋습니다.",
+    weak: "관리 구조가 약하면 벌어도 돈이 오래 머물지 않을 수 있습니다.",
+    tone: "bg-amber-500",
+  },
+  metal: {
+    label: "금",
+    ability: "판단력 · 정리 · 수익화 구조",
+    strong: "기준을 세우고 가격, 상품, 손익을 정리하는 힘이 좋습니다.",
+    weak: "좋은 아이디어를 가격과 결제 구조로 바꾸는 데 시간이 걸릴 수 있습니다.",
+    tone: "bg-slate-600",
+  },
+  water: {
+    label: "수",
+    ability: "정보력 · 분석력 · 흐름 읽기",
+    strong: "정보와 타이밍을 읽고 방향을 바꾸는 힘이 좋습니다.",
+    weak: "흐름을 바꿔야 할 때 한 박자 늦어질 수 있습니다.",
+    tone: "bg-sky-500",
+  },
+};
+
+const PROFILE_LABELS: Record<keyof WealthProfile, string> = {
+  moneySense: "돈 흐름 감지",
+  executionPower: "실행 전환력",
+  riskTaking: "기회 베팅력",
+  consistency: "반복 지속력",
+  impulsiveness: "즉흥 지출 경계",
+  socialCapital: "관계 자본",
+  creativity: "아이디어 수익화",
+  businessPotential: "사업화 가능성",
+  stability: "돈 관리 안정감",
+  luckFlow: "타이밍 감각",
+};
+
+const PROFILE_STRENGTH_COPY: Record<keyof WealthProfile, string> = {
+  moneySense: "돈이 될 만한 흐름과 아닌 흐름을 비교적 빨리 구분합니다.",
+  executionPower: "생각에서 멈추지 않고 제안, 공개, 실행으로 넘기는 힘이 있습니다.",
+  riskTaking: "기회가 보이면 작게라도 판을 열어보는 감각이 살아 있습니다.",
+  consistency: "한 번 정한 루틴을 반복하면서 신뢰와 결과를 쌓을 수 있습니다.",
+  impulsiveness: "순간 반응이 빠른 만큼 트렌드와 수요 변화에 민감하게 반응합니다.",
+  socialCapital: "사람, 소개, 협업 속에서 수익 기회를 만들 가능성이 큽니다.",
+  creativity: "아이디어와 감각을 콘텐츠나 상품의 출발점으로 바꾸기 쉽습니다.",
+  businessPotential: "직접 판을 만들거나 작은 수익 모델을 실험할 때 힘이 납니다.",
+  stability: "돈을 한 번에 쓰기보다 남기는 구조를 만들 수 있는 편입니다.",
+  luckFlow: "정보와 타이밍을 읽고 흐름에 맞춰 방향을 조정하는 힘이 있습니다.",
+};
+
+const PROFILE_WARNING_COPY: Record<keyof WealthProfile, string> = {
+  moneySense: "기준 없이 움직이면 좋은 제안과 그럴듯한 유혹을 헷갈릴 수 있습니다.",
+  executionPower: "팔 수 있는 형태로 내놓기 전까지 준비가 길어질 수 있습니다.",
+  riskTaking: "검증 없이 키우면 수익보다 비용이 먼저 커질 수 있습니다.",
+  consistency: "방향을 자주 바꾸면 경험이 쌓이기 전에 계속 초기화됩니다.",
+  impulsiveness: "수입 직후의 소비나 즉흥 결제가 재물 체감을 낮출 수 있습니다.",
+  socialCapital: "좋은 사람 역할만 하면 시간은 쓰고 돈은 남지 않을 수 있습니다.",
+  creativity: "아이디어가 많아도 마감과 판매 구조가 없으면 취미로 남기 쉽습니다.",
+  businessPotential: "직접 만들 힘은 있지만 운영 구조 없이 확장하면 피로가 먼저 옵니다.",
+  stability: "돈이 들어오는 속도에 비해 머물게 하는 장치가 부족할 수 있습니다.",
+  luckFlow: "분석이 길어지면 결정해야 할 타이밍을 놓칠 수 있습니다.",
+};
+
+const MONEY_MOMENT_COPY: Record<
+  WealthResult["resultSignals"]["earningStyle"],
+  string
+> = {
+  repeatTrust: "반복 거래, 정기 고객, 신뢰가 쌓이는 루틴에서 돈이 안정적으로 붙습니다.",
+  contentProduct: "아이디어를 콘텐츠, 상품, 서비스로 작게 공개할 때 돈의 실마리가 생깁니다.",
+  operations: "흐름을 정리하고 남들이 번거로워하는 운영을 맡을 때 수익으로 바뀝니다.",
+  fastTest: "작은 제안으로 시장 반응을 빠르게 확인할 때 돈 되는 방향이 보입니다.",
+  relationshipDeal: "소개, 협업, 제안처럼 사람 사이의 연결이 선명할 때 수익 기회가 커집니다.",
+  expertService: "이미 해결할 수 있는 문제를 서비스나 템플릿으로 잘라 팔 때 돈이 움직입니다.",
+  variableIncome: "단기 프로젝트, 시즌성 기회, 빠른 반응이 필요한 일에서 수입이 열립니다.",
+  experienceAsset: "겪은 시행착오를 기록, 상담, 가이드로 바꿀 때 경험이 자산이 됩니다.",
+  knowledgeAsset: "지식과 근거를 문서화해 설명 가능한 상품으로 만들 때 신뢰가 돈이 됩니다.",
+  salesProposal: "호감보다 조건이 선명한 제안, 가격, 마감일을 말할 때 돈이 움직입니다.",
+  marketTiming: "정보를 비교하고 들어갈 기준과 빠질 기준을 세울 때 손실을 줄입니다.",
+  selfOwnedSystem: "직접 만든 판에서 고객, 가격, 반복 운영이 맞물릴 때 수익 크기가 커집니다.",
+};
+
+const RISK_PATTERN_COPY: Record<WealthResult["resultSignals"]["riskPattern"], string> = {
+  lateExecution: "성과가 느리다는 이유로 돈이 되기 직전에 판을 접는 패턴입니다.",
+  launchDelay: "팔 수 있는 형태로 공개하기 전에 완성도와 흥미 사이에서 멈추기 쉽습니다.",
+  overCaution: "검토는 충분한데 실행의 크기가 작아 결과도 작게 남을 수 있습니다.",
+  overExpansion: "초반 반응을 확신으로 오해하면 비용과 에너지가 먼저 커집니다.",
+  peopleDrain: "역할, 보상, 시간을 정하지 않으면 관계는 많아도 수익이 흐려집니다.",
+  underpricing: "실력이 있어도 가격을 낮게 부르면 수익보다 피로가 먼저 쌓입니다.",
+  impulseLeak: "돈이 들어온 직후 즉흥 소비가 붙으면 재물 감각이 체감으로 남지 않습니다.",
+  scatteredFocus: "방향을 자주 바꾸면 배운 것들이 쌓이지 못하고 계속 처음으로 돌아갑니다.",
+  prepLoop: "공부와 준비가 길어지면 실전 판매가 계속 뒤로 밀릴 수 있습니다.",
+  priceFear: "가격을 말하는 순간 약해지면 좋은 제안도 부탁처럼 들릴 수 있습니다.",
+  analysisParalysis: "분석이 길어지면 좋은 가격과 타이밍이 먼저 지나갑니다.",
+  weakStructure: "고객, 가격, 운영 기준 없이 밀면 바쁘기만 하고 남는 돈이 줄어듭니다.",
+};
+
+const ANIMAL_VISUALS: Record<string, string> = {
+  거북: "🐢",
+  여우: "🦊",
+  곰: "🐻",
+  매: "🦅",
+  늑대: "🐺",
+  부엉이: "🦉",
+  치타: "🐆",
+  낙타: "🐪",
+  코끼리: "🐘",
+  사자: "🦁",
+  까마귀: "🐦",
+  야생마: "🐎",
 };
 
 type ShareToast = {
   message: string;
   tone: "success" | "error";
+};
+
+type SummaryCard = {
+  title: string;
+  value: string;
+  body: string;
+};
+
+type LockedPreview = {
+  title: string;
+  teaser: string;
+  blurredKeyword: string;
 };
 
 function parseBirthDate(birthDate: string) {
@@ -72,6 +218,167 @@ async function copyTextToClipboard(text: string) {
   return false;
 }
 
+function getAnimalVisual(result: WealthResult) {
+  return ANIMAL_VISUALS[result.animalType.animal] ?? "✨";
+}
+
+function getElementLabel(element: ElementKey) {
+  return ELEMENT_META[element].label;
+}
+
+function hasFinalConsonant(value: string) {
+  const chars = Array.from(value);
+  const lastHangul = chars.reverse().find((char) => {
+    const code = char.charCodeAt(0);
+    return code >= 0xac00 && code <= 0xd7a3;
+  });
+
+  if (!lastHangul) return false;
+
+  return (lastHangul.charCodeAt(0) - 0xac00) % 28 !== 0;
+}
+
+function withSubjectParticle(value: string) {
+  return `${value}${hasFinalConsonant(value) ? "이" : "가"}`;
+}
+
+function getRankedElements(result: WealthResult) {
+  return ELEMENT_KEYS.map((element) => ({
+    element,
+    value: result.elements[element],
+  })).sort((a, b) => b.value - a.value);
+}
+
+function getTopProfileLabels(result: WealthResult) {
+  return result.resultSignals.profileHighlights
+    .map((key) => PROFILE_LABELS[key])
+    .join(" · ");
+}
+
+function getSummaryCards(result: WealthResult): SummaryCard[] {
+  const strong = result.dominantElement;
+  const weak = result.weakElement;
+  const instinctLabel = getTopProfileLabels(result);
+
+  return [
+    {
+      title: "돈 버는 본능",
+      value: instinctLabel,
+      body: `${result.copy.moneyAttitude} ${PROFILE_STRENGTH_COPY[result.resultSignals.profileHighlights[0]]}`,
+    },
+    {
+      title: "돈이 들어오는 순간",
+      value: `${ELEMENT_META[strong].ability}`,
+      body: MONEY_MOMENT_COPY[result.resultSignals.earningStyle],
+    },
+    {
+      title: "돈이 새는 구멍",
+      value: `${getElementLabel(weak)} 보완 필요`,
+      body: RISK_PATTERN_COPY[result.resultSignals.riskPattern],
+    },
+  ];
+}
+
+function uniqueItems(items: string[], limit: number) {
+  const seen = new Set<string>();
+  const unique: string[] = [];
+
+  items.forEach((item) => {
+    const trimmed = item.trim();
+    if (!trimmed || seen.has(trimmed)) return;
+    seen.add(trimmed);
+    unique.push(trimmed);
+  });
+
+  return unique.slice(0, limit);
+}
+
+function getFreeStrengths(result: WealthResult) {
+  return uniqueItems(
+    [
+      result.copy.strength,
+      result.subtype.strengthAngle,
+      ...result.resultSignals.profileHighlights.map(
+        (key) => PROFILE_STRENGTH_COPY[key]
+      ),
+    ],
+    3
+  );
+}
+
+function getFreeWeaknesses(result: WealthResult) {
+  const warnings = result.resultSignals.profileWarnings;
+  const warningCopies =
+    warnings.length > 0
+      ? warnings.map((key) => PROFILE_WARNING_COPY[key])
+      : [PROFILE_WARNING_COPY[result.resultSignals.profileHighlights[0]]];
+
+  return uniqueItems(
+    [result.copy.weakness, result.subtype.weaknessAngle, ...warningCopies],
+    2
+  );
+}
+
+function getPaidPreviewSections(result: WealthResult): LockedPreview[] {
+  const paidReport = getPaidReportTemplate(result.templateId);
+  const weakLabel = getElementLabel(result.weakElement);
+  const strongLabel = getElementLabel(result.dominantElement);
+
+  const sections: LockedPreview[] = [
+    {
+      title: "나에게 맞는 수익화 방식 TOP 3",
+      teaser: `${paidReport.earningStyle} 특히 ${strongLabel} 기운이 강한 사람은 먼저 팔아볼 수 있는 순서를 좁히는 게 중요합니다.`,
+      blurredKeyword: "순서",
+    },
+    {
+      title: "피해야 할 돈버는 방식",
+      teaser: paidReport.warning,
+      blurredKeyword: "주의",
+    },
+    {
+      title: "오행 부족분 보완 전략",
+      teaser: `${weakLabel} 기운이 약한 구간을 보완하면 ${ELEMENT_META[result.weakElement].ability}이 수익화 병목을 줄여줍니다.`,
+      blurredKeyword: "수익화 병목",
+    },
+    {
+      title: "돈이 막히는 반복 패턴",
+      teaser: paidReport.moneyLeakPattern,
+      blurredKeyword: "반복 패턴",
+    },
+    {
+      title: "잘 맞는 일/부업/사업 방향",
+      teaser: paidReport.careerAndBusinessFit,
+      blurredKeyword: "사업 방향",
+    },
+    {
+      title: "3개월 돈버는 행동 가이드",
+      teaser: `${paidReport.actionPlan.thirtyDays[0]} 이후에는 결제, 제안, 기록 루틴을 3개월 단위로 정리합니다.`,
+      blurredKeyword: "3개월",
+    },
+    {
+      title: "올해 돈 흐름 요약",
+      teaser: paidReport.timingAdvice,
+      blurredKeyword: "돈 흐름",
+    },
+  ];
+
+  return sections.map((section) => ({
+    ...section,
+    blurredKeyword: section.teaser.includes(section.blurredKeyword)
+      ? section.blurredKeyword
+      : pickBlurredKeyword(section.teaser),
+  }));
+}
+
+function pickBlurredKeyword(text: string) {
+  return (
+    text
+      .split(/[ ,,.]/)
+      .find((word) => word.replace(/[^\w가-힣]/g, "").length >= 3) ??
+    text.slice(0, 3)
+  );
+}
+
 function ResultDebugLogger({
   debugKey,
   debug,
@@ -104,11 +411,70 @@ function BlurredKeywordText({
   return (
     <>
       {text.slice(0, keywordIndex)}
-      <span className="select-none rounded bg-gray-100 px-1 text-gray-700 blur-[3px]">
+      <span className="select-none rounded-md bg-slate-200 px-1 text-slate-700 blur-[3px]">
         {keyword}
       </span>
       {text.slice(keywordIndex + keyword.length)}
     </>
+  );
+}
+
+function ScorePill({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-white/12 px-4 py-3 text-white ring-1 ring-white/10">
+      <p className="text-[11px] font-bold text-white/50">{label}</p>
+      <p className="mt-1 text-sm font-black leading-5">{value}</p>
+    </div>
+  );
+}
+
+function SectionHeading({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-black tracking-[0.18em] text-teal-700">
+        {eyebrow}
+      </p>
+      <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950">
+        {title}
+      </h2>
+      {description && (
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+          {description}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function PrimaryCta({
+  children,
+  onClick,
+  dark = false,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+  dark?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-2xl px-5 py-4 text-base font-black shadow-lg transition active:scale-[0.98] ${
+        dark
+          ? "bg-slate-950 text-white shadow-slate-950/20"
+          : "bg-[#10b981] text-slate-950 shadow-emerald-900/20"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -136,10 +502,10 @@ function ResultContent() {
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     return (
-      <main className="min-h-screen bg-[#f7f1e8] px-5 py-8 [word-break:keep-all]">
+      <main className="min-h-screen bg-slate-100 px-5 py-8 [word-break:keep-all]">
         <section className="mx-auto max-w-md">
-          <div className="rounded-[2rem] bg-[#21160f] p-7 text-white shadow-2xl">
-            <div className="mb-5 inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-[#f6d58b]">
+          <div className="rounded-[2rem] bg-slate-950 p-7 text-white shadow-2xl">
+            <div className="mb-5 inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-emerald-200">
               RESULT
             </div>
             <h1 className="text-3xl font-black leading-tight">
@@ -151,7 +517,7 @@ function ResultContent() {
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="mt-6 w-full rounded-2xl bg-[#f6d58b] px-5 py-4 text-base font-black text-[#21160f] shadow-lg transition active:scale-[0.98]"
+              className="mt-6 w-full rounded-2xl bg-emerald-400 px-5 py-4 text-base font-black text-slate-950 shadow-lg transition active:scale-[0.98]"
             >
               테스트 시작하기
             </button>
@@ -170,10 +536,7 @@ function ResultContent() {
     day,
     hour,
     birthTime,
-    calendarType:
-      calendarTypeParam === "lunar"
-        ? "lunar"
-        : "solar",
+    calendarType: calendarTypeParam === "lunar" ? "lunar" : "solar",
     gender:
       genderParam === "male" || genderParam === "female"
         ? genderParam
@@ -181,13 +544,36 @@ function ResultContent() {
   });
 
   const copy = result.copy;
-  const animalType = result.animalType;
-  const lockedSections = copy.paidSections;
+  const rankedElements = getRankedElements(result);
+  const dominant = result.dominantElement;
+  const weak = result.weakElement;
+  const summaryCards = getSummaryCards(result);
+  const freeStrengths = getFreeStrengths(result);
+  const freeWeaknesses = getFreeWeaknesses(result);
+  const lockedSections = getPaidPreviewSections(result);
+  const paidReport = getPaidReportTemplate(result.templateId);
+  const animalVisual = getAnimalVisual(result);
+  const isPaid = false;
   const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
+  const shareLine = `${copy.title} · 재물 감각 상위 ${result.topPercent}% · ${getElementLabel(dominant)} 강세 / ${getElementLabel(weak)} 보완`;
+
+  const showToast = (message: string, tone: ShareToast["tone"] = "success") => {
+    setShareToast({ message, tone });
+  };
+
+  const handlePaidCta = () => {
+    // TODO: 실제 결제 플로우가 생기면 이 버튼을 checkout 또는 유료 리포트 해금 경로로 연결합니다.
+    showToast("전체 재물 해석 결제 흐름을 곧 연결할 예정입니다.");
+  };
+
+  const handleSaveImage = () => {
+    // TODO: 결과 카드 캡처/이미지 저장 기능을 연결합니다.
+    showToast("결과 이미지 저장 기능을 준비 중입니다.");
+  };
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = `${copy.shareText} 재물 포텐셜 상위 ${result.topPercent}%가 나왔어요.`;
+    const text = `${copy.shareText} ${shareLine}`;
     const textWithUrl = `${text}\n${url}`;
 
     try {
@@ -197,7 +583,7 @@ function ResultContent() {
       if (navigator.share) {
         try {
           await navigator.share({
-            title: "내 재물 사주 테스트 결과",
+            title: "내 돈버는 동물 테스트 결과",
             text,
             url,
           });
@@ -208,10 +594,7 @@ function ResultContent() {
       }
 
       if (copied) {
-        setShareToast({
-          message: "공유 내용과 링크를 복사했어요.",
-          tone: "success",
-        });
+        showToast("공유 내용과 링크를 복사했어요.");
         return;
       }
 
@@ -219,341 +602,453 @@ function ResultContent() {
         throw new Error("Share and clipboard unavailable");
       }
 
-      setShareToast({
-        message: "공유 시트를 열었어요.",
-        tone: "success",
-      });
+      showToast("공유 시트를 열었어요.");
     } catch {
-      setShareToast({
-        message: "공유에 실패했어요. 다시 시도해주세요.",
-        tone: "error",
-      });
+      showToast("공유에 실패했어요. 다시 시도해주세요.", "error");
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f1e8] px-5 py-8 [word-break:keep-all]">
+    <main className="min-h-screen bg-[#f4f7fb] px-5 py-6 text-slate-950 [word-break:keep-all]">
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
 
       <section className="mx-auto max-w-md pb-28">
-        <div className="overflow-hidden rounded-[2rem] bg-[#21160f] shadow-2xl">
-          <div className="px-6 pb-7 pt-7 text-white">
-            <div className="mb-5 inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-[#f6d58b]">
-              RESULT
-            </div>
-
-            <p className="text-sm font-semibold text-white/60">
-              재물 포텐셜
-            </p>
-
-            <div className="mt-4 flex items-center justify-between gap-5">
-              <div className="flex items-end gap-2">
-                <span className="text-6xl font-black tracking-tight">
-                  상위 {result.topPercent}
-                </span>
-                <span className="mb-2 text-2xl font-black text-white/70">
-                  %
-                </span>
+        <section className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-2xl shadow-slate-900/20">
+          <div className="bg-[linear-gradient(145deg,#0f172a_0%,#134e4a_52%,#111827_100%)] px-6 pb-6 pt-7">
+            <div className="flex items-center justify-between gap-3">
+              <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-black text-emerald-200 ring-1 ring-white/10">
+                당신의 돈 버는 동물은...
               </div>
-
-              <WealthPyramid percent={result.topPercent} />
+              <span className="rounded-full bg-emerald-300 px-3 py-1.5 text-xs font-black text-slate-950">
+                상위 {result.topPercent}%
+              </span>
             </div>
 
-            <p className="mt-4 text-xs leading-5 text-white/45">
-              정통 만세력 산출이나 실제 인구 통계 순위가 아닌, 입력값을
-              재물 성향 콘텐츠로 변환한 포텐셜 지표입니다.
+            <div className="mt-6 flex items-center gap-5">
+              <div className="grid h-24 w-24 shrink-0 place-items-center rounded-[2rem] bg-white text-6xl shadow-xl">
+                {animalVisual}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white/55">
+                  재물 동물 유형
+                </p>
+                <h1 className="mt-2 text-3xl font-black leading-tight">
+                  {copy.title}
+                </h1>
+              </div>
+            </div>
+
+            <p className="mt-6 text-lg font-black leading-8 text-emerald-100">
+              당신은 {copy.title}입니다.
             </p>
-            <p className="mt-2 text-xs font-semibold leading-5 text-white/45">
-              입력 기준: {calendarTypeParam === "lunar" ? "음력" : "양력"}
+            <p className="mt-3 text-sm font-semibold leading-7 text-white/72">
+              {copy.oneLineDiagnosis}
             </p>
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <ScorePill
+                label="대표 오행"
+                value={`${getElementLabel(dominant)} · ${ELEMENT_META[dominant].ability}`}
+              />
+              <ScorePill
+                label="부족 오행"
+                value={`${getElementLabel(weak)} · ${ELEMENT_META[weak].ability}`}
+              />
+            </div>
+
+            <div className="mt-6">
+              <PrimaryCta onClick={handlePaidCta}>
+                내 돈버는 전략 열기
+              </PrimaryCta>
+              <p className="mt-3 text-center text-xs font-bold text-white/55">
+                회원가입 없이 바로 확인 가능
+              </p>
+            </div>
           </div>
 
-          <div className="border-t border-white/10 px-6 py-5 text-white">
-            <p className="text-sm font-semibold text-white/50">
-              재물 동물 유형
-            </p>
-
-            <h1 className="mt-3 text-3xl font-black leading-tight">
-              {copy.title}
-            </h1>
-
-            <p className="mt-3 text-base font-semibold leading-7 text-[#f6d58b]">
-              {copy.subtitle}
-            </p>
-
-            <div className="mt-4 rounded-2xl bg-white/10 px-4 py-3">
-              <p className="text-[11px] font-bold tracking-widest text-white/40">
+          <div className="grid grid-cols-3 border-t border-white/10 text-center">
+            <div className="px-3 py-4">
+              <p className="text-lg font-black">{result.wealthScore}</p>
+              <p className="mt-1 text-[11px] font-bold text-white/45">
+                재물 점수
+              </p>
+            </div>
+            <div className="border-x border-white/10 px-3 py-4">
+              <p className="text-lg font-black">{result.animalType.animal}</p>
+              <p className="mt-1 text-[11px] font-bold text-white/45">
                 동물 판정
               </p>
-              <p className="mt-1 text-sm font-black leading-6 text-white">
-                {copy.title}
+            </div>
+            <div className="px-3 py-4">
+              <p className="text-lg font-black">
+                {calendarTypeParam === "lunar" ? "음력" : "양력"}
+              </p>
+              <p className="mt-1 text-[11px] font-bold text-white/45">
+                입력 기준
               </p>
             </div>
           </div>
-        </div>
-
-        <section className="mt-6 rounded-[2rem] bg-white p-6 shadow-xl">
-          <p className="text-sm font-bold text-gray-400">결과 요약</p>
-
-          <p className="mt-3 text-sm font-black leading-6 text-[#9a6a1d]">
-            {copy.hook}
-          </p>
-
-          <h2 className="mt-2 text-2xl font-black leading-tight text-gray-950">
-            {copy.oneLineDiagnosis}
-          </h2>
-
-          <p className="mt-4 text-sm leading-7 text-gray-700">
-            {copy.summary}
-          </p>
-
-          <p className="mt-4 rounded-2xl bg-[#f7f1e8] px-4 py-3 text-sm font-bold leading-6 text-gray-800">
-            {copy.moneyAttitude}
-          </p>
         </section>
 
-        <section className="mt-5 rounded-[2rem] bg-[#21160f] p-6 text-white shadow-xl">
-          <p className="text-sm font-bold text-[#f6d58b]">돈을 대하는 방식</p>
+        <section className="mt-7">
+          <SectionHeading
+            eyebrow="FREE SUMMARY"
+            title="무료 결과 핵심 3가지"
+            description="좋은 말만 모으지 않고, 돈으로 바뀌는 장면과 막히는 지점을 같이 보여드려요."
+          />
 
-          <h2 className="mt-2 text-2xl font-black leading-tight">핵심 판정</h2>
-
-          <p className="mt-4 text-base font-bold leading-8 text-white/90">
-            {copy.strength}
-          </p>
-
-          <p className="mt-4 border-t border-white/10 pt-4 text-sm font-semibold leading-7 text-white/65">
-            {copy.weakness}
-          </p>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">해석 근거</p>
-
-          <h2 className="mt-1 text-2xl font-black text-gray-950">
-            왜 이런 결과가 나왔을까?
-          </h2>
-
-          <div className="mt-5 space-y-3">
-            {result.logic.map((item, index) => (
-              <p
-                key={index}
-                className="rounded-2xl bg-gray-50 px-4 py-3 text-sm font-semibold leading-6 text-gray-700"
+          <div className="mt-4 space-y-3">
+            {summaryCards.map((card, index) => (
+              <article
+                key={card.title}
+                className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200"
               >
-                {item}
-              </p>
+                <div className="flex items-start gap-4">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-950 text-sm font-black text-white">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-black text-teal-700">
+                      {card.title}
+                    </p>
+                    <h3 className="mt-1 text-lg font-black leading-6 text-slate-950">
+                      {card.value}
+                    </h3>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                      {card.body}
+                    </p>
+                  </div>
+                </div>
+              </article>
             ))}
           </div>
-
-          <div className="mt-5 rounded-2xl bg-[#f7f1e8] p-4">
-            <p className="text-xs font-black tracking-widest text-gray-400">
-              동물 비유
-            </p>
-            <h3 className="mt-2 text-lg font-black text-gray-950">
-              {copy.title}
-            </h3>
-            <p className="mt-2 text-sm font-semibold leading-6 text-gray-700">
-              {animalType.freeCopy.summary} {copy.polarity.summary}
-            </p>
-          </div>
         </section>
 
-        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">오행 밸런스</p>
+        <section className="mt-8 rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/80 ring-1 ring-slate-200">
+          <SectionHeading
+            eyebrow="FIVE ELEMENTS"
+            title="오행 밸런스로 보는 돈버는 능력"
+            description="계산된 오행 점수를 성장, 브랜딩, 관리, 구조화, 분석 능력으로 번역했습니다."
+          />
 
-          <h2 className="mt-1 text-2xl font-black text-gray-950">
-            재물 성향 오행 분석
-          </h2>
-
-          <div className="mt-5 space-y-4">
-            {Object.entries(result.elements).map(([key, value]) => (
-              <div key={key}>
-                <div className="mb-2 flex justify-between text-sm font-bold text-gray-700">
-                  <span>{ELEMENT_LABELS[key] || key}</span>
-                  <span>{value}%</span>
+          <div className="mt-6 space-y-4">
+            {rankedElements.map(({ element, value }) => (
+              <div key={element}>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-slate-900">
+                      {getElementLabel(element)}
+                    </p>
+                    <p className="text-xs font-bold text-slate-400">
+                      {ELEMENT_META[element].ability}
+                    </p>
+                  </div>
+                  <span className="text-sm font-black text-slate-700">
+                    {value}%
+                  </span>
                 </div>
-
-                <div className="h-2.5 overflow-hidden rounded-full bg-[#efe5d6]">
+                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-[#21160f]"
-                    style={{ width: `${value}%` }}
+                    className={`h-full rounded-full ${ELEMENT_META[element].tone}`}
+                    style={{ width: `${Math.max(4, value)}%` }}
                   />
                 </div>
               </div>
             ))}
           </div>
 
-          <p className="mt-4 text-xs leading-5 text-gray-400">
-            오행 비율은 계산된 천간/지지 글자 기준이며, 재물 성향 점수는
-            해석용으로 별도 변환한 값입니다.
+          <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+              <p className="text-xs font-black text-emerald-700">가장 강함</p>
+              <h3 className="mt-1 text-xl font-black text-slate-950">
+                {getElementLabel(dominant)}
+              </h3>
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+                {ELEMENT_META[dominant].strong}
+              </p>
+            </div>
+            <div className="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100">
+              <p className="text-xs font-black text-rose-700">보완 필요</p>
+              <h3 className="mt-1 text-xl font-black text-slate-950">
+                {getElementLabel(weak)}
+              </h3>
+              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+                {ELEMENT_META[weak].weak}
+              </p>
+            </div>
+          </div>
+
+          <p className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
+            {withSubjectParticle(getElementLabel(dominant))} 강하면{" "}
+            {ELEMENT_META[dominant].strong} 하지만{" "}
+            {withSubjectParticle(getElementLabel(weak))} 약하면{" "}
+            {ELEMENT_META[weak].weak}
           </p>
         </section>
 
-        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">강점</p>
+        <section className="mt-8">
+          <SectionHeading
+            eyebrow="FREE DETAIL"
+            title="무료 상세 해석"
+            description="여기서는 성향 확인까지만 보여드립니다. 실제 수익화 순서와 행동 가이드는 전체 해석에서 열립니다."
+          />
 
-          <h2 className="mt-1 text-2xl font-black text-gray-950">
-            돈으로 바뀌기 쉬운 강점
-          </h2>
+          <div className="mt-4 space-y-4">
+            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
+              <h3 className="text-lg font-black text-slate-950">
+                돈으로 바뀌기 쉬운 강점 3개
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {freeStrengths.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            {[copy.strength].map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-[#f7f1e8] px-4 py-2 text-sm font-bold text-gray-800"
-              >
-                {item}
-              </span>
-            ))}
+            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
+              <h3 className="text-lg font-black text-slate-950">
+                수익화를 막는 약점 2개
+              </h3>
+              <ul className="mt-4 space-y-3">
+                {freeWeaknesses.map((item) => (
+                  <li
+                    key={item}
+                    className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
+              <h3 className="text-lg font-black text-slate-950">
+                돈버는 패턴
+              </h3>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
+                {paidReport.moneyPattern} {copy.summary}
+              </p>
+            </article>
+
+            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
+              <h3 className="text-lg font-black text-slate-950">
+                실패 패턴
+              </h3>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
+                {RISK_PATTERN_COPY[result.resultSignals.riskPattern]} {copy.cautions[0]}
+              </p>
+            </article>
           </div>
         </section>
 
-        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">주의 패턴</p>
-
-          <h2 className="mt-1 text-2xl font-black text-gray-950">
-            돈이 새기 쉬운 패턴
+        <section className="mt-8 rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-900/20">
+          <p className="text-xs font-black tracking-[0.18em] text-emerald-300">
+            NEXT QUESTION
+          </p>
+          <h2 className="mt-3 text-2xl font-black leading-tight">
+            하지만 이 유형은 돈을 벌 때 반복해서 막히는 지점이 있습니다.
           </h2>
+          <p className="mt-4 text-sm font-semibold leading-7 text-white/70">
+            무료 결과에서는 성향까지만 보여드렸어요. 전체 해석에서는 이 성향을 실제 수익화 방향, 피해야 할 방식, 3개월 행동 가이드로 바꿔드립니다.
+          </p>
+          <div className="mt-5">
+            <PrimaryCta onClick={handlePaidCta}>
+              내 수익화 전략 보기
+            </PrimaryCta>
+            <p className="mt-3 text-center text-xs font-bold text-white/50">
+              회원가입 없이 바로 확인
+            </p>
+          </div>
+        </section>
 
-          <ul className="mt-5 space-y-3">
-            {copy.cautions.map((item) => (
-              <li
-                key={item}
-                className="rounded-2xl bg-gray-50 px-4 py-3 text-sm font-semibold leading-6 text-gray-700"
-              >
-                {item}
+        <section className="mt-8">
+          <SectionHeading
+            eyebrow="LOCKED REPORT"
+            title="전체 해석 미리보기"
+            description="제목과 일부 문장만 먼저 보여드립니다. 전체 내용은 해석을 열면 바로 확인할 수 있어요."
+          />
+
+          {isPaid ? (
+            <div className="mt-4 rounded-[1.5rem] bg-white p-5 shadow-lg ring-1 ring-slate-200">
+              <h3 className="text-lg font-black text-slate-950">
+                {paidReport.title}
+              </h3>
+              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
+                {paidReport.overview}
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {lockedSections.map((section) => (
+                <article
+                  key={section.title}
+                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/70"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-base font-black leading-6 text-slate-950">
+                      {section.title}
+                    </h3>
+                    <span className="shrink-0 rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+                      잠금
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                    <BlurredKeywordText
+                      text={section.teaser}
+                      keyword={section.blurredKeyword}
+                    />
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-[2rem] bg-[linear-gradient(145deg,#042f2e_0%,#0f172a_58%,#111827_100%)] p-6 text-white shadow-2xl shadow-slate-900/25">
+          <div className="rounded-full bg-emerald-300 px-4 py-2 text-center text-xs font-black text-slate-950">
+            전체 재물 해석 · ₩1,900
+          </div>
+          <h2 className="mt-5 text-3xl font-black leading-tight">
+            전체 재물 해석 열기
+          </h2>
+          <p className="mt-4 text-sm font-semibold leading-7 text-white/70">
+            무료 결과에서는 당신의 돈버는 성향까지만 보여드렸어요. 전체 해석에서는 이 성향을 실제 수익화 방향으로 바꿔드립니다.
+          </p>
+
+          <ul className="mt-5 space-y-3 text-sm font-bold leading-6 text-white/86">
+            {[
+              "나에게 맞는 수익화 방식 TOP 3",
+              "피해야 할 돈버는 방식",
+              "오행 부족분 보완 전략",
+              "돈이 막히는 반복 패턴",
+              "3개월 실행 가이드",
+              "올해 돈 흐름 요약",
+            ].map((item) => (
+              <li key={item} className="flex gap-3">
+                <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-emerald-300 text-center text-xs font-black leading-5 text-slate-950">
+                  ✓
+                </span>
+                <span>{item}</span>
               </li>
             ))}
           </ul>
+
+          <div className="mt-6 rounded-[1.5rem] bg-white p-5 text-slate-950">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-xs font-black text-slate-400">출시 기념가</p>
+                <p className="mt-1 text-3xl font-black">₩1,900</p>
+              </div>
+              <p className="text-right text-xs font-bold leading-5 text-slate-500">
+                결제 후 바로
+                <br />
+                결과 확인 가능
+              </p>
+            </div>
+            <div className="mt-5">
+              <PrimaryCta onClick={handlePaidCta} dark>
+                내 돈버는 전략 열기
+              </PrimaryCta>
+              <p className="mt-3 text-center text-xs font-bold text-slate-500">
+                회원가입 없이 바로 확인
+              </p>
+            </div>
+          </div>
         </section>
 
-        <section className="mt-5 rounded-[2rem] border border-[#e0c58d] bg-[#fff8e9] p-6 shadow-lg">
-          <div className="inline-flex rounded-full bg-[#21160f] px-4 py-2 text-xs font-bold text-[#f6d58b]">
-            무료 해석 + 리포트 샘플
-          </div>
+        <section className="mt-8">
+          <SectionHeading
+            eyebrow="SHARE"
+            title="결과 공유하기"
+            description="캡처하고 싶은 핵심만 모아 친구에게 보여줄 수 있게 정리했습니다."
+          />
 
-          <h2 className="mt-4 text-2xl font-black leading-tight text-gray-950">
-            무료 결과에서 잡힌 패턴을
-            <br />
-            리포트 샘플로 조금 더 보여줘요
-          </h2>
-
-          <div className="mt-4 rounded-3xl bg-white p-5">
-            <p className="text-xs font-black tracking-widest text-gray-400">
-              무료 핵심
+          <div className="mt-4 rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
+            <p className="text-xs font-black tracking-[0.18em] text-teal-700">
+              MONEY ANIMAL CARD
             </p>
-            <p className="mt-2 text-sm font-bold leading-6 text-gray-800">
-              {copy.strength}
-            </p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
-              {copy.weakness}
-            </p>
-          </div>
-
-          <div className="mt-3 rounded-3xl bg-[#21160f] p-5 text-white">
-            <p className="text-xs font-black tracking-widest text-[#f6d58b]">
-              리포트 샘플
-            </p>
-            <p className="mt-2 text-sm font-semibold leading-7 text-white/80">
-              {copy.paidPreview}
-            </p>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {lockedSections.map((section) => (
-              <div
-                key={section.title}
-                className="rounded-3xl border border-[#eadfca] bg-white p-5"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-base font-black text-gray-950">
-                    {section.title}
-                  </h3>
-
-                  <span className="rounded-full bg-[#f7f1e8] px-3 py-1 text-xs font-black text-[#9a6a1d]">
-                    샘플
-                  </span>
-                </div>
-
-                <p className="mt-3 text-sm leading-6 text-gray-600">
-                  <BlurredKeywordText
-                    text={section.teaser}
-                    keyword={section.blurredKeyword}
-                  />
+            <div className="mt-4 flex items-center gap-4">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-slate-950 text-4xl">
+                {animalVisual}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-500">
+                  나는 {copy.title}
+                </p>
+                <h3 className="mt-1 text-xl font-black leading-7 text-slate-950">
+                  재물 감각 상위 {result.topPercent}%
+                </h3>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-emerald-50 p-4">
+                <p className="text-xs font-black text-emerald-700">강한 오행</p>
+                <p className="mt-1 text-lg font-black text-slate-950">
+                  {getElementLabel(dominant)}
                 </p>
               </div>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            className="mt-6 w-full rounded-2xl bg-[#21160f] px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
-          >
-            출시 기념 전체 리포트 보기 ₩2,500
-          </button>
-
-          <p className="mt-3 text-center text-xs leading-5 text-gray-500">
-            현재는 MVP 단계라 결제 기능은 아직 연결하지 않았습니다.
-          </p>
-        </section>
-
-        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
-          <p className="text-sm font-bold text-gray-400">공유하기</p>
-
-          <h2 className="mt-1 text-2xl font-black text-gray-950">
-            친구에게 결과 공유하기
-          </h2>
-
-          <div className="mt-5 rounded-3xl bg-[#f7f1e8] p-5">
-            <p className="text-sm leading-7 text-gray-700">
-              나는{" "}
-              <strong className="font-black text-gray-950">{copy.title}</strong>,
-              <br />
-              판정은{" "}
-              <strong className="font-black text-gray-950">
-                {animalType.name}
-              </strong>
-              이고,
-              <br />
-              재물 포텐셜{" "}
-              <strong className="font-black text-gray-950">
-                상위 {result.topPercent}%
-              </strong>
-              가 나왔어요.
+              <div className="rounded-2xl bg-rose-50 p-4">
+                <p className="text-xs font-black text-rose-700">부족 오행</p>
+                <p className="mt-1 text-lg font-black text-slate-950">
+                  {getElementLabel(weak)}
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700">
+              {copy.moneyAttitude}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleShare}
-            className="mt-5 w-full rounded-2xl border border-gray-300 bg-white px-5 py-4 text-base font-black text-gray-900 transition active:scale-[0.98]"
-          >
-            결과 공유하기
-          </button>
+          <div className="mt-4 grid gap-3">
+            <button
+              type="button"
+              onClick={handleSaveImage}
+              className="w-full rounded-2xl bg-white px-5 py-4 text-base font-black text-slate-900 shadow-lg ring-1 ring-slate-200 transition active:scale-[0.98]"
+            >
+              결과 이미지 저장하기
+            </button>
+            <button
+              type="button"
+              onClick={handleShare}
+              className="w-full rounded-2xl bg-white px-5 py-4 text-base font-black text-slate-900 shadow-lg ring-1 ring-slate-200 transition active:scale-[0.98]"
+            >
+              친구에게 공유하기
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
+            >
+              다시 테스트하기
+            </button>
+          </div>
         </section>
 
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          className="mt-5 w-full rounded-2xl bg-white px-5 py-4 text-base font-black text-gray-900 shadow-lg transition active:scale-[0.98]"
-        >
-          다시 테스트하기
-        </button>
+        <p className="mt-7 text-center text-xs font-semibold leading-5 text-slate-400">
+          본 테스트는 정통 만세력 감정이 아닌 오락 및 자기이해 목적의 콘텐츠형 변환입니다.
+          실제 금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.
+        </p>
 
-        <div className="fixed inset-x-0 bottom-0 z-20 bg-white/90 px-5 py-4 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-20 bg-white/90 px-5 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.12)] backdrop-blur">
           <div className="mx-auto flex max-w-md gap-3">
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-1/3 rounded-2xl border border-gray-300 bg-white px-3 py-4 text-sm font-black text-gray-800"
+              className="w-1/3 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm font-black text-slate-800"
             >
               다시
             </button>
-
             <button
               type="button"
-              className="w-2/3 rounded-2xl bg-[#21160f] px-3 py-4 text-sm font-black text-white"
+              onClick={handlePaidCta}
+              className="w-2/3 rounded-2xl bg-slate-950 px-3 py-4 text-sm font-black text-white"
             >
-              전체 리포트 보기 ₩2,500
+              내 돈버는 전략 열기
             </button>
           </div>
         </div>
@@ -566,8 +1061,8 @@ function ResultContent() {
             <p
               className={`mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-bold shadow-2xl ${
                 shareToast.tone === "success"
-                  ? "bg-[#21160f] text-white"
-                  : "bg-[#9f2d2d] text-white"
+                  ? "bg-slate-950 text-white"
+                  : "bg-rose-700 text-white"
               }`}
             >
               {shareToast.message}
@@ -578,57 +1073,16 @@ function ResultContent() {
     </main>
   );
 }
-function WealthPyramid({ percent }: { percent: number }) {
-  const safePercent = Math.max(1, Math.min(100, percent));
-
-  // 실제 삼각형 면적 기준 보정
-  const fillRatio = Math.sqrt(safePercent / 100);
-
-  return (
-    <div className="flex shrink-0 flex-col items-center">
-      <div className="relative h-28 w-24">
-        {/* 전체 삼각형 */}
-        <div
-          className="absolute inset-0 overflow-hidden"
-          style={{
-            clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-            background:
-              "linear-gradient(to bottom, #f6d58b 0%, #f6d58b " +
-              `${fillRatio * 100}%` +
-              `, rgba(255,255,255,0.08) ${fillRatio * 100}%` +
-              ", rgba(255,255,255,0.08) 100%)",
-          }}
-        />
-
-        {/* 외곽선 */}
-        <div
-          className="absolute inset-0 border border-white/20"
-          style={{
-            clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-          }}
-        />
-
-        {/* 중앙 빛 느낌 */}
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            clipPath: "polygon(50% 0%, 100% 100%, 0% 100%)",
-            background:
-              "linear-gradient(to right, transparent, rgba(255,255,255,0.15), transparent)",
-          }}
-        />
-      </div>
-
-      <p className="mt-2 text-[10px] font-bold tracking-widest text-white/40">
-        TOP {safePercent}%
-      </p>
-    </div>
-  );
-}
 
 export default function ResultPage() {
   return (
-    <Suspense fallback={<div className="p-10">결과를 불러오는 중입니다...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-100 p-10 text-sm font-bold text-slate-500">
+          결과를 불러오는 중입니다...
+        </div>
+      }
+    >
       <ResultContent />
     </Suspense>
   );
