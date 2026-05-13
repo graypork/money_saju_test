@@ -277,7 +277,7 @@ function getPolarityScores(
 ) {
   const { elements, profile, saju } = source;
   const actionPolarity = getActionPolarity(actionStyle);
-  const strengthBias =
+  const dayStrengthPolarity =
     saju.dayStrength.level === "strong"
       ? { masculine: 5, feminine: 0 }
       : saju.dayStrength.level === "weak"
@@ -295,7 +295,7 @@ function getPolarityScores(
     saju.relationScores.wealth * 0.12 +
     saju.relationScores.output * 0.1 +
     actionPolarity.masculine +
-    strengthBias.masculine;
+    dayStrengthPolarity.masculine;
 
   const feminine =
     profile.consistency * 0.16 +
@@ -308,7 +308,7 @@ function getPolarityScores(
     saju.relationScores.resource * 0.12 +
     saju.relationScores.career * 0.1 +
     actionPolarity.feminine +
-    strengthBias.feminine;
+    dayStrengthPolarity.feminine;
 
   return {
     masculine: Math.round(masculine),

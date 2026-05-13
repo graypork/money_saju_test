@@ -43,6 +43,16 @@ export type VisibleSajuCharacter = {
   element: ElementType;
 };
 
+export type SajuContribution = {
+  role: SajuPillarRole;
+  kind: "stem" | "hiddenStem";
+  name: string;
+  element: ElementType;
+  weight: number;
+  relation: TenGodCategory;
+  branch?: KoreanBranch;
+};
+
 export type SajuLikeInput = {
   year: number;
   month: number;
@@ -86,54 +96,64 @@ const earthlyBranches = [
   { name: "해", element: "water" },
 ] as const;
 
-const branchHiddenElements: Array<Array<[ElementType, number]>> = [
-  [["water", 1]],
+const branchHiddenStems: Array<
+  Array<{ stemIndex: number; weight: number }>
+> = [
+  [{ stemIndex: 9, weight: 1 }],
   [
-    ["earth", 0.6],
-    ["water", 0.25],
-    ["metal", 0.15],
+    { stemIndex: 5, weight: 0.6 },
+    { stemIndex: 9, weight: 0.3 },
+    { stemIndex: 7, weight: 0.1 },
   ],
   [
-    ["wood", 0.6],
-    ["fire", 0.25],
-    ["earth", 0.15],
+    { stemIndex: 0, weight: 0.6 },
+    { stemIndex: 2, weight: 0.3 },
+    { stemIndex: 4, weight: 0.1 },
   ],
-  [["wood", 1]],
+  [{ stemIndex: 1, weight: 1 }],
   [
-    ["earth", 0.6],
-    ["wood", 0.25],
-    ["water", 0.15],
-  ],
-  [
-    ["fire", 0.6],
-    ["earth", 0.25],
-    ["metal", 0.15],
+    { stemIndex: 4, weight: 0.6 },
+    { stemIndex: 1, weight: 0.3 },
+    { stemIndex: 9, weight: 0.1 },
   ],
   [
-    ["fire", 0.7],
-    ["earth", 0.3],
+    { stemIndex: 2, weight: 0.6 },
+    { stemIndex: 4, weight: 0.3 },
+    { stemIndex: 6, weight: 0.1 },
   ],
   [
-    ["earth", 0.6],
-    ["fire", 0.25],
-    ["wood", 0.15],
+    { stemIndex: 3, weight: 0.7 },
+    { stemIndex: 5, weight: 0.3 },
   ],
   [
-    ["metal", 0.6],
-    ["water", 0.25],
-    ["earth", 0.15],
-  ],
-  [["metal", 1]],
-  [
-    ["earth", 0.6],
-    ["metal", 0.25],
-    ["fire", 0.15],
+    { stemIndex: 5, weight: 0.6 },
+    { stemIndex: 3, weight: 0.3 },
+    { stemIndex: 1, weight: 0.1 },
   ],
   [
-    ["water", 0.7],
-    ["wood", 0.3],
+    { stemIndex: 6, weight: 0.6 },
+    { stemIndex: 8, weight: 0.3 },
+    { stemIndex: 4, weight: 0.1 },
+  ],
+  [{ stemIndex: 7, weight: 1 }],
+  [
+    { stemIndex: 4, weight: 0.6 },
+    { stemIndex: 7, weight: 0.3 },
+    { stemIndex: 3, weight: 0.1 },
+  ],
+  [
+    { stemIndex: 8, weight: 0.7 },
+    { stemIndex: 0, weight: 0.3 },
   ],
 ];
+
+const branchHiddenElements: Array<Array<[ElementType, number]>> =
+  branchHiddenStems.map((hiddenStems) =>
+    hiddenStems.map(({ stemIndex, weight }) => [
+      heavenlyStems[stemIndex].element as ElementType,
+      weight,
+    ])
+  );
 
 const creates: Record<ElementType, ElementType> = {
   wood: "fire",
@@ -173,6 +193,208 @@ function getJdn(year: number, month: number, day: number) {
     Math.floor(y / 400) -
     32045
   );
+}
+
+const KST_OFFSET_MS = 9 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const solarMonthStartTerms = [
+  { name: "소한", longitude: 285, month: 1, day: 6, branchIndex: 1 },
+  { name: "입춘", longitude: 315, month: 2, day: 4, branchIndex: 2 },
+  { name: "경칩", longitude: 345, month: 3, day: 6, branchIndex: 3 },
+  { name: "청명", longitude: 15, month: 4, day: 5, branchIndex: 4 },
+  { name: "입하", longitude: 45, month: 5, day: 6, branchIndex: 5 },
+  { name: "망종", longitude: 75, month: 6, day: 6, branchIndex: 6 },
+  { name: "소서", longitude: 105, month: 7, day: 7, branchIndex: 7 },
+  { name: "입추", longitude: 135, month: 8, day: 8, branchIndex: 8 },
+  { name: "백로", longitude: 165, month: 9, day: 8, branchIndex: 9 },
+  { name: "한로", longitude: 195, month: 10, day: 8, branchIndex: 10 },
+  { name: "입동", longitude: 225, month: 11, day: 7, branchIndex: 11 },
+  { name: "대설", longitude: 255, month: 12, day: 7, branchIndex: 0 },
+] as const;
+
+type SolarMonthStartTerm = (typeof solarMonthStartTerms)[number];
+
+const solarTermCache = new Map<string, number>();
+
+function normalizeDegrees(value: number) {
+  return mod(value, 360);
+}
+
+function sinDeg(value: number) {
+  return Math.sin((value * Math.PI) / 180);
+}
+
+function getJulianDayFromUtcMs(utcMs: number) {
+  return utcMs / 86400000 + 2440587.5;
+}
+
+function getSolarLongitude(utcMs: number) {
+  const jd = getJulianDayFromUtcMs(utcMs);
+  const t = (jd - 2451545.0) / 36525;
+  const meanLongitude = normalizeDegrees(
+    280.46646 + 36000.76983 * t + 0.0003032 * t * t
+  );
+  const meanAnomaly = normalizeDegrees(
+    357.52911 + 35999.05029 * t - 0.0001537 * t * t
+  );
+  const center =
+    (1.914602 - 0.004817 * t - 0.000014 * t * t) * sinDeg(meanAnomaly) +
+    (0.019993 - 0.000101 * t) * sinDeg(2 * meanAnomaly) +
+    0.000289 * sinDeg(3 * meanAnomaly);
+  const trueLongitude = meanLongitude + center;
+  const omega = 125.04 - 1934.136 * t;
+
+  return normalizeDegrees(trueLongitude - 0.00569 - 0.00478 * sinDeg(omega));
+}
+
+function unwrapLongitudeNearTarget(longitude: number, target: number) {
+  let unwrapped = longitude;
+
+  while (unwrapped - target > 180) unwrapped -= 360;
+  while (unwrapped - target < -180) unwrapped += 360;
+
+  return unwrapped;
+}
+
+function getUtcMsFromKst(
+  year: number,
+  month: number,
+  day: number,
+  hour = 12,
+  minute = 0
+) {
+  return Date.UTC(year, month - 1, day, hour, minute) - KST_OFFSET_MS;
+}
+
+function formatKstDateTime(utcMs: number) {
+  const date = new Date(utcMs + KST_OFFSET_MS);
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hour = String(date.getUTCHours()).padStart(2, "0");
+  const minute = String(date.getUTCMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function getSolarTermUtcMs(year: number, term: SolarMonthStartTerm) {
+  const cacheKey = `${year}-${term.name}`;
+  const cached = solarTermCache.get(cacheKey);
+
+  if (cached !== undefined) return cached;
+
+  let low = getUtcMsFromKst(year, term.month, term.day, 12) - 5 * DAY_MS;
+  let high = getUtcMsFromKst(year, term.month, term.day, 12) + 5 * DAY_MS;
+
+  for (let index = 0; index < 48; index += 1) {
+    const mid = (low + high) / 2;
+    const longitude = unwrapLongitudeNearTarget(
+      getSolarLongitude(mid),
+      term.longitude
+    );
+
+    if (longitude < term.longitude) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  const value = Math.round(high / (60 * 1000)) * 60 * 1000;
+  solarTermCache.set(cacheKey, value);
+
+  return value;
+}
+
+function getLocalYearFromUtcMs(utcMs: number) {
+  return new Date(utcMs + KST_OFFSET_MS).getUTCFullYear();
+}
+
+function getInputDateTime(input: SajuLikeInput, solarDate: ReturnType<typeof resolveSolarDate>) {
+  const isBranchPickerValue =
+    input.birthTime !== undefined &&
+    /^\d+$/.test(input.birthTime) &&
+    Number(input.birthTime) >= 1 &&
+    Number(input.birthTime) <= 12;
+  const isClockValue = input.birthTime?.includes(":");
+  const fallbackHourByBranch = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];
+
+  if (isClockValue && input.birthTime) {
+    const [hour, minute] = input.birthTime.split(":").map(Number);
+
+    return {
+      utcMs: getUtcMsFromKst(
+        solarDate.year,
+        solarDate.month,
+        solarDate.day,
+        Number.isFinite(hour) ? hour : 12,
+        Number.isFinite(minute) ? minute : 0
+      ),
+      precision: "clock" as const,
+    };
+  }
+
+  if (isBranchPickerValue && input.birthTime) {
+    const branchIndex = Number(input.birthTime) - 1;
+
+    return {
+      utcMs: getUtcMsFromKst(
+        solarDate.year,
+        solarDate.month,
+        solarDate.day,
+        fallbackHourByBranch[branchIndex] ?? 12
+      ),
+      precision: "branch" as const,
+    };
+  }
+
+  if (input.hour !== undefined && Number.isFinite(input.hour)) {
+    return {
+      utcMs: getUtcMsFromKst(
+        solarDate.year,
+        solarDate.month,
+        solarDate.day,
+        input.hour,
+        Number.isFinite(input.minute) ? input.minute ?? 0 : 0
+      ),
+      precision: "clock" as const,
+    };
+  }
+
+  return {
+    utcMs: getUtcMsFromKst(solarDate.year, solarDate.month, solarDate.day),
+    precision: "date" as const,
+  };
+}
+
+function getSolarMonthInfo(utcMs: number) {
+  const localYear = getLocalYearFromUtcMs(utcMs);
+  const terms = [localYear - 1, localYear, localYear + 1]
+    .flatMap((year) =>
+      solarMonthStartTerms.map((term) => ({
+        ...term,
+        year,
+        utcMs: getSolarTermUtcMs(year, term),
+      }))
+    )
+    .sort((a, b) => a.utcMs - b.utcMs);
+  const latestTerm =
+    [...terms].reverse().find((term) => term.utcMs <= utcMs) ?? terms[0];
+
+  return {
+    branchIndex: latestTerm.branchIndex,
+    termName: latestTerm.name,
+    termKst: formatKstDateTime(latestTerm.utcMs),
+  };
+}
+
+function getSajuYear(utcMs: number) {
+  const localYear = getLocalYearFromUtcMs(utcMs);
+  const lichun = solarMonthStartTerms[1];
+  const lichunUtcMs = getSolarTermUtcMs(localYear, lichun);
+
+  return utcMs < lichunUtcMs ? localYear - 1 : localYear;
 }
 
 function getGanji(index: number) {
@@ -273,39 +495,6 @@ function resolveSolarDate(input: SajuLikeInput) {
     calendarType,
     convertedFromLunar: false,
   };
-}
-
-function getSajuYear(solarYear: number, solarMonth: number, solarDay: number) {
-  if (solarMonth < 2) return solarYear - 1;
-  if (solarMonth === 2 && solarDay < 4) return solarYear - 1;
-  return solarYear;
-}
-
-function getMonthBranchIndex(month: number, day: number) {
-  const starts = [
-    { month: 1, day: 6, branchIndex: 1 },
-    { month: 2, day: 4, branchIndex: 2 },
-    { month: 3, day: 6, branchIndex: 3 },
-    { month: 4, day: 5, branchIndex: 4 },
-    { month: 5, day: 6, branchIndex: 5 },
-    { month: 6, day: 6, branchIndex: 6 },
-    { month: 7, day: 7, branchIndex: 7 },
-    { month: 8, day: 8, branchIndex: 8 },
-    { month: 9, day: 8, branchIndex: 9 },
-    { month: 10, day: 8, branchIndex: 10 },
-    { month: 11, day: 7, branchIndex: 11 },
-    { month: 12, day: 7, branchIndex: 0 },
-  ];
-
-  let branchIndex = 0;
-
-  starts.forEach((start) => {
-    if (month > start.month || (month === start.month && day >= start.day)) {
-      branchIndex = start.branchIndex;
-    }
-  });
-
-  return branchIndex;
 }
 
 const seasonalElementSupport: Record<number, Partial<ElementScoreMap>> = {
@@ -601,13 +790,53 @@ function buildVisibleCharacters(
   ]);
 }
 
+function buildSajuContributions(
+  dayElement: ElementType,
+  pillars: Array<{
+    role: SajuPillarRole;
+    pillar: ReturnType<typeof getGanji>;
+  }>
+): SajuContribution[] {
+  return pillars.flatMap(({ role, pillar }) => {
+    const stemElement = pillar.stem.element as ElementType;
+    const stemContribution: SajuContribution = {
+      role,
+      kind: "stem",
+      name: pillar.stem.name,
+      element: stemElement,
+      weight: 1,
+      relation: getTenGodCategory(dayElement, stemElement),
+    };
+    const hiddenStemContributions = branchHiddenStems[pillar.branchIndex].map(
+      ({ stemIndex, weight }) => {
+        const stem = heavenlyStems[stemIndex];
+        const element = stem.element as ElementType;
+
+        return {
+          role,
+          kind: "hiddenStem" as const,
+          name: stem.name,
+          element,
+          weight,
+          relation: getTenGodCategory(dayElement, element),
+          branch: pillar.branch.name as KoreanBranch,
+        };
+      }
+    );
+
+    return [stemContribution, ...hiddenStemContributions];
+  });
+}
+
 export function analyzeSajuLikeProfile(input: SajuLikeInput) {
   const solarDate = resolveSolarDate(input);
-  const sajuYear = getSajuYear(solarDate.year, solarDate.month, solarDate.day);
+  const inputDateTime = getInputDateTime(input, solarDate);
+  const sajuYear = getSajuYear(inputDateTime.utcMs);
   const yearIndex = mod(sajuYear - 1984, 60);
   const yearPillar = getGanji(yearIndex);
 
-  const monthBranchIndex = getMonthBranchIndex(solarDate.month, solarDate.day);
+  const solarMonthInfo = getSolarMonthInfo(inputDateTime.utcMs);
+  const monthBranchIndex = solarMonthInfo.branchIndex;
   const monthStemIndex = getMonthStemIndex(
     yearPillar.stemIndex,
     monthBranchIndex
@@ -669,11 +898,12 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
     pillar: ReturnType<typeof getGanji>;
   }>;
   const visibleCharacters = buildVisibleCharacters(pillars);
+  const sajuContributions = buildSajuContributions(dayElement, pillars);
 
-  visibleCharacters.forEach(({ element }) => {
-    addElementScore(visibleElementRawScores, element, 1);
-    addRelationScore(relationRawScores, dayElement, element, 1);
-    relationCounts[getTenGodCategory(dayElement, element)] += 1;
+  sajuContributions.forEach(({ element, weight, relation }) => {
+    addElementScore(visibleElementRawScores, element, weight);
+    addRelationScore(relationRawScores, dayElement, element, weight);
+    relationCounts[relation] += weight;
   });
 
   const seasonalSupport = getSeasonalSupport(monthBranchIndex);
@@ -709,6 +939,7 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
     relationScores,
     relationRawScores,
     visibleCharacters,
+    sajuContributions,
     visibleCharacterCount: visibleCharacters.length,
     seasonalSupport,
     balanceScore,
@@ -717,6 +948,9 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
       branch: earthlyBranches[monthBranchIndex].name,
       element: earthlyBranches[monthBranchIndex].element as ElementType,
       relationToDayMaster: dayStrength.monthRelation,
+      termName: solarMonthInfo.termName,
+      termKst: solarMonthInfo.termKst,
+      timePrecision: inputDateTime.precision,
     },
   };
 }

@@ -85,6 +85,9 @@ export type WealthSajuSummary = {
     branch: string;
     element: ElementKey;
     relationToDayMaster: TenGodCategory;
+    termName: string;
+    termKst: string;
+    timePrecision: "clock" | "branch" | "date";
   };
 };
 
@@ -182,28 +185,6 @@ function withAndParticle(value: string) {
   return `${value}${hasFinalConsonant(value) ? "과" : "와"}`;
 }
 
-function normalizeElements(raw: WealthElementScores): WealthElementScores {
-  const total = raw.wood + raw.fire + raw.earth + raw.metal + raw.water;
-
-  if (total <= 0) {
-    return {
-      wood: 20,
-      fire: 20,
-      earth: 20,
-      metal: 20,
-      water: 20,
-    };
-  }
-
-  return {
-    wood: Math.round((raw.wood / total) * 100),
-    fire: Math.round((raw.fire / total) * 100),
-    earth: Math.round((raw.earth / total) * 100),
-    metal: Math.round((raw.metal / total) * 100),
-    water: Math.round((raw.water / total) * 100),
-  };
-}
-
 function getDominantElement(elements: WealthElementScores): ElementKey {
   return Object.entries(elements).sort((a, b) => b[1] - a[1])[0][0] as ElementKey;
 }
@@ -213,43 +194,11 @@ function getWeakElement(elements: WealthElementScores): ElementKey {
 }
 
 function calculateElementsFromAnalysis(analysis: SajuAnalysis): WealthElementScores {
-  return normalizeElements(analysis.elementScores);
+  return analysis.elementScores;
 }
 
 function relationScore(analysis: SajuAnalysis, category: TenGodCategory) {
   return analysis.relationScores[category] ?? 20;
-}
-
-function applyDayElementBias(profile: WealthProfile, dayElement: ElementKey) {
-  if (dayElement === "wood") {
-    profile.creativity = clamp(profile.creativity + 4);
-    profile.riskTaking = clamp(profile.riskTaking + 3);
-    profile.businessPotential = clamp(profile.businessPotential + 3);
-  }
-
-  if (dayElement === "fire") {
-    profile.socialCapital = clamp(profile.socialCapital + 4);
-    profile.executionPower = clamp(profile.executionPower + 3);
-    profile.impulsiveness = clamp(profile.impulsiveness + 3);
-  }
-
-  if (dayElement === "earth") {
-    profile.consistency = clamp(profile.consistency + 4);
-    profile.stability = clamp(profile.stability + 4);
-    profile.riskTaking = clamp(profile.riskTaking - 2);
-  }
-
-  if (dayElement === "metal") {
-    profile.moneySense = clamp(profile.moneySense + 4);
-    profile.executionPower = clamp(profile.executionPower + 3);
-    profile.stability = clamp(profile.stability + 2);
-  }
-
-  if (dayElement === "water") {
-    profile.luckFlow = clamp(profile.luckFlow + 4);
-    profile.moneySense = clamp(profile.moneySense + 2);
-    profile.creativity = clamp(profile.creativity + 2);
-  }
 }
 
 function calculateProfile(
@@ -342,41 +291,6 @@ function calculateProfile(
     ),
   };
 
-  applyDayElementBias(profile, analysis.dayElement as ElementKey);
-
-  if (metal >= 35) {
-    profile.moneySense = clamp(profile.moneySense + 8);
-    profile.executionPower = clamp(profile.executionPower + 5);
-  }
-
-  if (fire >= 35) {
-    profile.socialCapital = clamp(profile.socialCapital + 8);
-    profile.impulsiveness = clamp(profile.impulsiveness + 10);
-    profile.stability = clamp(profile.stability - 5);
-  }
-
-  if (earth >= 35) {
-    profile.consistency = clamp(profile.consistency + 8);
-    profile.stability = clamp(profile.stability + 8);
-    profile.riskTaking = clamp(profile.riskTaking - 7);
-  }
-
-  if (wood >= 35) {
-    profile.creativity = clamp(profile.creativity + 8);
-    profile.businessPotential = clamp(profile.businessPotential + 7);
-  }
-
-  if (water >= 35) {
-    profile.luckFlow = clamp(profile.luckFlow + 8);
-    profile.moneySense = clamp(profile.moneySense + 4);
-  }
-
-  if (metal <= 10) profile.moneySense = clamp(profile.moneySense - 10);
-  if (earth <= 10) profile.consistency = clamp(profile.consistency - 10);
-  if (water <= 10) profile.luckFlow = clamp(profile.luckFlow - 8);
-  if (fire <= 10) profile.socialCapital = clamp(profile.socialCapital - 8);
-  if (wood <= 10) profile.creativity = clamp(profile.creativity - 8);
-
   return profile;
 }
 
@@ -397,39 +311,13 @@ function calculateWealthScore(profile: WealthProfile) {
 }
 
 function calculateDisplayWealthScore(rawScore: number) {
-  const score = clamp(rawScore);
-
-  // 콘텐츠 특성상 결과는 상위권으로 보여주되, 원점수 차이는 10%대/한 자릿수 구간에서 드러나게 펼친다.
-  return clamp(65 + (score - 43) * 1.75, 65, 98);
-}
-
-function interpolateTopPercent(
-  score: number,
-  minScore: number,
-  maxScore: number,
-  worstPercent: number,
-  bestPercent: number
-) {
-  const ratio = (score - minScore) / (maxScore - minScore);
-
-  return clamp(
-    worstPercent - (worstPercent - bestPercent) * ratio,
-    bestPercent,
-    worstPercent
-  );
+  return clamp(rawScore);
 }
 
 function scoreToTopPercent(score: number) {
   const safeScore = clamp(score);
 
-  if (safeScore >= 96) return interpolateTopPercent(safeScore, 96, 100, 5, 3);
-  if (safeScore >= 91) return interpolateTopPercent(safeScore, 91, 95, 9, 6);
-  if (safeScore >= 85) return interpolateTopPercent(safeScore, 85, 90, 13, 10);
-  if (safeScore >= 79) return interpolateTopPercent(safeScore, 79, 84, 17, 14);
-  if (safeScore >= 73) return interpolateTopPercent(safeScore, 73, 78, 21, 18);
-  if (safeScore >= 67) return interpolateTopPercent(safeScore, 67, 72, 25, 22);
-
-  return interpolateTopPercent(safeScore, 0, 66, 30, 26);
+  return clamp(101 - safeScore, 1, 99);
 }
 
 function weightedScore(factors: Array<[number, number]>) {
@@ -442,14 +330,6 @@ function weightedScore(factors: Array<[number, number]>) {
 
 function lowScore(value: number) {
   return 100 - value;
-}
-
-function elementBonus(element: ElementKey, matches: ElementKey[], bonus: number) {
-  return matches.includes(element) ? bonus : 0;
-}
-
-function weakElementPenalty(element: ElementKey, weakElement: ElementKey, penalty: number) {
-  return element === weakElement ? penalty : 0;
 }
 
 function calculateTypeScores(
@@ -471,15 +351,11 @@ function calculateTypeScores(
     luckFlow,
   } = profile;
 
-  const dominant = getDominantElement(elements);
-  const weak = getWeakElement(elements);
   const { wood, fire, earth, metal, water } = elements;
   const lowImpulsiveness = lowScore(impulsiveness);
   const weakStability = lowScore(stability);
   const weakEarth = lowScore(earth);
   const weakExecution = lowScore(executionPower);
-  const eliteAdjustment = displayWealthScore >= 85 ? 1 : 0;
-  const averageAdjustment = displayWealthScore < 72 ? 1 : 0;
   const peer = relationScore(analysis, "peer");
   const output = relationScore(analysis, "output");
   const wealth = relationScore(analysis, "wealth");
@@ -495,9 +371,7 @@ function calculateTypeScores(
         [lowImpulsiveness, 0.12],
         [metal, 0.08],
         [displayWealthScore, 0.1],
-      ]) +
-      elementBonus(dominant, ["earth", "metal"], 6) -
-      weakElementPenalty("earth", weak, 8),
+      ]),
     2:
       weightedScore([
         [creativity, 0.3],
@@ -507,9 +381,7 @@ function calculateTypeScores(
         [businessPotential, 0.09],
         [executionPower, 0.07],
         [displayWealthScore, 0.06],
-      ]) +
-      elementBonus(dominant, ["fire", "wood"], 7) -
-      weakElementPenalty("fire", weak, 5),
+      ]),
     3:
       weightedScore([
         [consistency, 0.3],
@@ -518,9 +390,7 @@ function calculateTypeScores(
         [metal, 0.12],
         [moneySense, 0.09],
         [lowImpulsiveness, 0.07],
-      ]) +
-      elementBonus(dominant, ["earth", "metal"], 7) -
-      weakElementPenalty("earth", weak, 8),
+      ]),
     4:
       weightedScore([
         [executionPower, 0.24],
@@ -530,9 +400,7 @@ function calculateTypeScores(
         [fire, 0.1],
         [displayWealthScore, 0.07],
         [socialCapital, 0.05],
-      ]) +
-      elementBonus(dominant, ["wood", "fire"], 7) -
-      averageAdjustment * 4,
+      ]),
     5:
       weightedScore([
         [socialCapital, 0.34],
@@ -542,9 +410,7 @@ function calculateTypeScores(
         [creativity, 0.09],
         [executionPower, 0.08],
         [displayWealthScore, 0.07],
-      ]) +
-      elementBonus(dominant, ["fire", "water"], 7) -
-      weakElementPenalty("fire", weak, 5),
+      ]),
     6:
       weightedScore([
         [moneySense, 0.25],
@@ -554,9 +420,7 @@ function calculateTypeScores(
         [stability, 0.08],
         [lowImpulsiveness, 0.08],
         [displayWealthScore, 0.1],
-      ]) +
-      elementBonus(dominant, ["metal", "earth"], 7) -
-      weakElementPenalty("metal", weak, 7),
+      ]),
     7:
       weightedScore([
         [impulsiveness, 0.28],
@@ -567,9 +431,7 @@ function calculateTypeScores(
         [wood, 0.08],
         [businessPotential, 0.05],
         [socialCapital, 0.05],
-      ]) +
-      elementBonus(dominant, ["fire", "wood"], 4) -
-      eliteAdjustment * 5,
+      ]),
     8:
       weightedScore([
         [luckFlow, 0.22],
@@ -579,9 +441,7 @@ function calculateTypeScores(
         [earth, 0.12],
         [stability, 0.1],
         [displayWealthScore, 0.1],
-      ]) +
-      elementBonus(dominant, ["water", "earth"], 6) -
-      eliteAdjustment * 7,
+      ]),
     9:
       weightedScore([
         [consistency, 0.25],
@@ -591,10 +451,7 @@ function calculateTypeScores(
         [stability, 0.08],
         [lowImpulsiveness, 0.06],
         [displayWealthScore, 0.05],
-      ]) +
-      elementBonus(dominant, ["metal", "earth"], 9) +
-      elementBonus(weak, ["fire"], 4) -
-      weakElementPenalty("metal", weak, 6),
+      ]),
     10:
       weightedScore([
         [socialCapital, 0.3],
@@ -604,9 +461,7 @@ function calculateTypeScores(
         [businessPotential, 0.08],
         [riskTaking, 0.05],
         [displayWealthScore, 0.05],
-      ]) +
-      elementBonus(dominant, ["fire"], 8) -
-      weakElementPenalty("fire", weak, 7),
+      ]),
     11:
       weightedScore([
         [moneySense, 0.28],
@@ -616,9 +471,7 @@ function calculateTypeScores(
         [consistency, 0.07],
         [lowImpulsiveness, 0.05],
         [displayWealthScore, 0.07],
-      ]) +
-      elementBonus(dominant, ["metal", "water"], 7) -
-      weakElementPenalty("water", weak, 5),
+      ]),
     12:
       weightedScore([
         [businessPotential, 0.28],
@@ -628,9 +481,7 @@ function calculateTypeScores(
         [fire, 0.08],
         [metal, 0.08],
         [displayWealthScore, 0.06],
-      ]) +
-      elementBonus(dominant, ["wood", "fire", "metal"], 7) -
-      averageAdjustment * 4,
+      ]),
   };
 
   rawScores[1] += resource * 0.08 + career * 0.03 - output * 0.03;
@@ -797,6 +648,9 @@ function buildSajuSummary(analysis: SajuAnalysis): WealthSajuSummary {
       branch: analysis.monthSeason.branch,
       element: analysis.monthSeason.element as ElementKey,
       relationToDayMaster: analysis.monthSeason.relationToDayMaster,
+      termName: analysis.monthSeason.termName,
+      termKst: analysis.monthSeason.termKst,
+      timePrecision: analysis.monthSeason.timePrecision,
     },
   };
 }
@@ -821,7 +675,7 @@ function buildDayStrengthReason(analysis: SajuAnalysis, dayElement: ElementKey) 
     weak: "기준 기운은 보완이 필요한 편입니다.",
   };
 
-  return `일간(기준 글자)은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})이고, 월지(태어난 달의 지지)는 ${analysis.monthSeason.branch}(${ELEMENT_LABEL[analysis.monthSeason.element as ElementKey]})입니다. ${rootText} ${strengthText[analysis.dayStrength.level]}`;
+  return `일간(기준 글자)은 ${analysis.dayMaster}(${ELEMENT_LABEL[dayElement]})이고, 월지는 ${analysis.monthSeason.termName} 절입(${analysis.monthSeason.termKst}) 기준 ${analysis.monthSeason.branch}(${ELEMENT_LABEL[analysis.monthSeason.element as ElementKey]})입니다. ${rootText} ${strengthText[analysis.dayStrength.level]}`;
 }
 
 function buildWealthFlowReason(analysis: SajuAnalysis, profile: WealthProfile) {
@@ -876,7 +730,7 @@ function buildPillarReason(
       ? "시주 미입력"
       : `시주 ${analysis.pillars.hour}`;
 
-  return `사주는 연주 ${analysis.pillars.year}, 월주 ${analysis.pillars.month}, 일주 ${analysis.pillars.day}, ${hourText}입니다. 오행은 이 ${countText}만 세어 ${ELEMENT_LABEL[dominant]} 기운이 가장 많고 ${ELEMENT_LABEL[weak]} 기운이 가장 적게 나왔습니다.`;
+  return `사주는 연주 ${analysis.pillars.year}, 월주 ${analysis.pillars.month}, 일주 ${analysis.pillars.day}, ${hourText}입니다. 오행은 겉으로 보이는 ${countText}에 지지 속 지장간 비율까지 반영해 ${ELEMENT_LABEL[dominant]} 기운이 가장 많고 ${ELEMENT_LABEL[weak]} 기운이 가장 적게 나왔습니다.`;
 }
 
 function buildLogic(
