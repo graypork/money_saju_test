@@ -112,6 +112,8 @@ export type WealthResult = {
     strongest: ElementKey;
     weakest: ElementKey;
     balanceType: ResultSignals["balanceType"];
+    polarityStyle: ResultSignals["polarityStyle"];
+    polarityScores: ResultSignals["polarityScores"];
     selectedAnimalType: string;
     resultSignals: ResultSignals;
     legacyLogic: string[];
@@ -987,6 +989,8 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
       strongest: dominantElement,
       weakest: weakElement,
       balanceType: resultSignals.balanceType,
+      polarityStyle: resultSignals.polarityStyle,
+      polarityScores: resultSignals.polarityScores,
       selectedAnimalType: animalType.id,
       resultSignals,
       legacyLogic,

@@ -303,6 +303,31 @@ function ResultContent() {
         </section>
 
         <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
+          <p className="text-sm font-bold text-gray-400">에너지 결</p>
+
+          <div className="mt-2 inline-flex rounded-full bg-[#f7f1e8] px-3 py-1 text-xs font-black text-[#9a6a1d]">
+            {copy.polarity.badge}
+          </div>
+
+          <h2 className="mt-3 text-2xl font-black leading-tight text-gray-950">
+            {copy.polarity.label}
+          </h2>
+
+          <p className="mt-4 text-sm font-semibold leading-7 text-gray-700">
+            {copy.polarity.summary}
+          </p>
+
+          <div className="mt-4 grid gap-3">
+            <p className="rounded-2xl bg-[#f7f1e8] px-4 py-3 text-sm font-bold leading-6 text-gray-800">
+              {copy.polarity.strength}
+            </p>
+            <p className="rounded-2xl bg-gray-50 px-4 py-3 text-sm font-semibold leading-6 text-gray-600">
+              {copy.polarity.caution}
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-[2rem] bg-white p-6 shadow-lg">
           <p className="text-sm font-bold text-gray-400">해석 근거</p>
 
           <h2 className="mt-1 text-2xl font-black text-gray-950">

@@ -69,6 +69,8 @@ export type EarningStyle =
   | "marketTiming"
   | "selfOwnedSystem";
 
+export type PolarityStyle = "masculine" | "feminine" | "mixed";
+
 export type ResultSignals = {
   templateId: TemplateId;
   dominantElement: ElementKey;
@@ -81,6 +83,11 @@ export type ResultSignals = {
   actionStyle: ActionStyle;
   riskPattern: RiskPattern;
   earningStyle: EarningStyle;
+  polarityStyle: PolarityStyle;
+  polarityScores: {
+    masculine: number;
+    feminine: number;
+  };
   dominantRelation: TenGodCategory;
   dayStrengthLevel: WealthSajuSummary["dayStrength"]["level"];
   profileHighlights: Array<keyof WealthProfile>;
@@ -246,6 +253,77 @@ function getRiskPattern(
   return RISK_BY_PATTERN[moneyPattern];
 }
 
+function getActionPolarity(actionStyle: ActionStyle) {
+  const actionPolarity: Record<ActionStyle, { masculine: number; feminine: number }> = {
+    steady: { masculine: 2, feminine: 7 },
+    expressive: { masculine: 7, feminine: 3 },
+    cautious: { masculine: 1, feminine: 8 },
+    fast: { masculine: 9, feminine: 1 },
+    relational: { masculine: 4, feminine: 6 },
+    studious: { masculine: 2, feminine: 8 },
+    adaptive: { masculine: 5, feminine: 5 },
+    observing: { masculine: 2, feminine: 8 },
+    persuasive: { masculine: 8, feminine: 2 },
+    analytical: { masculine: 5, feminine: 6 },
+    independent: { masculine: 9, feminine: 2 },
+  };
+
+  return actionPolarity[actionStyle];
+}
+
+function getPolarityScores(
+  source: ResultSignalSource,
+  actionStyle: ActionStyle
+) {
+  const { elements, profile, saju } = source;
+  const actionPolarity = getActionPolarity(actionStyle);
+  const strengthBias =
+    saju.dayStrength.level === "strong"
+      ? { masculine: 5, feminine: 0 }
+      : saju.dayStrength.level === "weak"
+      ? { masculine: 0, feminine: 5 }
+      : { masculine: 2, feminine: 2 };
+
+  const masculine =
+    profile.executionPower * 0.18 +
+    profile.riskTaking * 0.16 +
+    profile.businessPotential * 0.14 +
+    profile.socialCapital * 0.08 +
+    elements.wood * 0.2 +
+    elements.fire * 0.24 +
+    elements.metal * 0.1 +
+    saju.relationScores.wealth * 0.12 +
+    saju.relationScores.output * 0.1 +
+    actionPolarity.masculine +
+    strengthBias.masculine;
+
+  const feminine =
+    profile.consistency * 0.16 +
+    profile.stability * 0.18 +
+    profile.moneySense * 0.08 +
+    profile.luckFlow * 0.1 +
+    elements.earth * 0.24 +
+    elements.water * 0.22 +
+    elements.metal * 0.08 +
+    saju.relationScores.resource * 0.12 +
+    saju.relationScores.career * 0.1 +
+    actionPolarity.feminine +
+    strengthBias.feminine;
+
+  return {
+    masculine: Math.round(masculine),
+    feminine: Math.round(feminine),
+  };
+}
+
+function getPolarityStyle(scores: { masculine: number; feminine: number }) {
+  const gap = scores.masculine - scores.feminine;
+
+  if (gap >= 8) return "masculine";
+  if (gap <= -8) return "feminine";
+  return "mixed";
+}
+
 export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
   const rankedElements = getRankedElements(source.elements);
   const strongest = rankedElements[0];
@@ -260,6 +338,8 @@ export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
     balanceType
   );
   const riskPattern = getRiskPattern(source.profile, moneyPattern, balanceType);
+  const actionStyle = ACTION_BY_PATTERN[moneyPattern];
+  const polarityScores = getPolarityScores(source, actionStyle);
 
   return {
     templateId: source.templateId,
@@ -270,9 +350,11 @@ export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
     balanceType,
     elementGap,
     moneyPattern,
-    actionStyle: ACTION_BY_PATTERN[moneyPattern],
+    actionStyle,
     riskPattern,
     earningStyle: EARNING_BY_PATTERN[moneyPattern],
+    polarityStyle: getPolarityStyle(polarityScores),
+    polarityScores,
     dominantRelation,
     dayStrengthLevel: source.saju.dayStrength.level,
     profileHighlights: getProfileHighlights(source.profile),

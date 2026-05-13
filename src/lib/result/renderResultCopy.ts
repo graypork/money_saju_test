@@ -17,6 +17,13 @@ export type RenderedResultCopy = {
   moneyAttitude: string;
   strength: string;
   weakness: string;
+  polarity: {
+    label: string;
+    badge: string;
+    summary: string;
+    strength: string;
+    caution: string;
+  };
   paidPreview: string;
   paidSections: ResultPaidPreviewSection[];
   cautions: string[];
@@ -86,6 +93,36 @@ const MONEY_ATTITUDE: Record<ResultSignals["moneyPattern"], string> = {
   independent: "돈은 직접 만든 판에서 커지지만, 오래 가려면 구조가 먼저입니다.",
 };
 
+const POLARITY_COPY: Record<
+  ResultSignals["polarityStyle"],
+  RenderedResultCopy["polarity"]
+> = {
+  masculine: {
+    label: "남성형 추진 에너지",
+    badge: "사람의 성별이 아니라 사주의 작동 방식",
+    summary:
+      "돈을 볼 때 먼저 밀고 들어가 확인하는 흐름입니다. 기회가 보이면 생각만 오래 하기보다 행동으로 판을 여는 쪽에 가깝습니다.",
+    strength: "속도, 결단, 제안, 확장처럼 밖으로 밀어내는 힘이 강합니다.",
+    caution: "속도가 기준보다 앞서면 수익보다 지출과 피로가 먼저 커질 수 있습니다.",
+  },
+  feminine: {
+    label: "여성형 축적 에너지",
+    badge: "사람의 성별이 아니라 사주의 작동 방식",
+    summary:
+      "돈을 바로 밀어붙이기보다 상황을 읽고, 관계와 정보를 모아 구조로 바꾸는 흐름입니다. 겉으로 느려 보여도 쌓이면 오래 갑니다.",
+    strength: "관찰, 축적, 관리, 회복처럼 돈을 머물게 하는 힘이 강합니다.",
+    caution: "너무 오래 지켜보면 팔아야 할 타이밍이나 제안해야 할 순간을 놓칠 수 있습니다.",
+  },
+  mixed: {
+    label: "혼합형 전환 에너지",
+    badge: "남성형/여성형 에너지가 같이 작동",
+    summary:
+      "밀고 나가는 힘과 쌓아두는 힘이 같이 보입니다. 돈을 벌 때는 속도가 필요하지만, 오래 남기려면 중간에 구조를 세워야 합니다.",
+    strength: "상황에 따라 공격적으로 움직이다가도 다시 정리하는 전환력이 있습니다.",
+    caution: "기준이 없으면 밀어붙일 때와 기다릴 때가 섞여 선택 피로가 커질 수 있습니다.",
+  },
+};
+
 function getPaidSections(animalType: AnimalType): ResultPaidPreviewSection[] {
   return [
     {
@@ -152,6 +189,7 @@ export function renderResultCopy(
     moneyAttitude: MONEY_ATTITUDE[signals.moneyPattern],
     strength: animalType.freeCopy.strength,
     weakness: animalType.freeCopy.weakness,
+    polarity: POLARITY_COPY[signals.polarityStyle],
     paidPreview: `${animalType.freeCopy.blurredTeaser} 능력 부족보다 반복되는 선택 패턴에 가까운 지점을 소비, 일, 인간관계에서 더 구체적으로 보여줍니다.`,
     paidSections: getPaidSections(animalType),
     cautions: [animalType.freeCopy.weakness, RISK_COPY[signals.riskPattern]],
