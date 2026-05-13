@@ -260,11 +260,11 @@ export const animalTypes: AnimalType[] = [
     },
   },
   {
-    id: "ant-knowledge",
+    id: "tusk-knowledge",
     templateId: 9,
-    name: "개미형 지식 설계자",
-    title: "지식을 차곡차곡 돈으로 바꾸는 개미형",
-    animal: "개미",
+    name: "코끼리형 지식 설계자",
+    title: "지식을 묵직하게 돈으로 바꾸는 코끼리형",
+    animal: "코끼리",
     trigger: {
       dominant: ["metal", "earth"],
       pattern: "knowledge",

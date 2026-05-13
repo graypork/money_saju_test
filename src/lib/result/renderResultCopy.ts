@@ -5,6 +5,7 @@ import type { ResultSignals } from "./deriveResultSignals";
 export type ResultPaidPreviewSection = {
   title: string;
   teaser: string;
+  blurredKeyword: string;
 };
 
 export type RenderedResultCopy = {
@@ -90,18 +91,22 @@ function getPaidSections(animalType: AnimalType): ResultPaidPreviewSection[] {
     {
       title: "돈 버는 패턴",
       teaser: animalType.paidSections.moneyPattern,
+      blurredKeyword: "돈으로",
     },
     {
       title: "돈 놓치는 패턴",
       teaser: animalType.paidSections.riskPattern,
+      blurredKeyword: "패턴",
     },
     {
       title: "성장 전략",
       teaser: animalType.paidSections.growthStrategy,
+      blurredKeyword: "제안",
     },
     {
       title: "돈과의 관계",
       teaser: animalType.paidSections.relationshipWithMoney,
+      blurredKeyword: "돈",
     },
   ];
 }

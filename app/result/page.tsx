@@ -404,18 +404,35 @@ function ResultContent() {
 
         <section className="mt-5 rounded-[2rem] border border-[#e0c58d] bg-[#fff8e9] p-6 shadow-lg">
           <div className="inline-flex rounded-full bg-[#21160f] px-4 py-2 text-xs font-bold text-[#f6d58b]">
-            전체 리포트
+            무료 해석 + 리포트 샘플
           </div>
 
           <h2 className="mt-4 text-2xl font-black leading-tight text-gray-950">
-            전체 리포트에서는
+            무료 결과에서 잡힌 패턴을
             <br />
-            더 깊게 볼 수 있어요
+            리포트 샘플로 조금 더 보여줘요
           </h2>
 
-          <p className="mt-4 text-sm leading-7 text-gray-700">
-            {copy.paidPreview}
-          </p>
+          <div className="mt-4 rounded-3xl bg-white p-5">
+            <p className="text-xs font-black tracking-widest text-gray-400">
+              무료 핵심
+            </p>
+            <p className="mt-2 text-sm font-bold leading-6 text-gray-800">
+              {copy.strength}
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+              {copy.weakness}
+            </p>
+          </div>
+
+          <div className="mt-3 rounded-3xl bg-[#21160f] p-5 text-white">
+            <p className="text-xs font-black tracking-widest text-[#f6d58b]">
+              리포트 샘플
+            </p>
+            <p className="mt-2 text-sm font-semibold leading-7 text-white/80">
+              {copy.paidPreview}
+            </p>
+          </div>
 
           <div className="mt-5 space-y-3">
             {lockedSections.map((section) => (
@@ -428,13 +445,20 @@ function ResultContent() {
                     {section.title}
                   </h3>
 
-                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black text-gray-500">
-                    잠김
+                  <span className="rounded-full bg-[#f7f1e8] px-3 py-1 text-xs font-black text-[#9a6a1d]">
+                    샘플
                   </span>
                 </div>
 
-                <p className="mt-3 select-none text-sm leading-6 text-gray-500 blur-[2px]">
+                <p className="mt-3 text-sm leading-6 text-gray-600">
                   {section.teaser}
+                </p>
+
+                <p className="mt-3 text-xs font-bold text-gray-400">
+                  핵심 키워드{" "}
+                  <span className="select-none rounded-full bg-gray-100 px-2 py-1 text-gray-700 blur-[3px]">
+                    {section.blurredKeyword}
+                  </span>
                 </p>
               </div>
             ))}

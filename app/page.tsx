@@ -21,7 +21,7 @@ export default function Home() {
             <p className="mt-5 text-base leading-7 text-white/75">
               생년월일과 태어난 시간으로 보는
               <br />
-              나의 재물 포텐셜, 성공 방식, 돈이 새는 패턴.
+              나의 재물 동물유형, 성공 방식, 돈이 새는 패턴.
             </p>
 
             <div className="mt-7 rounded-3xl bg-white px-5 py-5 text-[#21160f]">
@@ -39,7 +39,7 @@ export default function Home() {
           <div className="grid grid-cols-3 border-t border-white/10 text-center text-xs font-semibold text-white">
             <div className="px-3 py-4">
               <p className="text-lg font-black">12</p>
-              <p className="mt-1 text-white/60">재물 유형</p>
+              <p className="mt-1 text-white/60">동물유형</p>
             </div>
 
             <div className="border-x border-white/10 px-3 py-4">
@@ -79,10 +79,10 @@ export default function Home() {
             <div className="rounded-3xl bg-[#f7f1e8] p-5">
               <p className="text-xs font-bold text-gray-500">예시 유형</p>
               <h3 className="mt-2 text-xl font-black text-gray-950">
-                감각으로 버는 크리에이터형
+                여우형 크리에이터
               </h3>
               <p className="mt-3 text-sm leading-6 text-gray-700">
-                단순 반복보다 감각, 표현력, 콘텐츠, 기획을 통해 돈을 만들 때 강해지는 타입입니다.
+                감각, 표현력, 콘텐츠, 기획이 돈으로 바뀌기 쉬운 재물 동물유형입니다.
               </p>
             </div>
 
