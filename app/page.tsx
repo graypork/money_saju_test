@@ -45,25 +45,13 @@ export default function Home() {
             </a>
           </div>
 
-          <div className="grid grid-cols-3 border-t border-[#FFFDF8]/10 text-center text-xs font-bold text-[#FFFDF8]">
-            <div className="px-3 py-4">
-              <p className="text-lg font-extrabold">12</p>
-              <p className="mt-1 text-[#FFFDF8]/55">동물 유형</p>
-            </div>
-
-            <div className="border-x border-[#FFFDF8]/10 px-3 py-4">
-              <p className="text-lg font-extrabold">오행</p>
-              <p className="mt-1 text-[#FFFDF8]/55">밸런스</p>
-            </div>
-
-            <div className="px-3 py-4">
-              <p className="text-lg font-extrabold">무료</p>
-              <p className="mt-1 text-[#FFFDF8]/55">기본 결과</p>
-            </div>
+          <div className="border-t border-[#FFFDF8]/10 px-6 py-4 text-[13px] font-semibold leading-6 text-[#FFFDF8]/68">
+            동물 유형은 생년월일시로 계산된 오행 강약과 재물 흐름을 읽기 쉽게
+            바꾼 결과입니다.
           </div>
         </section>
 
-        <section id="test-start" className={`${uiTokens.card} mt-6 p-5`}>
+        <section id="test-start" className={`${uiTokens.card} mt-6`}>
           <div className="mb-5">
             <p className={uiTokens.eyebrow}>START</p>
             <h2 className={`${uiTokens.sectionTitle} mt-1`}>
@@ -75,33 +63,6 @@ export default function Home() {
           </div>
 
           <BirthForm />
-        </section>
-
-        <section className={`${uiTokens.card} mt-6`}>
-          <p className={uiTokens.eyebrow}>RESULT PREVIEW</p>
-
-          <h2 className={`${uiTokens.sectionTitle} mt-2`}>
-            동물은 장식이 아니라 돈의 패턴입니다
-          </h2>
-
-          <p className={`${uiTokens.body} mt-3`}>
-            강한 오행, 부족한 오행, 재성의 상태를 바탕으로 돈 앞에서 드러나는 움직임을 하나의 동물 유형으로 정리합니다.
-          </p>
-
-          <div className="mt-5 grid gap-3">
-            {[
-              "기회를 바로 낚아채는 타입",
-              "차곡차곡 모으는 타입",
-              "잡기 직전 망설이는 타입",
-            ].map((item) => (
-              <div
-                key={item}
-                className="rounded-[18px] border border-[#E8D8C5] bg-[#FDF7EC] px-4 py-3 text-[14px] font-bold text-[#241A12]"
-              >
-                {item}
-              </div>
-            ))}
-          </div>
         </section>
 
         <p className={`${uiTokens.caption} mt-6 text-center`}>

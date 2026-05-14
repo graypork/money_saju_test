@@ -3,7 +3,7 @@ export const uiTokens = {
     "min-h-screen bg-[#F8F2E8] px-5 py-8 text-[#241A12] [word-break:keep-all]",
   shell: "mx-auto max-w-md",
   card:
-    "rounded-[24px] border border-[#E8D8C5] bg-[#FFFDF8] p-6 shadow-[0_12px_30px_rgba(36,26,18,0.08)]",
+    "rounded-[24px] border border-[#E8D8C5] bg-[#FFFDF8] p-5 shadow-[0_12px_30px_rgba(36,26,18,0.08)]",
   softCard:
     "rounded-[24px] border border-[#E8D8C5] bg-[#FDF7EC] p-5",
   button:

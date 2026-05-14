@@ -113,10 +113,18 @@ export type WealthResult = {
   interpretation: WealthInterpretation;
   copy: RenderedResultCopy;
   debug: {
+    dayMaster: string;
     pillars: WealthSajuSummary["pillars"];
+    elementScores: WealthElementScores;
     elements: {
       percentages: WealthElementScores;
     };
+    strongestElement: ElementKey;
+    weakestElement: ElementKey;
+    wealthElement: ElementKey;
+    wealthStrength: ResultSignals["wealthStrength"];
+    animalType: string;
+    animalReason: string[];
     strongest: ElementKey;
     weakest: ElementKey;
     balanceType: ResultSignals["balanceType"];
@@ -827,7 +835,6 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     saju,
     signals: resultSignals,
     animalType,
-    animalTitle: copy.title,
   });
   const legacyLogic = buildLogic(elements, profile, templateId, analysis);
 
@@ -849,12 +856,20 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     interpretation,
     copy,
     debug: {
+      dayMaster: saju.dayMaster,
       pillars: saju.pillars,
+      elementScores: elements,
       elements: {
         percentages: elements,
       },
-      strongest: dominantElement,
-      weakest: weakElement,
+      strongestElement: interpretation.strongestElement,
+      weakestElement: interpretation.weakestElement,
+      wealthElement: interpretation.wealthElement,
+      wealthStrength: interpretation.wealthStrength,
+      animalType: interpretation.animalTitle,
+      animalReason: copy.logic,
+      strongest: interpretation.strongestElement,
+      weakest: interpretation.weakestElement,
       balanceType: resultSignals.balanceType,
       polarityStyle: resultSignals.polarityStyle,
       polarityScores: resultSignals.polarityScores,

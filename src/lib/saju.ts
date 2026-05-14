@@ -96,6 +96,8 @@ const earthlyBranches = [
   { name: "해", element: "water" },
 ] as const;
 
+// 지장간 가중치는 각 지지 안의 본기/중기/여기 비율을 합계 1로 둔 값입니다.
+// 오행 점수와 십성 흐름에 같은 비율로 반영하며, 결과를 좋게 보이게 하는 보정값은 아닙니다.
 const branchHiddenStems: Array<
   Array<{ stemIndex: number; weight: number }>
 > = [

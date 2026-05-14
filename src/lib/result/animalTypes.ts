@@ -186,7 +186,7 @@ export const animalTypes: AnimalType[] = [
   {
     id: "owl-expert",
     templateId: 6,
-    name: "부엉이형 전문가",
+    name: "부엉이형 해결가",
     title: "실력을 돈으로 바꾸는 부엉이형",
     animal: "부엉이",
     trigger: {

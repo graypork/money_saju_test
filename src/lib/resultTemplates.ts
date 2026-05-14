@@ -69,10 +69,10 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "완벽하게 만들려다 공개 타이밍을 놓치기 쉽습니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 당신의 감각을 어떤 상품, 콘텐츠, 서비스로 바꿔야 돈이 되는지 구체적으로 분석합니다.",
+      "전체 리포트에서는 감각을 어떤 상품, 콘텐츠, 서비스로 바꿔야 돈이 되는지 구체적으로 분석합니다.",
     paidSections: [
-      { title: "콘텐츠 수익화 방향", teaser: "당신의 감각이 팔리기 쉬운 포맷을 좁혀봅니다." },
-      { title: "브랜딩 포인트", teaser: "사람들이 당신에게 돈을 쓰게 되는 매력 포인트를 분석합니다." },
+      { title: "콘텐츠 수익화 방향", teaser: "감각이 팔리기 쉬운 포맷을 좁혀봅니다." },
+      { title: "브랜딩 포인트", teaser: "사람들이 돈을 쓰게 되는 매력 포인트를 분석합니다." },
       { title: "지속력 보완법", teaser: "질려서 접는 패턴을 줄이는 운영 방식을 잡습니다." },
     ],
     shareText: "나는 감각과 아이디어를 돈으로 바꾸는 크리에이터형이 나왔어요.",
@@ -127,7 +127,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
     paidSections: [
       { title: "사업 적성", teaser: "직접 판을 벌였을 때 강해지는 영역을 좁힙니다." },
       { title: "리스크 관리", teaser: "기회와 무모함을 구분하는 기준을 세웁니다." },
-      { title: "돈이 붙는 행동 패턴", teaser: "움직여야 할 때와 멈춰야 할 때를 나눕니다." },
+      { title: "돈이 붙는 선택 기준", teaser: "움직여야 할 때와 멈춰야 할 때를 나눕니다." },
     ],
     shareText: "나는 기회를 빠르게 잡는 사업가형 재물 타입이 나왔어요.",
   },
@@ -140,7 +140,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
     summary:
       "혼자 고립돼서 돈을 버는 구조보다 사람과 연결될 때 기회가 커지는 타입입니다. 다만 모두에게 좋은 사람으로 남으려 하면 정작 내 수익 구조가 약해질 수 있습니다.",
     coreMessage:
-      "당신에게 돈은 사람을 타고 들어올 가능성이 큽니다. 하지만 모두에게 맞춰주면, 돈이 되는 관계와 에너지만 쓰는 관계가 섞입니다.",
+      "돈은 사람을 타고 들어올 가능성이 큽니다. 하지만 모두에게 맞춰주면, 돈이 되는 관계와 에너지만 쓰는 관계가 섞입니다.",
     painPoint: "도와주는 일은 많은데 가격, 조건, 역할을 명확히 하지 않으면 수익으로 연결되지 않습니다.",
     freeAdvice: "이번 주에는 도움 요청을 받을 때 결과물, 시간, 금액 중 하나를 반드시 먼저 정해보세요.",
     strengths: ["관계 자산", "협업", "설득력", "소개운", "호감도"],
@@ -150,7 +150,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "관계는 많은데 수익 구조가 없으면 바쁘기만 하고 남는 게 적습니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 당신에게 돈이 되는 관계와 에너지만 빼앗는 관계를 구분하는 기준을 제시합니다.",
+      "전체 리포트에서는 돈이 되는 관계와 에너지만 빼앗는 관계를 구분하는 기준을 제시합니다.",
     paidSections: [
       { title: "돈이 되는 인맥", teaser: "어떤 사람과 연결될 때 기회가 커지는지 분석합니다." },
       { title: "협업 수익화", teaser: "관계를 실제 수익으로 바꾸는 방식을 잡습니다." },
@@ -177,7 +177,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "배우는 시간과 파는 시간을 분리하지 않으면 수익화가 늦어집니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 당신의 전문성을 어떤 형태로 팔아야 돈이 되는지 구체적으로 보여줍니다.",
+      "전체 리포트에서는 쌓아온 실력을 어떤 형태로 팔아야 돈이 되는지 구체적으로 보여줍니다.",
     paidSections: [
       { title: "전문성 수익화", teaser: "기술과 지식을 돈으로 바꾸는 구조를 분석합니다." },
       { title: "가격 책정", teaser: "너무 싸게 팔고 있는 영역이 있을 수 있습니다." },
@@ -204,7 +204,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "수익보다 소비 만족이 앞서면 재물운 체감이 약해집니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 돈이 새는 패턴과 당신에게 맞는 현실적인 재정 통제 방식을 분석합니다.",
+      "전체 리포트에서는 돈이 새는 패턴과 현실적인 재정 통제 방식을 분석합니다.",
     paidSections: [
       { title: "소비 패턴", teaser: "돈이 어디서 새는지 핵심 패턴을 봅니다." },
       { title: "수입 유지법", teaser: "벌어도 남지 않는 구조를 바꾸는 방식을 잡습니다." },
@@ -276,7 +276,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "무언가를 혼자 조용히 만드는 것보다 사람을 설득하고 움직일 때 수익 가능성이 커집니다. 다만 자신감이 떨어지면 가진 매력을 제대로 쓰지 못합니다.",
     coreMessage:
       "설득과 제안의 힘은 있는 편입니다. 다만 스스로를 너무 낮게 보면 좋은 제안도 부탁처럼 들리고, 정당하게 돈 받을 기회를 놓치기 쉽습니다.",
-    painPoint: "거절이 두려워 제안을 늦추면, 상대는 당신의 가치를 모른 채 지나갑니다.",
+    painPoint: "거절이 두려워 제안을 늦추면, 상대는 가치를 모른 채 지나갑니다.",
     freeAdvice: "다음 제안에서는 설명보다 먼저 가격, 결과물, 마감일을 짧게 말하는 연습이 필요합니다.",
     strengths: ["설득력", "제안력", "호감", "영업 감각", "관계 활용"],
     cautions: [
@@ -287,7 +287,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
     paidPreview:
       "전체 리포트에서는 당신이 어떤 방식으로 제안하고 팔아야 돈이 되는지 분석합니다.",
     paidSections: [
-      { title: "설득 포인트", teaser: "상대가 당신에게 끌리는 지점을 분석합니다." },
+      { title: "설득 포인트", teaser: "상대가 끌리는 지점을 분석합니다." },
       { title: "제안 방식", teaser: "부탁이 아니라 거래로 보이게 만드는 방식을 잡습니다." },
       { title: "가격 저항", teaser: "돈 얘기에서 약해지는 패턴을 봅니다." },
     ],
@@ -312,7 +312,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "정보를 많이 볼수록 오히려 결정이 느려질 수 있습니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 당신의 분석 감각을 실제 수익으로 연결하는 타이밍과 의사결정 기준을 보여줍니다.",
+      "전체 리포트에서는 분석 감각을 실제 수익으로 연결하는 타이밍과 의사결정 기준을 보여줍니다.",
     paidSections: [
       { title: "투자 감각", teaser: "당신이 흐름을 잘 읽는 영역을 분석합니다." },
       { title: "결정 타이밍", teaser: "분석을 멈추고 움직여야 하는 기준을 잡습니다." },
@@ -339,7 +339,7 @@ export const resultTemplateMap: Record<TemplateId, ResultTemplate> = {
       "초반 반응에 취하면 검증 없이 확장할 수 있습니다.",
     ],
     paidPreview:
-      "전체 리포트에서는 당신에게 맞는 사업 방식, 수익 모델, 피해야 할 확장 실수를 구체적으로 분석합니다.",
+      "전체 리포트에서는 맞는 사업 방식, 수익 모델, 피해야 할 확장 실수를 구체적으로 분석합니다.",
     paidSections: [
       { title: "사업화 방향", teaser: "직접 판을 만들 때 강해지는 영역을 찾습니다." },
       { title: "수익 모델", teaser: "콘텐츠형, 서비스형, 상품형 중 맞는 구조를 봅니다." },
