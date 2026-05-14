@@ -113,6 +113,7 @@ export type WealthResult = {
   interpretation: WealthInterpretation;
   copy: RenderedResultCopy;
   debug: {
+    birthInput: CalculateInput;
     dayMaster: string;
     pillars: WealthSajuSummary["pillars"];
     elementScores: WealthElementScores;
@@ -123,6 +124,8 @@ export type WealthResult = {
     weakestElement: ElementKey;
     wealthElement: ElementKey;
     wealthStrength: ResultSignals["wealthStrength"];
+    spendingRisk: ResultSignals["riskPattern"];
+    opportunityStyle: string;
     animalType: string;
     animalReason: string[];
     strongest: ElementKey;
@@ -856,6 +859,7 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     interpretation,
     copy,
     debug: {
+      birthInput: safeInput,
       dayMaster: saju.dayMaster,
       pillars: saju.pillars,
       elementScores: elements,
@@ -866,6 +870,8 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
       weakestElement: interpretation.weakestElement,
       wealthElement: interpretation.wealthElement,
       wealthStrength: interpretation.wealthStrength,
+      spendingRisk: resultSignals.riskPattern,
+      opportunityStyle: interpretation.opportunityStyle,
       animalType: interpretation.animalTitle,
       animalReason: copy.logic,
       strongest: interpretation.strongestElement,

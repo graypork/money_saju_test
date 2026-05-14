@@ -5,9 +5,9 @@ export default function Home() {
   return (
     <main className={uiTokens.page}>
       <section className={uiTokens.shell}>
-        <section className="overflow-hidden rounded-[32px] bg-[#241A12] shadow-[0_18px_50px_rgba(36,26,18,0.18)]">
-          <div className="px-6 pb-8 pt-7 text-[#FFFDF8]">
-            <div className="mb-5 inline-flex rounded-full border border-[#E8D8C5]/20 bg-[#FFFDF8]/10 px-4 py-2 text-xs font-bold text-[#F7D8A7]">
+        <section className="overflow-hidden rounded-[32px] border border-[#D8E1D1] bg-[#FFFFFF] shadow-[0_8px_24px_rgba(31,42,34,0.06)]">
+          <div className="px-6 pb-8 pt-7 text-[#1F2A22]">
+            <div className="mb-5 inline-flex rounded-full bg-[#DDE8D2] px-4 py-2 text-xs font-bold text-[#2F6B4F]">
               사주와 오행으로 보는 재물 동물 테스트
             </div>
 
@@ -17,7 +17,7 @@ export default function Home() {
               자기만의 동물이 됩니다.
             </h1>
 
-            <p className="mt-5 text-[16px] leading-8 text-[#FFFDF8]/78">
+            <p className="mt-5 text-[16px] leading-8 text-[#667568]">
               누군가는 바로 낚아채고,
               <br />
               누군가는 차곡차곡 모으고,
@@ -25,13 +25,13 @@ export default function Home() {
               누군가는 냄새를 맡고도 망설입니다.
             </p>
 
-            <p className="mt-5 text-[16px] font-bold leading-8 text-[#FFFDF8]">
+            <p className="mt-5 text-[16px] font-bold leading-8 text-[#1F2A22]">
               나는 돈을 모으는 쪽일까요,
               <br />
               흘려보내는 쪽일까요?
             </p>
 
-            <p className="mt-5 text-[15px] leading-7 text-[#FFFDF8]/70">
+            <p className="mt-5 text-[15px] leading-7 text-[#667568]">
               사주와 오행으로 보는
               <br />
               나의 돈버는 동물 테스트.
@@ -39,15 +39,14 @@ export default function Home() {
 
             <a
               href="#test-start"
-              className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-[#FFFDF8] px-[22px] py-4 text-base font-bold text-[#241A12] shadow-[0_12px_30px_rgba(0,0,0,0.18)] transition active:scale-[0.98]"
+              className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-[#2F6B4F] px-[22px] py-4 text-base font-bold text-[#FFFFFF] transition hover:bg-[#25563F] active:scale-[0.98] active:bg-[#25563F]"
             >
               내 유형 확인하기
             </a>
           </div>
 
-          <div className="border-t border-[#FFFDF8]/10 px-6 py-4 text-[13px] font-semibold leading-6 text-[#FFFDF8]/68">
-            동물 유형은 생년월일시로 계산된 오행 강약과 재물 흐름을 읽기 쉽게
-            바꾼 결과입니다.
+          <div className="border-t border-[#D8E1D1] bg-[#DDE8D2] px-6 py-4 text-[13px] font-semibold leading-6 text-[#2F6B4F]">
+            사주와 오행을 바탕으로 재물 성향을 하나의 동물 유형으로 보여줍니다.
           </div>
         </section>
 
@@ -58,7 +57,7 @@ export default function Home() {
               내 돈버는 동물 찾기
             </h2>
             <p className={`${uiTokens.body} mt-2`}>
-              생년월일과 태어난 시간으로 오행의 강약, 재성 흐름, 돈이 새기 쉬운 패턴을 함께 봅니다.
+              생년월일과 태어난 시간만 입력하면 바로 확인할 수 있습니다.
             </p>
           </div>
 

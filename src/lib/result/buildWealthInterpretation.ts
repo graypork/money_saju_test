@@ -34,14 +34,6 @@ export type WealthInterpretation = {
   paidReportHookParagraphs: string[];
 };
 
-const ELEMENT_LABEL: Record<ElementKey, string> = {
-  wood: "목",
-  fire: "화",
-  earth: "토",
-  metal: "금",
-  water: "수",
-};
-
 const WEALTH_ELEMENT_BY_DAY_ELEMENT: Record<ElementKey, ElementKey> = {
   wood: "earth",
   fire: "metal",
@@ -72,7 +64,7 @@ const EARNING_STYLE_TEXT: Record<EarningStyle, string> = {
   relationshipDeal: "소개, 협업, 제안처럼 사람 사이에서 열리는 방식",
   expertService: "해결 가능한 문제를 서비스 단위로 잘라 파는 방식",
   variableIncome: "시즌성 기회와 빠른 반응에서 생기는 변동 수입",
-  experienceAsset: "겪은 시행착오를 기록과 가이드로 바꾸는 방식",
+  experienceAsset: "겪은 시행착오를 기록과 작은 자료로 바꾸는 방식",
   knowledgeAsset: "지식과 근거를 설명 가능한 상품으로 만드는 방식",
   salesProposal: "명확한 제안, 가격, 마감으로 결정을 끌어내는 방식",
   marketTiming: "정보를 비교하고 들어갈 기준과 빠질 기준을 세우는 방식",
@@ -139,22 +131,16 @@ const TITLE_MODIFIER_BY_PATTERN: Record<ResultSignals["moneyPattern"], string> =
   independent: "개척형",
 };
 
-function getElementLabel(element: ElementKey) {
-  return ELEMENT_LABEL[element];
-}
-
 function getMoneyStrengthText(
-  strongestElement: ElementKey,
   earningStyle: EarningStyle
 ) {
-  return `${getElementLabel(strongestElement)} 기운이 ${EARNING_STYLE_TEXT[earningStyle]}으로 이어지는 흐름이 보입니다.`;
+  return `${EARNING_STYLE_TEXT[earningStyle]}에서 돈의 흐름이 살아나는 편입니다.`;
 }
 
 function getMoneyWeaknessText(
-  weakestElement: ElementKey,
   riskPattern: RiskPattern
 ) {
-  return `다만 ${getElementLabel(weakestElement)} 기운이 약해 ${SPENDING_RISK_TEXT[riskPattern]}이 반복될 수 있습니다.`;
+  return `다만 ${SPENDING_RISK_TEXT[riskPattern]}이 반복될 수 있습니다.`;
 }
 
 export function buildWealthInterpretation({
@@ -174,18 +160,16 @@ export function buildWealthInterpretation({
   const animalTitle = `${TITLE_MODIFIER_BY_PATTERN[signals.moneyPattern]} ${animalType.animal}`;
   const animalSummary = `${coreTendency} 타입입니다.`;
   const moneyStrengthText = getMoneyStrengthText(
-    signals.strongest,
     signals.earningStyle
   );
   const moneyWeaknessText = getMoneyWeaknessText(
-    signals.weakest,
     signals.riskPattern
   );
   const paidReportHookParagraphs = [
-    "이 동물이 나온 이유에는 더 깊은 돈의 패턴이 숨어 있습니다.",
-    "겉으로 보이는 유형은 시작입니다.",
-    "왜 이런 방식으로 돈이 들어오고, 어디서 자꾸 빠져나가는지까지 봐야 진짜 흐름이 보입니다.",
-    "전체 리포트에서 오행 밸런스와 재물 흐름을 더 구체적으로 확인해보세요.",
+    "이 동물이 나온 이유에는 돈이 반복되는 방식이 숨어 있습니다.",
+    "월급이 들어와도 금방 불안해지는 이유, 카드값 앞에서 매번 비슷한 생각을 하는 이유.",
+    "좋은 기회 앞에서 망설이거나 반대로 너무 빨리 움직이는 이유.",
+    "전체 리포트에서는 오행 밸런스와 재물 흐름을 바탕으로 돈이 들어오는 방식과 새어나가는 지점을 더 구체적으로 확인합니다.",
   ];
 
   return {
