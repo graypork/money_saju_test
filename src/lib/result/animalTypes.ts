@@ -5,6 +5,7 @@ import type {
   EarningStyle,
   MoneyPattern,
   RiskPattern,
+  WealthStrength,
 } from "./deriveResultSignals";
 
 type TriggerValue<T extends string> = T | T[];
@@ -23,6 +24,7 @@ export type AnimalType = {
     actionStyle?: TriggerValue<ActionStyle>;
     riskPattern?: TriggerValue<RiskPattern>;
     earningStyle?: TriggerValue<EarningStyle>;
+    wealthStrength?: TriggerValue<WealthStrength>;
   };
   freeCopy: {
     hook: string;
@@ -52,6 +54,7 @@ export const animalTypes: AnimalType[] = [
       pattern: "accumulate",
       actionStyle: "steady",
       earningStyle: "repeatTrust",
+      wealthStrength: ["moderate", "strong"],
     },
     freeCopy: {
       hook: "돈이 한 번에 터지는 쪽은 아닙니다. 대신 구조가 잡히면 잘 무너지지 않습니다.",
@@ -79,6 +82,7 @@ export const animalTypes: AnimalType[] = [
       pattern: "create",
       actionStyle: "expressive",
       earningStyle: "contentProduct",
+      wealthStrength: "moderate",
     },
     freeCopy: {
       hook: "아이디어가 돈 냄새를 먼저 맡습니다. 문제는 팔기 전에 식어버리는 순간입니다.",
@@ -107,6 +111,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "cautious",
       riskPattern: "overCaution",
       earningStyle: "operations",
+      wealthStrength: ["moderate", "strong"],
     },
     freeCopy: {
       hook: "돈을 크게 잃을 확률은 낮습니다. 대신 기회까지 너무 작게 잡을 수 있습니다.",
@@ -134,6 +139,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "fast",
       riskPattern: "overExpansion",
       earningStyle: "fastTest",
+      wealthStrength: "strong",
     },
     freeCopy: {
       hook: "기회는 빨리 봅니다. 다만 검증 없이 커지면 돈도 같이 샙니다.",
@@ -161,6 +167,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "relational",
       riskPattern: "peopleDrain",
       earningStyle: "relationshipDeal",
+      wealthStrength: ["moderate", "strong"],
     },
     freeCopy: {
       hook: "돈이 사람을 타고 들어옵니다. 문제는 좋은 사람 역할만 하면 남는 게 적다는 점입니다.",
@@ -188,6 +195,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "studious",
       riskPattern: "underpricing",
       earningStyle: "expertService",
+      wealthStrength: ["weak", "moderate"],
     },
     freeCopy: {
       hook: "능력이 부족한 게 아닙니다. 가격을 말하는 순간 작아지는 쪽에 가깝습니다.",
@@ -216,6 +224,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "adaptive",
       riskPattern: "impulseLeak",
       earningStyle: "variableIncome",
+      wealthStrength: ["weak", "moderate"],
     },
     freeCopy: {
       hook: "못 버는 타입은 아닙니다. 문제는 들어온 돈이 오래 머물 구조입니다.",
@@ -244,6 +253,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "observing",
       riskPattern: "scatteredFocus",
       earningStyle: "experienceAsset",
+      wealthStrength: ["weak", "moderate"],
     },
     freeCopy: {
       hook: "늦은 게 아닙니다. 겪은 일을 돈 되는 언어로 바꾸는 시간이 필요한 쪽입니다.",
@@ -271,6 +281,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "studious",
       riskPattern: "prepLoop",
       earningStyle: "knowledgeAsset",
+      wealthStrength: ["weak", "moderate"],
     },
     freeCopy: {
       hook: "공부한 만큼 벌려면, 지식을 팔 수 있는 형태로 잘라야 합니다.",
@@ -298,6 +309,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "persuasive",
       riskPattern: "priceFear",
       earningStyle: "salesProposal",
+      wealthStrength: ["moderate", "strong"],
     },
     freeCopy: {
       hook: "팔 수 있는 힘은 있습니다. 다만 가격을 말하는 순간 약해지면 기회가 지나갑니다.",
@@ -325,6 +337,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "analytical",
       riskPattern: "analysisParalysis",
       earningStyle: "marketTiming",
+      wealthStrength: ["moderate", "strong"],
     },
     freeCopy: {
       hook: "돈 냄새를 맡는 감각은 있습니다. 오래 재다가 좋은 가격을 보내는 게 문제입니다.",
@@ -352,6 +365,7 @@ export const animalTypes: AnimalType[] = [
       actionStyle: "independent",
       riskPattern: "weakStructure",
       earningStyle: "selfOwnedSystem",
+      wealthStrength: "strong",
     },
     freeCopy: {
       hook: "남이 만든 판에 오래 있으면 힘이 빠집니다. 직접 만들 때 돈의 크기가 커집니다.",

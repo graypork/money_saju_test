@@ -9,6 +9,7 @@ import {
   type WealthResult,
 } from "../../src/lib/score";
 import { getPaidReportTemplate } from "../../src/lib/paidReportTemplates";
+import { uiTokens } from "../../src/lib/uiTokens";
 
 const ELEMENT_KEYS = ["wood", "fire", "earth", "metal", "water"] as const;
 
@@ -27,35 +28,35 @@ const ELEMENT_META: Record<
     ability: "성장력 · 아이디어 · 확장성",
     strong: "아이디어를 키우고 새 판을 여는 힘이 좋습니다.",
     weak: "시작과 확장을 미루면 좋은 흐름을 작게 쓰기 쉽습니다.",
-    tone: "bg-emerald-500",
+    tone: "bg-[#7A9C62]",
   },
   fire: {
     label: "화",
     ability: "표현력 · 브랜딩 · 영향력",
     strong: "사람의 반응을 끌어내고 가치를 보여주는 힘이 좋습니다.",
     weak: "드러내고 팔아야 할 때 뒤로 물러나면 실력보다 작게 보일 수 있습니다.",
-    tone: "bg-rose-500",
+    tone: "bg-[#B46A3C]",
   },
   earth: {
     label: "토",
     ability: "안정성 · 축적 · 관리",
     strong: "수익을 오래 남기고 루틴으로 관리하는 힘이 좋습니다.",
     weak: "관리 구조가 약하면 벌어도 돈이 오래 머물지 않을 수 있습니다.",
-    tone: "bg-amber-500",
+    tone: "bg-[#C4A163]",
   },
   metal: {
     label: "금",
     ability: "판단력 · 정리 · 수익화 구조",
     strong: "기준을 세우고 가격, 상품, 손익을 정리하는 힘이 좋습니다.",
     weak: "좋은 아이디어를 가격과 결제 구조로 바꾸는 데 시간이 걸릴 수 있습니다.",
-    tone: "bg-slate-600",
+    tone: "bg-[#6F3F2A]",
   },
   water: {
     label: "수",
     ability: "정보력 · 분석력 · 흐름 읽기",
     strong: "정보와 타이밍을 읽고 방향을 바꾸는 힘이 좋습니다.",
     weak: "흐름을 바꿔야 할 때 한 박자 늦어질 수 있습니다.",
-    tone: "bg-sky-500",
+    tone: "bg-[#5E7C8B]",
   },
 };
 
@@ -411,7 +412,7 @@ function BlurredKeywordText({
   return (
     <>
       {text.slice(0, keywordIndex)}
-      <span className="select-none rounded-md bg-slate-200 px-1 text-slate-700 blur-[3px]">
+      <span className="select-none rounded-md bg-[#E8D8C5] px-1 text-[#6F3F2A] blur-[3px]">
         {keyword}
       </span>
       {text.slice(keywordIndex + keyword.length)}
@@ -421,9 +422,9 @@ function BlurredKeywordText({
 
 function ScorePill({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/12 px-4 py-3 text-white ring-1 ring-white/10">
-      <p className="text-[11px] font-bold text-white/50">{label}</p>
-      <p className="mt-1 text-sm font-black leading-5">{value}</p>
+    <div className="rounded-[18px] border border-[#E8D8C5] bg-[#FFFDF8] px-4 py-3 text-[#241A12]">
+      <p className="text-[11px] font-bold text-[#7A6754]">{label}</p>
+      <p className="mt-1 text-sm font-extrabold leading-5">{value}</p>
     </div>
   );
 }
@@ -439,14 +440,14 @@ function SectionHeading({
 }) {
   return (
     <div>
-      <p className="text-xs font-black tracking-[0.18em] text-teal-700">
+      <p className={uiTokens.eyebrow}>
         {eyebrow}
       </p>
-      <h2 className="mt-2 text-2xl font-black leading-tight text-slate-950">
+      <h2 className={`${uiTokens.sectionTitle} mt-2`}>
         {title}
       </h2>
       {description && (
-        <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+        <p className={`${uiTokens.body} mt-2`}>
           {description}
         </p>
       )}
@@ -467,10 +468,10 @@ function PrimaryCta({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl px-5 py-4 text-base font-black shadow-lg transition active:scale-[0.98] ${
+      className={`w-full rounded-full px-[22px] py-4 text-base font-bold shadow-[0_12px_30px_rgba(36,26,18,0.16)] transition active:scale-[0.98] ${
         dark
-          ? "bg-slate-950 text-white shadow-slate-950/20"
-          : "bg-[#10b981] text-slate-950 shadow-emerald-900/20"
+          ? "bg-[#241A12] text-[#FFFDF8]"
+          : "bg-[#241A12] text-[#FFFDF8]"
       }`}
     >
       {children}
@@ -502,22 +503,22 @@ function ResultContent() {
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     return (
-      <main className="min-h-screen bg-slate-100 px-5 py-8 [word-break:keep-all]">
-        <section className="mx-auto max-w-md">
-          <div className="rounded-[2rem] bg-slate-950 p-7 text-white shadow-2xl">
-            <div className="mb-5 inline-flex rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-emerald-200">
+      <main className={uiTokens.page}>
+        <section className={uiTokens.shell}>
+          <div className="rounded-[32px] bg-[#241A12] p-7 text-[#FFFDF8] shadow-[0_18px_50px_rgba(36,26,18,0.18)]">
+            <div className="mb-5 inline-flex rounded-full bg-[#FFFDF8]/10 px-4 py-2 text-xs font-bold text-[#F7D8A7]">
               RESULT
             </div>
-            <h1 className="text-3xl font-black leading-tight">
+            <h1 className="text-[28px] font-extrabold leading-[1.25]">
               아직 만들 결과가 없어요
             </h1>
-            <p className="mt-4 text-sm font-semibold leading-7 text-white/70">
+            <p className="mt-4 text-[15px] leading-7 text-[#FFFDF8]/70">
               생년월일과 태어난 시간을 먼저 선택하면 재물 성향 결과를 만들 수 있습니다.
             </p>
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="mt-6 w-full rounded-2xl bg-emerald-400 px-5 py-4 text-base font-black text-slate-950 shadow-lg transition active:scale-[0.98]"
+              className="mt-6 w-full rounded-full bg-[#FFFDF8] px-[22px] py-4 text-base font-bold text-[#241A12] shadow-lg transition active:scale-[0.98]"
             >
               테스트 시작하기
             </button>
@@ -552,10 +553,11 @@ function ResultContent() {
   const freeWeaknesses = getFreeWeaknesses(result);
   const lockedSections = getPaidPreviewSections(result);
   const paidReport = getPaidReportTemplate(result.templateId);
+  const interpretation = result.interpretation;
   const animalVisual = getAnimalVisual(result);
   const isPaid = false;
   const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
-  const shareLine = `${copy.title} · 재물 감각 상위 ${result.topPercent}% · ${getElementLabel(dominant)} 강세 / ${getElementLabel(weak)} 보완`;
+  const shareLine = `${interpretation.animalTitle} · 재물 감각 상위 ${result.topPercent}% · ${getElementLabel(dominant)} 강세 / ${getElementLabel(weak)} 보완`;
 
   const showToast = (message: string, tone: ShareToast["tone"] = "success") => {
     setShareToast({ message, tone });
@@ -609,84 +611,125 @@ function ResultContent() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f4f7fb] px-5 py-6 text-slate-950 [word-break:keep-all]">
+    <main className={`${uiTokens.page} py-6`}>
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
 
       <section className="mx-auto max-w-md pb-28">
-        <section className="overflow-hidden rounded-[2rem] bg-slate-950 text-white shadow-2xl shadow-slate-900/20">
-          <div className="bg-[linear-gradient(145deg,#0f172a_0%,#134e4a_52%,#111827_100%)] px-6 pb-6 pt-7">
+        <section className="overflow-hidden rounded-[32px] bg-[#241A12] text-[#FFFDF8] shadow-[0_18px_50px_rgba(36,26,18,0.18)]">
+          <div className="px-6 pb-7 pt-7">
             <div className="flex items-center justify-between gap-3">
-              <div className="rounded-full bg-white/10 px-4 py-2 text-xs font-black text-emerald-200 ring-1 ring-white/10">
-                당신의 돈 버는 동물은...
+              <div className="rounded-full bg-[#FFFDF8]/10 px-4 py-2 text-xs font-bold text-[#F7D8A7] ring-1 ring-[#FFFDF8]/10">
+                MONEY ANIMAL RESULT
               </div>
-              <span className="rounded-full bg-emerald-300 px-3 py-1.5 text-xs font-black text-slate-950">
+              <span className="rounded-full bg-[#FFFDF8] px-3 py-1.5 text-xs font-extrabold text-[#241A12]">
                 상위 {result.topPercent}%
               </span>
             </div>
 
-            <div className="mt-6 flex items-center gap-5">
-              <div className="grid h-24 w-24 shrink-0 place-items-center rounded-[2rem] bg-white text-6xl shadow-xl">
-                {animalVisual}
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white/55">
-                  재물 동물 유형
-                </p>
-                <h1 className="mt-2 text-3xl font-black leading-tight">
-                  {copy.title}
-                </h1>
-              </div>
-            </div>
+            <h1 className="mt-6 text-[31px] font-extrabold leading-[1.25]">
+              돈만 보면 눈을 뜨는
+              <br />
+              내 안의 동물은?
+            </h1>
 
-            <p className="mt-6 text-lg font-black leading-8 text-emerald-100">
-              당신은 {copy.title}입니다.
-            </p>
-            <p className="mt-3 text-sm font-semibold leading-7 text-white/72">
-              {copy.oneLineDiagnosis}
+            <p className="mt-5 text-[15px] leading-7 text-[#FFFDF8]/76">
+              누군가는 바로 낚아채고,
+              <br />
+              누군가는 차곡차곡 모으고,
+              <br />
+              누군가는 잡기 직전에 망설입니다.
             </p>
 
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <ScorePill
-                label="대표 오행"
-                value={`${getElementLabel(dominant)} · ${ELEMENT_META[dominant].ability}`}
-              />
-              <ScorePill
-                label="부족 오행"
-                value={`${getElementLabel(weak)} · ${ELEMENT_META[weak].ability}`}
-              />
-            </div>
-
-            <div className="mt-6">
-              <PrimaryCta onClick={handlePaidCta}>
-                내 돈버는 전략 열기
-              </PrimaryCta>
-              <p className="mt-3 text-center text-xs font-bold text-white/55">
-                회원가입 없이 바로 확인 가능
-              </p>
-            </div>
+            <p className="mt-5 text-[15px] leading-7 text-[#FFFDF8]/76">
+              이번 결과는
+              <br />
+              돈을 버는 방식,
+              <br />
+              돈이 새는 지점,
+              <br />
+              놓치기 쉬운 기회의 패턴을
+              <br />
+              하나의 동물 유형으로 정리한 것입니다.
+            </p>
           </div>
 
-          <div className="grid grid-cols-3 border-t border-white/10 text-center">
+          <div className="grid grid-cols-3 border-t border-[#FFFDF8]/10 text-center">
             <div className="px-3 py-4">
-              <p className="text-lg font-black">{result.wealthScore}</p>
-              <p className="mt-1 text-[11px] font-bold text-white/45">
+              <p className="text-lg font-extrabold">{result.wealthScore}</p>
+              <p className="mt-1 text-[11px] font-bold text-[#FFFDF8]/48">
                 재물 점수
               </p>
             </div>
-            <div className="border-x border-white/10 px-3 py-4">
-              <p className="text-lg font-black">{result.animalType.animal}</p>
-              <p className="mt-1 text-[11px] font-bold text-white/45">
+            <div className="border-x border-[#FFFDF8]/10 px-3 py-4">
+              <p className="text-lg font-extrabold">{result.animalType.animal}</p>
+              <p className="mt-1 text-[11px] font-bold text-[#FFFDF8]/48">
                 동물 판정
               </p>
             </div>
             <div className="px-3 py-4">
-              <p className="text-lg font-black">
+              <p className="text-lg font-extrabold">
                 {calendarTypeParam === "lunar" ? "음력" : "양력"}
               </p>
-              <p className="mt-1 text-[11px] font-bold text-white/45">
+              <p className="mt-1 text-[11px] font-bold text-[#FFFDF8]/48">
                 입력 기준
               </p>
             </div>
+          </div>
+        </section>
+
+        <section className={`${uiTokens.card} mt-5`}>
+          <div className="flex items-center gap-5">
+            <div className="grid h-24 w-24 shrink-0 place-items-center rounded-[28px] bg-[#FDF7EC] text-6xl shadow-[0_12px_30px_rgba(36,26,18,0.08)]">
+              {animalVisual}
+            </div>
+            <div>
+              <p className={uiTokens.caption}>재물 동물 유형</p>
+              <h2 className="mt-2 text-[28px] font-extrabold leading-[1.25] text-[#241A12]">
+                {interpretation.animalTitle} 유형
+              </h2>
+            </div>
+          </div>
+
+          <div className="mt-6 space-y-4 text-[15px] leading-7 text-[#7A6754]">
+            <p>
+              돈 앞에서 {interpretation.coreTendency}이 강하게 드러나는 타입입니다.
+            </p>
+            <p>
+              사주와 오행 밸런스를 보면 {getElementLabel(dominant)}의 흐름이 두드러지고,
+              {getElementLabel(weak)}은 상대적으로 약하게 나타납니다.
+            </p>
+            <p>
+              그래서 돈을 벌 때는 {interpretation.earningStyle}에 강하지만,
+              {interpretation.spendingRisk}에서 반복적으로 흔들릴 수 있습니다.
+            </p>
+          </div>
+
+          <div className="mt-5 grid grid-cols-2 gap-3">
+            <ScorePill
+              label="대표 오행"
+              value={`${getElementLabel(dominant)} · ${ELEMENT_META[dominant].ability}`}
+            />
+            <ScorePill
+              label="부족 오행"
+              value={`${getElementLabel(weak)} · ${ELEMENT_META[weak].ability}`}
+            />
+            <ScorePill
+              label="재성"
+              value={`${getElementLabel(interpretation.wealthElement)} · ${interpretation.wealthScore}%`}
+            />
+            <ScorePill
+              label="균형"
+              value={interpretation.balanceLevel}
+            />
+          </div>
+
+          <div className="mt-6">
+            <PrimaryCta onClick={handlePaidCta}>
+              내 돈이 새는 지점 확인하기
+            </PrimaryCta>
+            <p className="mt-3 text-center text-xs font-bold text-[#7A6754]">
+              회원가입 없이 바로 확인 가능
+            </p>
           </div>
         </section>
 
@@ -694,27 +737,27 @@ function ResultContent() {
           <SectionHeading
             eyebrow="FREE SUMMARY"
             title="무료 결과 핵심 3가지"
-            description="좋은 말만 모으지 않고, 돈으로 바뀌는 장면과 막히는 지점을 같이 보여드려요."
+            description="좋은 말만 모으지 않고, 돈으로 바뀌는 장면과 막히는 지점을 같이 정리했습니다."
           />
 
           <div className="mt-4 space-y-3">
             {summaryCards.map((card, index) => (
               <article
                 key={card.title}
-                className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200"
+                className={uiTokens.card}
               >
                 <div className="flex items-start gap-4">
-                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-slate-950 text-sm font-black text-white">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#241A12] text-sm font-extrabold text-[#FFFDF8]">
                     {index + 1}
                   </div>
                   <div>
-                    <p className="text-sm font-black text-teal-700">
+                    <p className="text-sm font-extrabold text-[#B46A3C]">
                       {card.title}
                     </p>
-                    <h3 className="mt-1 text-lg font-black leading-6 text-slate-950">
+                    <h3 className="mt-1 text-lg font-extrabold leading-6 text-[#241A12]">
                       {card.value}
                     </h3>
-                    <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+                    <p className="mt-2 text-sm font-semibold leading-6 text-[#7A6754]">
                       {card.body}
                     </p>
                   </div>
@@ -724,7 +767,7 @@ function ResultContent() {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] bg-white p-6 shadow-xl shadow-slate-200/80 ring-1 ring-slate-200">
+        <section className={`${uiTokens.card} mt-8`}>
           <SectionHeading
             eyebrow="FIVE ELEMENTS"
             title="오행 밸런스로 보는 돈버는 능력"
@@ -736,18 +779,18 @@ function ResultContent() {
               <div key={element}>
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-black text-slate-900">
+                    <p className="text-sm font-extrabold text-[#241A12]">
                       {getElementLabel(element)}
                     </p>
-                    <p className="text-xs font-bold text-slate-400">
+                    <p className="text-xs font-bold text-[#7A6754]">
                       {ELEMENT_META[element].ability}
                     </p>
                   </div>
-                  <span className="text-sm font-black text-slate-700">
+                  <span className="text-sm font-extrabold text-[#241A12]">
                     {value}%
                   </span>
                 </div>
-                <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-3 overflow-hidden rounded-full bg-[#F1E4D3]">
                   <div
                     className={`h-full rounded-full ${ELEMENT_META[element].tone}`}
                     style={{ width: `${Math.max(4, value)}%` }}
@@ -758,27 +801,27 @@ function ResultContent() {
           </div>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
-              <p className="text-xs font-black text-emerald-700">가장 강함</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">
+            <div className="rounded-[18px] border border-[#E8D8C5] bg-[#FDF7EC] p-4">
+              <p className="text-xs font-extrabold text-[#B46A3C]">가장 강함</p>
+              <h3 className="mt-1 text-xl font-extrabold text-[#241A12]">
                 {getElementLabel(dominant)}
               </h3>
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#7A6754]">
                 {ELEMENT_META[dominant].strong}
               </p>
             </div>
-            <div className="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-100">
-              <p className="text-xs font-black text-rose-700">보완 필요</p>
-              <h3 className="mt-1 text-xl font-black text-slate-950">
+            <div className="rounded-[18px] border border-[#E8D8C5] bg-[#FDF7EC] p-4">
+              <p className="text-xs font-extrabold text-[#B46A3C]">보완 필요</p>
+              <h3 className="mt-1 text-xl font-extrabold text-[#241A12]">
                 {getElementLabel(weak)}
               </h3>
-              <p className="mt-2 text-xs font-semibold leading-5 text-slate-600">
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#7A6754]">
                 {ELEMENT_META[weak].weak}
               </p>
             </div>
           </div>
 
-          <p className="mt-5 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold leading-6 text-slate-600">
+          <p className="mt-5 rounded-[18px] bg-[#FDF7EC] px-4 py-3 text-sm font-semibold leading-6 text-[#7A6754]">
             {withSubjectParticle(getElementLabel(dominant))} 강하면{" "}
             {ELEMENT_META[dominant].strong} 하지만{" "}
             {withSubjectParticle(getElementLabel(weak))} 약하면{" "}
@@ -794,15 +837,15 @@ function ResultContent() {
           />
 
           <div className="mt-4 space-y-4">
-            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
-              <h3 className="text-lg font-black text-slate-950">
+            <article className={uiTokens.card}>
+              <h3 className="text-lg font-extrabold text-[#241A12]">
                 돈으로 바뀌기 쉬운 강점 3개
               </h3>
               <ul className="mt-4 space-y-3">
                 {freeStrengths.map((item) => (
                   <li
                     key={item}
-                    className="rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700"
+                    className="rounded-[18px] bg-[#FDF7EC] px-4 py-3 text-sm font-bold leading-6 text-[#241A12]"
                   >
                     {item}
                   </li>
@@ -810,15 +853,15 @@ function ResultContent() {
               </ul>
             </article>
 
-            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
-              <h3 className="text-lg font-black text-slate-950">
+            <article className={uiTokens.card}>
+              <h3 className="text-lg font-extrabold text-[#241A12]">
                 수익화를 막는 약점 2개
               </h3>
               <ul className="mt-4 space-y-3">
                 {freeWeaknesses.map((item) => (
                   <li
                     key={item}
-                    className="rounded-2xl bg-rose-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700"
+                    className="rounded-[18px] bg-[#FDF7EC] px-4 py-3 text-sm font-bold leading-6 text-[#7A6754]"
                   >
                     {item}
                   </li>
@@ -826,41 +869,46 @@ function ResultContent() {
               </ul>
             </article>
 
-            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
-              <h3 className="text-lg font-black text-slate-950">
+            <article className={uiTokens.card}>
+              <h3 className="text-lg font-extrabold text-[#241A12]">
                 돈버는 패턴
               </h3>
-              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
-                {paidReport.moneyPattern} {copy.summary}
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#7A6754]">
+                {paidReport.moneyPattern} {interpretation.moneyStrengthText}
               </p>
             </article>
 
-            <article className="rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
-              <h3 className="text-lg font-black text-slate-950">
+            <article className={uiTokens.card}>
+              <h3 className="text-lg font-extrabold text-[#241A12]">
                 실패 패턴
               </h3>
-              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
-                {RISK_PATTERN_COPY[result.resultSignals.riskPattern]} {copy.cautions[0]}
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#7A6754]">
+                {RISK_PATTERN_COPY[result.resultSignals.riskPattern]} {interpretation.moneyWeaknessText}
               </p>
             </article>
           </div>
         </section>
 
-        <section className="mt-8 rounded-[2rem] bg-slate-950 p-6 text-white shadow-2xl shadow-slate-900/20">
-          <p className="text-xs font-black tracking-[0.18em] text-emerald-300">
+        <section className="mt-8 rounded-[32px] bg-[#241A12] p-6 text-[#FFFDF8] shadow-[0_18px_50px_rgba(36,26,18,0.18)]">
+          <p className="text-xs font-extrabold uppercase text-[#F7D8A7]">
             NEXT QUESTION
           </p>
-          <h2 className="mt-3 text-2xl font-black leading-tight">
-            하지만 이 유형은 돈을 벌 때 반복해서 막히는 지점이 있습니다.
+          <h2 className="mt-3 text-[24px] font-extrabold leading-[1.25]">
+            이 동물이 보여주는 재물 신호는 아직 끝이 아닙니다.
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-7 text-white/70">
-            무료 결과에서는 성향까지만 보여드렸어요. 전체 해석에서는 이 성향을 실제 수익화 방향, 피해야 할 방식, 3개월 행동 가이드로 바꿔드립니다.
-          </p>
+          <div className="mt-4 space-y-3 text-[15px] leading-7 text-[#FFFDF8]/72">
+            <p>
+              {interpretation.animalTitle} 유형 안에는 반복해서 돈이 붙는 장면과 빠져나가는 지점이 같이 숨어 있습니다.
+            </p>
+            <p>
+              무료 결과는 성향 확인까지입니다. 전체 리포트에서는 이 동물이 왜 나왔는지, 어떤 오행 흐름이 돈을 끌어오는지, 어디서 돈이 새기 쉬운지까지 이어서 봅니다.
+            </p>
+          </div>
           <div className="mt-5">
             <PrimaryCta onClick={handlePaidCta}>
-              내 수익화 전략 보기
+              내 돈이 새는 지점 확인하기
             </PrimaryCta>
-            <p className="mt-3 text-center text-xs font-bold text-white/50">
+            <p className="mt-3 text-center text-xs font-bold text-[#FFFDF8]/50">
               회원가입 없이 바로 확인
             </p>
           </div>
@@ -870,15 +918,15 @@ function ResultContent() {
           <SectionHeading
             eyebrow="LOCKED REPORT"
             title="전체 해석 미리보기"
-            description="제목과 일부 문장만 먼저 보여드립니다. 전체 내용은 해석을 열면 바로 확인할 수 있어요."
+            description="동물 유형이 보여주는 돈의 패턴을 제목과 일부 문장으로 먼저 엽니다."
           />
 
           {isPaid ? (
-            <div className="mt-4 rounded-[1.5rem] bg-white p-5 shadow-lg ring-1 ring-slate-200">
-              <h3 className="text-lg font-black text-slate-950">
+            <div className={`${uiTokens.card} mt-4`}>
+              <h3 className="text-lg font-extrabold text-[#241A12]">
                 {paidReport.title}
               </h3>
-              <p className="mt-3 text-sm font-semibold leading-7 text-slate-600">
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#7A6754]">
                 {paidReport.overview}
               </p>
             </div>
@@ -887,17 +935,17 @@ function ResultContent() {
               {lockedSections.map((section) => (
                 <article
                   key={section.title}
-                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/70"
+                  className={uiTokens.card}
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-base font-black leading-6 text-slate-950">
+                    <h3 className="text-base font-extrabold leading-6 text-[#241A12]">
                       {section.title}
                     </h3>
-                    <span className="shrink-0 rounded-full bg-slate-950 px-3 py-1 text-xs font-black text-white">
+                    <span className="shrink-0 rounded-full bg-[#241A12] px-3 py-1 text-xs font-extrabold text-[#FFFDF8]">
                       잠금
                     </span>
                   </div>
-                  <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                  <p className="mt-3 text-sm font-semibold leading-6 text-[#7A6754]">
                     <BlurredKeywordText
                       text={section.teaser}
                       keyword={section.blurredKeyword}
@@ -909,18 +957,20 @@ function ResultContent() {
           )}
         </section>
 
-        <section className="mt-8 rounded-[2rem] bg-[linear-gradient(145deg,#042f2e_0%,#0f172a_58%,#111827_100%)] p-6 text-white shadow-2xl shadow-slate-900/25">
-          <div className="rounded-full bg-emerald-300 px-4 py-2 text-center text-xs font-black text-slate-950">
+        <section className="mt-8 rounded-[32px] bg-[#6F3F2A] p-6 text-[#FFFDF8] shadow-[0_18px_50px_rgba(36,26,18,0.22)]">
+          <div className="rounded-full bg-[#FFFDF8] px-4 py-2 text-center text-xs font-extrabold text-[#241A12]">
             전체 재물 해석 · ₩1,900
           </div>
-          <h2 className="mt-5 text-3xl font-black leading-tight">
+          <h2 className="mt-5 text-[28px] font-extrabold leading-[1.25]">
             전체 재물 해석 열기
           </h2>
-          <p className="mt-4 text-sm font-semibold leading-7 text-white/70">
-            무료 결과에서는 당신의 돈버는 성향까지만 보여드렸어요. 전체 해석에서는 이 성향을 실제 수익화 방향으로 바꿔드립니다.
-          </p>
+          <div className="mt-4 space-y-3 text-sm font-semibold leading-7 text-[#FFFDF8]/76">
+            {interpretation.paidReportHookParagraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
 
-          <ul className="mt-5 space-y-3 text-sm font-bold leading-6 text-white/86">
+          <ul className="mt-5 space-y-3 text-sm font-bold leading-6 text-[#FFFDF8]/90">
             {[
               "나에게 맞는 수익화 방식 TOP 3",
               "피해야 할 돈버는 방식",
@@ -930,7 +980,7 @@ function ResultContent() {
               "올해 돈 흐름 요약",
             ].map((item) => (
               <li key={item} className="flex gap-3">
-                <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-emerald-300 text-center text-xs font-black leading-5 text-slate-950">
+                <span className="mt-1 h-5 w-5 shrink-0 rounded-full bg-[#FFFDF8] text-center text-xs font-extrabold leading-5 text-[#6F3F2A]">
                   ✓
                 </span>
                 <span>{item}</span>
@@ -938,13 +988,13 @@ function ResultContent() {
             ))}
           </ul>
 
-          <div className="mt-6 rounded-[1.5rem] bg-white p-5 text-slate-950">
+          <div className="mt-6 rounded-[24px] bg-[#FFFDF8] p-5 text-[#241A12]">
             <div className="flex items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-black text-slate-400">출시 기념가</p>
-                <p className="mt-1 text-3xl font-black">₩1,900</p>
+                <p className="text-xs font-extrabold text-[#7A6754]">출시 기념가</p>
+                <p className="mt-1 text-3xl font-extrabold">₩1,900</p>
               </div>
-              <p className="text-right text-xs font-bold leading-5 text-slate-500">
+              <p className="text-right text-xs font-bold leading-5 text-[#7A6754]">
                 결제 후 바로
                 <br />
                 결과 확인 가능
@@ -952,9 +1002,9 @@ function ResultContent() {
             </div>
             <div className="mt-5">
               <PrimaryCta onClick={handlePaidCta} dark>
-                내 돈버는 전략 열기
+                내 돈이 새는 지점 확인하기
               </PrimaryCta>
-              <p className="mt-3 text-center text-xs font-bold text-slate-500">
+              <p className="mt-3 text-center text-xs font-bold text-[#7A6754]">
                 회원가입 없이 바로 확인
               </p>
             </div>
@@ -968,39 +1018,39 @@ function ResultContent() {
             description="캡처하고 싶은 핵심만 모아 친구에게 보여줄 수 있게 정리했습니다."
           />
 
-          <div className="mt-4 rounded-[1.5rem] bg-white p-5 shadow-lg shadow-slate-200/70 ring-1 ring-slate-200">
-            <p className="text-xs font-black tracking-[0.18em] text-teal-700">
+          <div className={`${uiTokens.card} mt-4`}>
+            <p className={uiTokens.eyebrow}>
               MONEY ANIMAL CARD
             </p>
             <div className="mt-4 flex items-center gap-4">
-              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-3xl bg-slate-950 text-4xl">
+              <div className="grid h-16 w-16 shrink-0 place-items-center rounded-[22px] bg-[#241A12] text-4xl">
                 {animalVisual}
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-500">
-                  나는 {copy.title}
+                <p className="text-sm font-bold text-[#7A6754]">
+                  나는 {interpretation.animalTitle}
                 </p>
-                <h3 className="mt-1 text-xl font-black leading-7 text-slate-950">
+                <h3 className="mt-1 text-xl font-extrabold leading-7 text-[#241A12]">
                   재물 감각 상위 {result.topPercent}%
                 </h3>
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl bg-emerald-50 p-4">
-                <p className="text-xs font-black text-emerald-700">강한 오행</p>
-                <p className="mt-1 text-lg font-black text-slate-950">
+              <div className="rounded-[18px] bg-[#FDF7EC] p-4">
+                <p className="text-xs font-extrabold text-[#B46A3C]">강한 오행</p>
+                <p className="mt-1 text-lg font-extrabold text-[#241A12]">
                   {getElementLabel(dominant)}
                 </p>
               </div>
-              <div className="rounded-2xl bg-rose-50 p-4">
-                <p className="text-xs font-black text-rose-700">부족 오행</p>
-                <p className="mt-1 text-lg font-black text-slate-950">
+              <div className="rounded-[18px] bg-[#FDF7EC] p-4">
+                <p className="text-xs font-extrabold text-[#B46A3C]">부족 오행</p>
+                <p className="mt-1 text-lg font-extrabold text-[#241A12]">
                   {getElementLabel(weak)}
                 </p>
               </div>
             </div>
-            <p className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold leading-6 text-slate-700">
-              {copy.moneyAttitude}
+            <p className="mt-4 rounded-[18px] bg-[#FDF7EC] px-4 py-3 text-sm font-bold leading-6 text-[#7A6754]">
+              {interpretation.moneyStrengthText}
             </p>
           </div>
 
@@ -1008,47 +1058,47 @@ function ResultContent() {
             <button
               type="button"
               onClick={handleSaveImage}
-              className="w-full rounded-2xl bg-white px-5 py-4 text-base font-black text-slate-900 shadow-lg ring-1 ring-slate-200 transition active:scale-[0.98]"
+              className={uiTokens.secondaryButton}
             >
               결과 이미지 저장하기
             </button>
             <button
               type="button"
               onClick={handleShare}
-              className="w-full rounded-2xl bg-white px-5 py-4 text-base font-black text-slate-900 shadow-lg ring-1 ring-slate-200 transition active:scale-[0.98]"
+              className={uiTokens.secondaryButton}
             >
               친구에게 공유하기
             </button>
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-full rounded-2xl bg-slate-950 px-5 py-4 text-base font-black text-white shadow-lg transition active:scale-[0.98]"
+              className={uiTokens.button}
             >
               다시 테스트하기
             </button>
           </div>
         </section>
 
-        <p className="mt-7 text-center text-xs font-semibold leading-5 text-slate-400">
+        <p className={`${uiTokens.caption} mt-7 text-center font-semibold`}>
           본 테스트는 정통 만세력 감정이 아닌 오락 및 자기이해 목적의 콘텐츠형 변환입니다.
           실제 금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.
         </p>
 
-        <div className="fixed inset-x-0 bottom-0 z-20 bg-white/90 px-5 py-4 shadow-[0_-10px_30px_rgba(15,23,42,0.12)] backdrop-blur">
+        <div className="fixed inset-x-0 bottom-0 z-20 bg-[#FFFDF8]/92 px-5 py-4 shadow-[0_-10px_30px_rgba(36,26,18,0.12)] backdrop-blur">
           <div className="mx-auto flex max-w-md gap-3">
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="w-1/3 rounded-2xl border border-slate-200 bg-white px-3 py-4 text-sm font-black text-slate-800"
+              className="w-1/3 rounded-full border border-[#E8D8C5] bg-[#FFFDF8] px-3 py-4 text-sm font-extrabold text-[#241A12]"
             >
               다시
             </button>
             <button
               type="button"
               onClick={handlePaidCta}
-              className="w-2/3 rounded-2xl bg-slate-950 px-3 py-4 text-sm font-black text-white"
+              className="w-2/3 rounded-full bg-[#241A12] px-3 py-4 text-sm font-extrabold text-[#FFFDF8]"
             >
-              내 돈버는 전략 열기
+              내 돈이 새는 지점 확인하기
             </button>
           </div>
         </div>
@@ -1061,8 +1111,8 @@ function ResultContent() {
             <p
               className={`mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-bold shadow-2xl ${
                 shareToast.tone === "success"
-                  ? "bg-slate-950 text-white"
-                  : "bg-rose-700 text-white"
+                  ? "bg-[#241A12] text-[#FFFDF8]"
+                  : "bg-[#9f2d2d] text-[#FFFDF8]"
               }`}
             >
               {shareToast.message}
@@ -1078,7 +1128,7 @@ export default function ResultPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-slate-100 p-10 text-sm font-bold text-slate-500">
+        <div className="min-h-screen bg-[#F8F2E8] p-10 text-sm font-bold text-[#7A6754]">
           결과를 불러오는 중입니다...
         </div>
       }

@@ -17,6 +17,10 @@ import {
   renderResultCopy,
   type RenderedResultCopy,
 } from "./result/renderResultCopy";
+import {
+  buildWealthInterpretation,
+  type WealthInterpretation,
+} from "./result/buildWealthInterpretation";
 
 export type Gender = "male" | "female" | "unknown";
 
@@ -106,6 +110,7 @@ export type WealthResult = {
   saju: WealthSajuSummary;
   animalType: AnimalType;
   resultSignals: ResultSignals;
+  interpretation: WealthInterpretation;
   copy: RenderedResultCopy;
   debug: {
     pillars: WealthSajuSummary["pillars"];
@@ -817,6 +822,13 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
   });
   const animalType = selectAnimalType(resultSignals);
   const copy = renderResultCopy(animalType, resultSignals);
+  const interpretation = buildWealthInterpretation({
+    elements,
+    saju,
+    signals: resultSignals,
+    animalType,
+    animalTitle: copy.title,
+  });
   const legacyLogic = buildLogic(elements, profile, templateId, analysis);
 
   return {
@@ -834,6 +846,7 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     saju,
     animalType,
     resultSignals,
+    interpretation,
     copy,
     debug: {
       pillars: saju.pillars,

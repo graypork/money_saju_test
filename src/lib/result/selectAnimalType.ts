@@ -22,6 +22,7 @@ function getAnimalScore(animalType: AnimalType, signals: ResultSignals) {
   if (includes(signals.actionStyle, trigger.actionStyle)) score += 12;
   if (includes(signals.riskPattern, trigger.riskPattern)) score += 12;
   if (includes(signals.earningStyle, trigger.earningStyle)) score += 12;
+  if (includes(signals.wealthStrength, trigger.wealthStrength)) score += 16;
 
   return score;
 }

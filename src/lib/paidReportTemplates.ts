@@ -40,7 +40,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["한 가지 채널에 주 3회 이상 기록을 쌓습니다.", "기존 고객이나 지인에게 재구매 제안을 보냅니다.", "수익 루틴을 가격표와 일정표로 고정합니다."],
     },
     warning: "느린 속도를 실패로 단정하면 가장 강한 무기인 누적성이 사라집니다.",
-    finalMessage: "당신에게 필요한 건 더 큰 확신보다, 중간에 접지 않을 구조입니다.",
+    finalMessage: "이 유형에 필요한 건 더 큰 확신보다, 중간에 접지 않을 구조입니다.",
     previewSections: [
       { title: "누적 수익 지도", teaser: "어떤 반복 활동이 돈으로 쌓이는지 우선순위를 보여줍니다." },
       { title: "흔들리는 시점", teaser: "포기하기 쉬운 구간과 버텨야 하는 구간을 나눕니다." },
@@ -56,13 +56,13 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
     moneyLeakPattern: "완성도에 갇히거나 흥미가 식어 출시 전 멈추면 수익 전환이 늦어집니다.",
     timingAdvice: "완성 후 공개보다 60퍼센트 완성도에서 반응을 보는 방식이 유리합니다.",
     careerAndBusinessFit: "콘텐츠 마케팅, 디자인, 브랜드 기획, 1인 미디어, 템플릿 상품에 적성이 있습니다.",
-    relationshipAndMoney: "당신의 감각을 알아보는 팬, 고객, 협업자와 만났을 때 돈의 속도가 빨라집니다.",
+    relationshipAndMoney: "감각을 알아보는 팬, 고객, 협업자와 만났을 때 돈의 속도가 빨라집니다.",
     actionPlan: {
       sevenDays: ["팔 수 있는 아이디어 3개를 적습니다.", "가장 쉬운 아이디어를 무료 샘플로 공개합니다.", "반응이 온 문장을 따로 저장합니다."],
       thirtyDays: ["반응이 온 주제로 작은 유료 상품을 만듭니다.", "콘텐츠 발행 요일을 고정합니다.", "대표 포트폴리오 3개를 한 화면에 정리합니다."],
     },
     warning: "감각만 믿고 판매 구조를 만들지 않으면 결과가 계속 취미에 머뭅니다.",
-    finalMessage: "당신의 돈길은 더 잘 만드는 것보다 더 빨리 보여주는 데서 열립니다.",
+    finalMessage: "돈길은 더 잘 만드는 것보다 더 빨리 보여주는 데서 열립니다.",
     previewSections: [
       { title: "팔리는 감각 포맷", teaser: "콘텐츠, 상품, 서비스 중 어디에 먼저 얹을지 분석합니다." },
       { title: "출시 지연 패턴", teaser: "완벽주의가 돈을 늦추는 지점을 짚습니다." },
@@ -128,7 +128,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["관계 기반 제안 5건을 보냅니다.", "무상 도움의 기준을 정합니다.", "협업 후 정산 방식 템플릿을 만듭니다."],
     },
     warning: "관계가 많아도 기준이 없으면 수익보다 피로가 먼저 쌓입니다.",
-    finalMessage: "당신의 관계운은 자산이 될 수 있습니다. 단, 선을 그어야 돈이 됩니다.",
+    finalMessage: "관계운은 자산이 될 수 있습니다. 단, 선을 그어야 돈이 됩니다.",
     previewSections: [
       { title: "돈 되는 관계", teaser: "기회를 주는 관계와 에너지만 쓰는 관계를 구분합니다." },
       { title: "협업 정산법", teaser: "좋은 관계를 망치지 않는 돈 기준을 정합니다." },
@@ -144,13 +144,13 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
     moneyLeakPattern: "계속 배우기만 하고 제안하지 않으면 실력이 통장으로 옮겨가지 않습니다.",
     timingAdvice: "더 배운 뒤가 아니라, 이미 해결 가능한 문제부터 작게 팔아야 합니다.",
     careerAndBusinessFit: "전문직, 개발, 데이터, 교육, 운영 자동화, B2B 문제 해결에 강점이 있습니다.",
-    relationshipAndMoney: "당신의 실력을 알아보고 반복 의뢰하는 고객과 길게 가는 것이 좋습니다.",
+    relationshipAndMoney: "실력을 알아보고 반복 의뢰하는 고객과 길게 가는 것이 좋습니다.",
     actionPlan: {
       sevenDays: ["이미 해결 가능한 문제 5개를 적습니다.", "그중 하나를 1시간 서비스로 만듭니다.", "가격을 낮추기 전에 결과물을 명확히 씁니다."],
       thirtyDays: ["작은 유료 제안 3건을 보냅니다.", "자주 받는 질문을 콘텐츠로 정리합니다.", "반복 가능한 작업을 템플릿화합니다."],
     },
     warning: "준비만 오래 하면 실력은 늘지만 수익은 늦어집니다.",
-    finalMessage: "당신의 돈은 더 배우는 순간보다, 배운 것을 팔기 시작하는 순간 움직입니다.",
+    finalMessage: "돈은 더 배우는 순간보다, 배운 것을 팔기 시작하는 순간 움직입니다.",
     previewSections: [
       { title: "전문성 상품화", teaser: "지금 가진 능력을 팔 수 있는 단위로 쪼갭니다." },
       { title: "가격 저평가", teaser: "싸게 부르게 되는 지점과 기준 가격을 봅니다." },
@@ -194,7 +194,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["경험 기반 콘텐츠를 주 2회 발행합니다.", "하나의 방향을 30일간 고정합니다.", "시행착오를 체크리스트나 가이드로 바꿉니다."],
     },
     warning: "늦었다는 생각이 가장 큰 방해입니다. 방향이 잡히기 전에 멈추면 후반 힘을 못 씁니다.",
-    finalMessage: "당신에게 필요한 건 빠른 증명이 아니라, 경험을 돈으로 바꾸는 편집력입니다.",
+    finalMessage: "이 유형에 필요한 건 빠른 증명이 아니라, 경험을 돈으로 바꾸는 편집력입니다.",
     previewSections: [
       { title: "후반 성장 구간", teaser: "경험이 돈으로 바뀌기 쉬운 흐름을 봅니다." },
       { title: "시행착오 자산화", teaser: "버린 경험처럼 보이는 것의 수익화 지점을 찾습니다." },
@@ -210,13 +210,13 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
     moneyLeakPattern: "자격을 더 따야 한다는 생각으로 실전 판매를 미루면 수익 전환이 늦습니다.",
     timingAdvice: "공부와 판매를 분리하지 말고, 배우는 내용을 바로 정리해 공개하는 편이 좋습니다.",
     careerAndBusinessFit: "교육, 제도권 전문직, 문서화, 심사, 분석, 자문 역할에 적성이 있습니다.",
-    relationshipAndMoney: "당신의 근거와 성실함을 신뢰하는 고객과 안정적으로 연결됩니다.",
+    relationshipAndMoney: "근거와 성실함을 신뢰하는 고객과 안정적으로 연결됩니다.",
     actionPlan: {
       sevenDays: ["가진 자격과 지식을 목록화합니다.", "사람들이 자주 묻는 질문 5개를 적습니다.", "답변 하나를 짧은 글로 공개합니다."],
       thirtyDays: ["질문 10개를 묶어 미니 가이드로 만듭니다.", "상담이나 강의 형태의 작은 상품을 만듭니다.", "실전 사례를 포트폴리오로 정리합니다."],
     },
     warning: "공부가 돈이 되려면 결과물이 있어야 합니다. 지식만 쌓으면 수익은 늦습니다.",
-    finalMessage: "당신의 지식은 충분히 자산이 될 수 있습니다. 이제 팔리는 형태가 필요합니다.",
+    finalMessage: "지식은 충분히 자산이 될 수 있습니다. 이제 팔리는 형태가 필요합니다.",
     previewSections: [
       { title: "지식 자산화", teaser: "지금 가진 지식을 상품 단위로 바꾸는 법을 봅니다." },
       { title: "준비 과다 패턴", teaser: "공부가 실행을 밀어내는 지점을 분석합니다." },
@@ -240,7 +240,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
     warning: "좋은 사람으로 보이려다 거래 조건을 흐리면 돈 받을 기회를 놓칩니다.",
     finalMessage: "팔 수 있는 힘이 있습니다. 이제 부탁이 아니라 제안으로 말하면 됩니다.",
     previewSections: [
-      { title: "팔리는 제안 문장", teaser: "당신에게 맞는 판매 문장 구조를 제안합니다." },
+      { title: "팔리는 제안 문장", teaser: "이 유형에 맞는 판매 문장 구조를 제안합니다." },
       { title: "가격 말하기", teaser: "돈 얘기에서 약해지는 지점을 봅니다." },
       { title: "30일 세일즈 플랜", teaser: "부담 없이 제안을 늘리는 순서를 정리합니다." },
     ],
@@ -260,7 +260,7 @@ export const paidReportTemplateMap: Record<TemplateId, PaidReport> = {
       thirtyDays: ["관찰 기록을 주 2회 남깁니다.", "작은 금액이나 모의 방식으로 기준을 테스트합니다.", "성공/실패 판단표를 만듭니다."],
     },
     warning: "분석력이 좋아도 기준 없는 확신은 위험합니다. 오래 재는 습관도 기회를 놓치게 합니다.",
-    finalMessage: "당신에게 필요한 건 더 많은 정보보다, 움직일 기준과 멈출 기준입니다.",
+    finalMessage: "이 유형에 필요한 건 더 많은 정보보다, 움직일 기준과 멈출 기준입니다.",
     previewSections: [
       { title: "기회 선별 기준", teaser: "좋은 기회와 착각을 구분하는 지표를 잡습니다." },
       { title: "타이밍 판단", teaser: "분석을 멈추고 결정해야 할 신호를 봅니다." },

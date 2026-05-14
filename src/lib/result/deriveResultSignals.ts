@@ -70,6 +70,7 @@ export type EarningStyle =
   | "selfOwnedSystem";
 
 export type PolarityStyle = "masculine" | "feminine" | "mixed";
+export type WealthStrength = "weak" | "moderate" | "strong";
 
 export type ResultSignals = {
   templateId: TemplateId;
@@ -84,6 +85,8 @@ export type ResultSignals = {
   riskPattern: RiskPattern;
   earningStyle: EarningStyle;
   polarityStyle: PolarityStyle;
+  wealthScore: number;
+  wealthStrength: WealthStrength;
   polarityScores: {
     masculine: number;
     feminine: number;
@@ -324,6 +327,12 @@ function getPolarityStyle(scores: { masculine: number; feminine: number }) {
   return "mixed";
 }
 
+function getWealthStrength(wealthScore: number): WealthStrength {
+  if (wealthScore >= 27) return "strong";
+  if (wealthScore <= 15) return "weak";
+  return "moderate";
+}
+
 export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
   const rankedElements = getRankedElements(source.elements);
   const strongest = rankedElements[0];
@@ -331,6 +340,7 @@ export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
   const elementGap = strongest.value - weakest.value;
   const balanceType = getBalanceType(source.elements, elementGap);
   const dominantRelation = getDominantRelation(source.saju);
+  const wealthScore = source.saju.relationScores.wealth;
   const moneyPattern = getMoneyPattern(
     source,
     strongest.element,
@@ -354,6 +364,8 @@ export function deriveResultSignals(source: ResultSignalSource): ResultSignals {
     riskPattern,
     earningStyle: EARNING_BY_PATTERN[moneyPattern],
     polarityStyle: getPolarityStyle(polarityScores),
+    wealthScore,
+    wealthStrength: getWealthStrength(wealthScore),
     polarityScores,
     dominantRelation,
     dayStrengthLevel: source.saju.dayStrength.level,
