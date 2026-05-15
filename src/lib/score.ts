@@ -117,6 +117,10 @@ export type WealthResult = {
     dayMaster: string;
     pillars: WealthSajuSummary["pillars"];
     elementScores: WealthElementScores;
+    rawWealthScore: number;
+    baseTopPercent: number;
+    displayWealthScore: number;
+    topPercent: number;
     elements: {
       percentages: WealthElementScores;
     };
@@ -180,6 +184,8 @@ const RELATION_FLOW_LABEL: Record<TenGodCategory, string> = {
 };
 
 const TYPE_IDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+const RAW_SCORE_MIN = 47;
+const RAW_SCORE_MAX = 60;
 
 function clamp(value: number, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
@@ -327,13 +333,67 @@ function calculateWealthScore(profile: WealthProfile) {
 }
 
 function calculateDisplayWealthScore(rawScore: number) {
+  return normalizeWealthScore(rawScore);
+}
+
+function calculateTypeSelectionWealthScore(rawScore: number) {
   return clamp(rawScore);
 }
 
-function scoreToTopPercent(score: number) {
-  const safeScore = clamp(score);
+function normalizeWealthScore(rawScore: number) {
+  const safeScore = Math.max(RAW_SCORE_MIN, Math.min(RAW_SCORE_MAX, rawScore));
 
-  return clamp(101 - safeScore, 1, 99);
+  return clamp(
+    ((safeScore - RAW_SCORE_MIN) / (RAW_SCORE_MAX - RAW_SCORE_MIN)) * 100
+  );
+}
+
+function calculateBaseTopPercent(rawScore: number) {
+  const safeScore = Math.max(RAW_SCORE_MIN, Math.min(RAW_SCORE_MAX, rawScore));
+
+  return clamp(
+    1 + ((RAW_SCORE_MAX - safeScore) / (RAW_SCORE_MAX - RAW_SCORE_MIN)) * 98,
+    1,
+    99
+  );
+}
+
+function calibrateDisplayTopPercent(baseTopPercent: number) {
+  const p = Math.max(1, Math.min(99, Math.round(baseTopPercent)));
+
+  if (p <= 10) {
+    return clamp(1 + ((p - 1) / 9) * 4, 1, 5);
+  }
+
+  if (p <= 20) {
+    return clamp(6 + ((p - 11) / 9) * 4, 6, 10);
+  }
+
+  if (p <= 30) {
+    return clamp(11 + ((p - 21) / 9) * 9, 11, 20);
+  }
+
+  if (p <= 40) {
+    return clamp(30 + ((p - 31) / 9) * 9, 30, 39);
+  }
+
+  if (p <= 50) {
+    return clamp(40 + ((p - 41) / 9) * 9, 40, 49);
+  }
+
+  if (p <= 60) {
+    return clamp(50 + ((p - 51) / 9) * 9, 50, 59);
+  }
+
+  if (p <= 70) {
+    return clamp(60 + ((p - 61) / 9) * 9, 60, 69);
+  }
+
+  if (p <= 80) {
+    return clamp(70 + ((p - 71) / 9) * 9, 70, 79);
+  }
+
+  return clamp(80 + ((p - 81) / 18) * 19, 80, 99);
 }
 
 function weightedScore(factors: Array<[number, number]>) {
@@ -813,11 +873,14 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
   const profile = calculateProfile(elements, analysis);
   const rawWealthScore = calculateWealthScore(profile);
   const displayWealthScore = calculateDisplayWealthScore(rawWealthScore);
-  const topPercent = scoreToTopPercent(displayWealthScore);
+  const baseTopPercent = calculateBaseTopPercent(rawWealthScore);
+  const topPercent = calibrateDisplayTopPercent(baseTopPercent);
+  const typeSelectionWealthScore =
+    calculateTypeSelectionWealthScore(rawWealthScore);
   const typeScores = calculateTypeScores(
     profile,
     elements,
-    displayWealthScore,
+    typeSelectionWealthScore,
     analysis
   );
   const templateId = selectTemplateId(typeScores);
@@ -863,6 +926,10 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
       dayMaster: saju.dayMaster,
       pillars: saju.pillars,
       elementScores: elements,
+      rawWealthScore,
+      baseTopPercent,
+      displayWealthScore,
+      topPercent,
       elements: {
         percentages: elements,
       },
