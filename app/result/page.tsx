@@ -1,56 +1,20 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   calculateWealthResult,
-  type ElementKey,
   type WealthResult,
 } from "../../src/lib/score";
-import { uiTokens } from "../../src/lib/uiTokens";
 
-const ELEMENT_KEYS = ["wood", "fire", "earth", "metal", "water"] as const;
-
-const ELEMENT_META: Record<
-  ElementKey,
-  {
-    label: string;
-    strong: string;
-    weak: string;
-    color: string;
-  }
-> = {
-  wood: {
-    label: "목",
-    strong: "새로운 아이디어가 잘 떠오르지만",
-    weak: "시작하는 힘은 늦어질 수 있습니다.",
-    color: "#3A7D44",
-  },
-  fire: {
-    label: "화",
-    strong: "드러내고 밀어붙이는 힘은 살아나지만",
-    weak: "보여주고 파는 힘은 약해질 수 있습니다.",
-    color: "#E85D3F",
-  },
-  earth: {
-    label: "토",
-    strong: "쌓아두고 버티는 힘은 안정적이지만",
-    weak: "돈이 머무는 구조는 약해질 수 있습니다.",
-    color: "#C89B3C",
-  },
-  metal: {
-    label: "금",
-    strong: "정리하고 판단하는 힘은 선명하지만",
-    weak: "가격과 기준을 잡는 데 시간이 걸릴 수 있습니다.",
-    color: "#9EA7AD",
-  },
-  water: {
-    label: "수",
-    strong: "흐름과 타이밍을 읽는 힘은 살아나지만",
-    weak: "흐름을 조절하는 힘은 약해질 수 있습니다.",
-    color: "#2F6FAE",
-  },
-};
+const PAGE_CLASS =
+  "min-h-screen break-keep bg-[#F2F4F6] px-5 pb-36 pt-4 text-[#191F28]";
+const CARD_CLASS =
+  "rounded-[28px] bg-[#FFFFFF] p-6 shadow-[0_8px_24px_rgba(25,31,40,0.04)]";
+const PRIMARY_BUTTON_CLASS =
+  "min-h-14 w-full rounded-[18px] bg-[#3182F6] px-5 py-4 text-center text-[16px] font-extrabold text-[#FFFFFF] transition active:bg-[#1B64DA]";
+const SECONDARY_BUTTON_CLASS =
+  "min-h-14 w-full rounded-[18px] bg-[#FFFFFF] px-5 py-4 text-center text-[15px] font-extrabold text-[#4E5968] transition active:bg-[#E5E8EB]";
 
 const ANIMAL_VISUALS: Record<string, string> = {
   거북: "🐢",
@@ -70,15 +34,56 @@ const ANIMAL_VISUALS: Record<string, string> = {
 const LOCKED_REPORT_ITEMS = [
   {
     title: "돈이 들어오는 방식",
-    body: "어떤 환경에서 돈의 흐름이 살아나는지 확인합니다.",
+    body: "어떤 환경에서 수입 흐름이 살아나는지 구체적으로 봅니다.",
   },
   {
-    title: "돈이 새는 지점",
-    body: "작은 소비, 망설임, 충동 중 어디서 반복되는지 봅니다.",
+    title: "돈이 새는 반복 패턴",
+    body: "작은 소비, 망설임, 충동 중 어디서 반복되는지 정리합니다.",
   },
   {
-    title: "반복되는 선택 패턴",
-    body: "비슷한 돈 문제를 반복하는 이유를 정리합니다.",
+    title: "돈이 막히는 정확한 지점",
+    body: "무료 결과에서 보인 장면이 왜 반복되는지 핵심 지점을 엽니다.",
+  },
+  {
+    title: "3일/5일/1주 재정 체크",
+    body: "이번 주에 바로 확인할 소비와 수익화 행동을 순서대로 봅니다.",
+  },
+  {
+    title: "현재 유형에게 맞는 수익화 방식",
+    body: "지금 가진 능력을 어떤 형태로 작게 팔 수 있는지 좁힙니다.",
+  },
+  {
+    title: "바로 고쳐야 할 행동",
+    body: "돈 흐름을 막는 행동을 하나씩 바꿀 수 있게 정리합니다.",
+  },
+  {
+    title: "주의해야 할 소비 패턴",
+    body: "스트레스성 소비와 반복 결제를 놓치지 않게 체크합니다.",
+  },
+];
+
+const PAID_REPORT_CHECKLIST = [
+  "돈이 막히는 정확한 지점",
+  "반복되는 소비/수익화 패턴",
+  "7일 행동 처방",
+  "유형별 수익화 방향",
+];
+
+const WEEKLY_MONEY_CHECK_ITEMS = [
+  {
+    label: "3일 체크",
+    title: "작은 지출부터 보기",
+    body: "작은 결제, 자동결제, 미뤄둔 지출을 먼저 확인해보세요. 큰돈보다 작은 지출이 반복될 때 돈이 새는 느낌이 커질 수 있습니다.",
+  },
+  {
+    label: "5일 체크",
+    title: "지친 상태의 결제 멈추기",
+    body: "스트레스가 쌓인 날에는 결제가 필요한 소비처럼 느껴지기 쉽습니다. 바로 결제하기보다 하루 뒤에도 필요한지 다시 보는 편이 좋습니다.",
+  },
+  {
+    label: "1주 체크",
+    title: "작게 팔 수 있는 형태 만들기",
+    body: "아끼는 것만으로는 흐름이 바뀌지 않습니다. 지금 가진 능력 하나를 작게 팔 수 있는 형태로 정리해보세요.",
   },
 ];
 
@@ -145,14 +150,6 @@ const LIFE_PATTERNS: Record<LifePatternKey, LifePattern> = {
   },
 };
 
-const WEAK_ELEMENT_PATTERN_COPY: Record<ElementKey, string> = {
-  wood: "시작할 일과 멈출 일을 가르는 기준이 흐려질 수 있습니다.",
-  fire: "필요한 순간에 드러내거나 제안하는 힘이 약해질 수 있습니다.",
-  earth: "들어온 돈이 머무는 구조를 놓치기 쉽습니다.",
-  metal: "가격, 한도, 결제 기준을 늦게 정하기 쉽습니다.",
-  water: "흐름을 조절하고 빠져나가는 구멍을 늦게 알아차릴 수 있습니다.",
-};
-
 function parseBirthDate(birthDate: string) {
   const parts = birthDate.split("-").map(Number);
 
@@ -175,19 +172,8 @@ function parseBirthTime(birthTime: string) {
   return Number.isFinite(hour) ? hour : undefined;
 }
 
-function getElementLabel(element: ElementKey) {
-  return ELEMENT_META[element].label;
-}
-
 function getAnimalVisual(result: WealthResult) {
   return ANIMAL_VISUALS[result.animalType.animal] ?? "•";
-}
-
-function buildElementSummary(result: WealthResult) {
-  const strong = result.interpretation.strongestElement;
-  const weak = result.interpretation.weakestElement;
-
-  return `${ELEMENT_META[strong].strong}, ${ELEMENT_META[weak].weak}`;
 }
 
 function getLifePattern(result: WealthResult) {
@@ -211,66 +197,106 @@ function ResultDebugLogger({
   return null;
 }
 
+function ResultCard({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <section className={`${CARD_CLASS} ${className}`}>{children}</section>;
+}
+
+function InsightRow({
+  icon,
+  title,
+  body,
+}: {
+  icon: string;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="flex gap-4 rounded-[22px] bg-[#F2F4F6] p-4">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E8F3FF] text-lg font-extrabold text-[#3182F6]">
+        {icon}
+      </span>
+      <div>
+        <h3 className="text-[16px] font-extrabold leading-6 text-[#191F28]">
+          {title}
+        </h3>
+        <p className="mt-1 text-[14px] font-semibold leading-6 text-[#4E5968]">
+          {body}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MissionRow({
+  label,
+  title,
+  body,
+}: {
+  label: string;
+  title: string;
+  body: string;
+}) {
+  const badge = label.replace(" 체크", "");
+
+  return (
+    <div className="flex gap-4 rounded-[22px] bg-[#F2F4F6] p-4">
+      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E8F3FF] text-[13px] font-extrabold text-[#3182F6]">
+        {badge}
+      </span>
+      <div>
+        <p className="text-[13px] font-extrabold text-[#8B95A1]">{label}</p>
+        <h3 className="mt-1 text-[16px] font-extrabold leading-6 text-[#191F28]">
+          {title}
+        </h3>
+        <p className="mt-1 text-[14px] font-semibold leading-6 text-[#4E5968]">
+          {body}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function LockedReportRow({
+  title,
+  body,
+}: {
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="rounded-[20px] bg-[#F2F4F6] px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[15px] font-extrabold text-[#191F28]">
+          {title}
+        </span>
+        <span className="rounded-full bg-[#E8F3FF] px-2.5 py-1 text-[11px] font-extrabold text-[#3182F6]">
+          잠금
+        </span>
+      </div>
+      <p className="mt-2 text-[13px] font-semibold leading-5 text-[#4E5968]">
+        {body}
+      </p>
+    </div>
+  );
+}
+
 function PrimaryCta({
   children,
   onClick,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   onClick: () => void;
 }) {
   return (
-    <button type="button" onClick={onClick} className={uiTokens.button}>
+    <button type="button" onClick={onClick} className={PRIMARY_BUTTON_CLASS}>
       {children}
     </button>
-  );
-}
-
-function ElementGauge({
-  element,
-  value,
-  status,
-}: {
-  element: ElementKey;
-  value: number;
-  status?: "strong" | "weak";
-}) {
-  return (
-    <div className="grid gap-2">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span
-            className="h-2.5 w-2.5 rounded-full"
-            style={{ backgroundColor: ELEMENT_META[element].color }}
-          />
-          <span className="text-[14px] font-extrabold text-[#18251D]">
-            {getElementLabel(element)}
-          </span>
-          {status && (
-            <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${
-                status === "strong"
-                  ? "bg-[#F26B3A] text-[#FFFFFF]"
-                  : "bg-[#E4EDDA] text-[#2F6B4F]"
-              }`}
-            >
-              {status === "strong" ? "강함" : "부족"}
-            </span>
-          )}
-        </div>
-        <span className="text-[13px] font-extrabold text-[#18251D]">
-          {value}
-        </span>
-      </div>
-      <div className="h-2 overflow-hidden rounded-full bg-[#EDF1E8]">
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${Math.max(4, value)}%`,
-            backgroundColor: ELEMENT_META[element].color,
-          }}
-        />
-      </div>
-    </div>
   );
 }
 
@@ -278,24 +304,26 @@ function InvalidResult() {
   const router = useRouter();
 
   return (
-    <main className={uiTokens.page}>
-      <section className={uiTokens.shell}>
-        <div className={uiTokens.card}>
-          <p className={uiTokens.eyebrow}>RESULT</p>
-          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#18251D]">
+    <main className={PAGE_CLASS}>
+      <section className="mx-auto max-w-[430px] pt-16">
+        <ResultCard>
+          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#8B95A1]">
+            RESULT
+          </p>
+          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#191F28]">
             아직 만들 결과가 없어요
           </h1>
-          <p className={`${uiTokens.body} mt-4`}>
+          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#4E5968]">
             생년월일과 태어난 시간을 먼저 선택하면 재물 동물 유형을 볼 수 있습니다.
           </p>
           <button
             type="button"
             onClick={() => router.push("/")}
-            className={`${uiTokens.button} mt-6`}
+            className={`${PRIMARY_BUTTON_CLASS} mt-6`}
           >
             테스트 시작하기
           </button>
-        </div>
+        </ResultCard>
       </section>
     </main>
   );
@@ -342,10 +370,20 @@ function ResultContent() {
         : "unknown",
   });
   const interpretation = result.interpretation;
-  const strongElement = interpretation.strongestElement;
-  const weakElement = interpretation.weakestElement;
   const lifePattern = getLifePattern(result);
   const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
+  const earningPattern =
+    interpretation.typePatternDetails.find(
+      (detail) => detail.label === "돈 버는 방식",
+    ) ?? interpretation.typePatternDetails[0];
+  const leakingPattern =
+    interpretation.typePatternDetails.find(
+      (detail) => detail.label === "돈이 새는 지점",
+    ) ??
+    interpretation.typePatternDetails[1] ??
+    earningPattern;
+  const earningText = earningPattern?.text ?? interpretation.animalSummary;
+  const leakingText = leakingPattern?.text ?? interpretation.realitySceneText;
 
   const showToast = (message: string, tone: Toast["tone"] = "success") => {
     setToast({ message, tone });
@@ -357,217 +395,201 @@ function ResultContent() {
   };
 
   return (
-    <main className={`${uiTokens.page} pb-32 pt-6`}>
+    <main className={PAGE_CLASS}>
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
 
       <section className="mx-auto max-w-[430px] pb-8">
-        <section className="px-1 pb-2 pt-1">
-          <div className="flex items-center justify-between gap-3">
-            <p className="rounded-full bg-[#E4EDDA] px-4 py-2 text-xs font-bold text-[#2F6B4F]">
-              MONEY ANIMAL RESULT
-            </p>
-            <span className="rounded-full bg-[#F26B3A] px-3 py-1.5 text-xs font-extrabold text-[#FFFFFF]">
-              상위 {result.topPercent}%
-            </span>
-          </div>
+        <header className="mb-5 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.back()}
+            aria-label="뒤로 가기"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[#FFFFFF] text-xl font-extrabold text-[#191F28] transition active:bg-[#E5E8EB]"
+          >
+            ←
+          </button>
+          <p className="text-[14px] font-extrabold text-[#4E5968]">
+            결과 리포트
+          </p>
+          <div className="h-10 w-10" />
+        </header>
 
-          <h1 className="mt-7 text-[34px] font-extrabold leading-[1.18] text-[#18251D]">
+        <section className="mb-5 px-1">
+          <h1 className="text-[32px] font-extrabold leading-[1.18] text-[#191F28]">
             돈만 보면 눈을 뜨는
             <br />
             내 안의 동물은?
           </h1>
-
-          <p className="mt-5 text-[15px] leading-7 text-[#667568]">
-            누군가는 바로 낚아채고,
-            <br />
-            누군가는 차곡차곡 모으고,
-            <br />
-            누군가는 잡기 직전에 망설입니다.
-          </p>
-
-          <p className="mt-5 text-[15px] font-semibold leading-7 text-[#18251D]">
-            이번 결과는
-            <br />
-            돈을 대하는 방식과
-            <br />
-            반복되기 쉬운 돈의 패턴을
-            <br />
-            하나의 동물 유형으로 정리한 것입니다.
+          <p className="mt-3 text-[15px] font-semibold leading-7 text-[#4E5968]">
+            돈을 대하는 방식과 반복되기 쉬운 패턴을 하나의 유형으로 정리했습니다.
           </p>
         </section>
 
-        <section className={`${uiTokens.card} mt-4`}>
-          <div className="flex items-center gap-4">
-            <div className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-[24px] bg-[#E4EDDA] text-4xl">
-              {getAnimalVisual(result)}
+        <div className="grid gap-5">
+          <ResultCard className="p-7">
+            <div className="flex items-start justify-between gap-4">
+              <div className="grid h-[76px] w-[76px] shrink-0 place-items-center rounded-[26px] bg-[#F2F4F6] text-4xl">
+                {getAnimalVisual(result)}
+              </div>
+              <span className="rounded-full bg-[#E8F3FF] px-3 py-1.5 text-[13px] font-extrabold text-[#3182F6]">
+                상위 {result.topPercent}%
+              </span>
             </div>
-            <div>
-              <p className={uiTokens.caption}>동물 유형</p>
-              <h2 className="mt-1 text-[30px] font-extrabold leading-[1.15] text-[#18251D]">
-                {interpretation.animalTitle}
-              </h2>
-            </div>
-          </div>
 
-          <p className="mt-5 text-[18px] font-extrabold leading-7 text-[#18251D]">
-            {interpretation.animalSummary}
-          </p>
-          <p className="mt-3 text-[15px] leading-7 text-[#667568]">
-            {interpretation.moneyStrengthText}
-          </p>
-          <p className="mt-2 text-[15px] leading-7 text-[#667568]">
-            {interpretation.moneyWeaknessText}
-          </p>
-        </section>
-
-        <section className={`${uiTokens.card} mt-4`}>
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-[22px] font-extrabold text-[#18251D]">
-              오행 요약
+            <p className="mt-6 text-[13px] font-extrabold text-[#8B95A1]">
+              돈버는 동물 유형
+            </p>
+            <h2 className="mt-2 text-[34px] font-extrabold leading-[1.12] text-[#191F28]">
+              {interpretation.animalTitle}
             </h2>
-            <span className="rounded-full bg-[#E4EDDA] px-3 py-1 text-xs font-bold text-[#2F6B4F]">
-              {interpretation.balanceLevel}
-            </span>
-          </div>
+            <p className="mt-4 text-[18px] font-extrabold leading-7 text-[#191F28]">
+              {interpretation.symbolicTitle}
+            </p>
+            <p className="mt-3 text-[15px] font-semibold leading-7 text-[#4E5968]">
+              {interpretation.animalSummary}
+            </p>
+          </ResultCard>
 
-          <div className="mt-5 grid gap-4" aria-label="오행 점수">
-            {ELEMENT_KEYS.map((element) => (
-              <ElementGauge
-                key={element}
-                element={element}
-                value={result.elements[element]}
-                status={
-                  element === strongElement
-                    ? "strong"
-                    : element === weakElement
-                    ? "weak"
-                    : undefined
-                }
+          <ResultCard>
+            <p className="text-[13px] font-extrabold text-[#3182F6]">
+              핵심 진단
+            </p>
+            <h2 className="mt-2 text-[24px] font-extrabold leading-[1.25] text-[#191F28]">
+              돈이 들어오고
+              <br />
+              새는 방식
+            </h2>
+            <div className="mt-5 grid gap-3">
+              <InsightRow
+                icon="↗"
+                title="돈이 들어오는 방식"
+                body={earningText}
               />
-            ))}
-          </div>
-
-          <div className="mt-5 grid gap-2">
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-[18px] bg-[#E4EDDA] px-4 py-3">
-                <p className="text-[12px] font-bold text-[#667568]">강한 기운</p>
-                <p className="mt-1 text-[16px] font-extrabold text-[#18251D]">
-                  {getElementLabel(strongElement)}
-                </p>
-              </div>
-              <div className="rounded-[18px] bg-[#E4EDDA] px-4 py-3">
-                <p className="text-[12px] font-bold text-[#667568]">부족한 기운</p>
-                <p className="mt-1 text-[16px] font-extrabold text-[#18251D]">
-                  {getElementLabel(weakElement)}
-                </p>
-              </div>
+              <InsightRow
+                icon="↓"
+                title={lifePattern.title}
+                body={interpretation.realitySceneText || leakingText}
+              />
             </div>
-            <div className="rounded-[18px] bg-[#E4EDDA] px-4 py-3">
-              <p className="text-[12px] font-bold text-[#667568]">재물 흐름</p>
-              <p className="mt-1 text-[16px] font-extrabold text-[#18251D]">
-                {interpretation.wealthStrengthText} · {getElementLabel(interpretation.wealthElement)}
+            <div className="mt-4 rounded-[22px] bg-[#E8F3FF] p-4">
+              <p className="text-[13px] font-extrabold text-[#3182F6]">
+                지금 필요한 조언
+              </p>
+              <p className="mt-2 text-[15px] font-extrabold leading-6 text-[#191F28]">
+                {interpretation.directAdviceText}
               </p>
             </div>
-          </div>
+          </ResultCard>
 
-          <p className="mt-4 rounded-[18px] bg-[#F5F7EE] px-4 py-3 text-[14px] font-semibold leading-6 text-[#667568]">
-            {buildElementSummary(result)}
-          </p>
-        </section>
-
-        <section className={`${uiTokens.card} mt-4`}>
-          <p className={uiTokens.eyebrow}>MONEY PATTERN</p>
-          <h2 className="mt-2 text-[22px] font-extrabold text-[#18251D]">
-            돈이 새는 장면
-          </h2>
-          <div className="mt-4 rounded-[22px] bg-[#E4EDDA] p-5">
-            <h3 className="text-[19px] font-extrabold leading-7 text-[#18251D]">
-              {lifePattern.title}
-            </h3>
-            <p className="mt-3 text-[15px] leading-7 text-[#18251D]/80">
-              {lifePattern.body}
+          <ResultCard>
+            <p className="text-[13px] font-extrabold text-[#3182F6]">
+              이번 주 체크
             </p>
-          </div>
-          <p className="mt-4 text-[14px] font-semibold leading-6 text-[#667568]">
-            사주 흐름상 {getElementLabel(weakElement)} 기운이 약하게 나타나면{" "}
-            {WEAK_ELEMENT_PATTERN_COPY[weakElement]}
-          </p>
-        </section>
+            <h2 className="mt-2 text-[24px] font-extrabold leading-[1.25] text-[#191F28]">
+              3일/5일/1주
+              <br />
+              재정 체크
+            </h2>
+            <p className="mt-3 text-[14px] font-semibold leading-6 text-[#4E5968]">
+              예측보다 중요한 건 이번 주에 실제로 확인할 수 있는 돈의 흐름입니다.
+            </p>
+            <div className="mt-5 grid gap-3">
+              {WEEKLY_MONEY_CHECK_ITEMS.map((item) => (
+                <MissionRow
+                  key={item.label}
+                  label={item.label}
+                  title={item.title}
+                  body={item.body}
+                />
+              ))}
+            </div>
+          </ResultCard>
 
-        <section className={`${uiTokens.card} mt-4`}>
-          <h2 className="text-[22px] font-extrabold text-[#18251D]">
-            전체 리포트에서 더 보는 것
-          </h2>
-          <div className="mt-4 grid gap-2.5">
-            {LOCKED_REPORT_ITEMS.map((item) => (
-              <div
-                key={item.title}
-                className="rounded-[18px] border border-[#D8E2D1] bg-[#E4EDDA] px-4 py-3"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-[15px] font-extrabold text-[#18251D]">
-                    {item.title}
+          <ResultCard className="border border-[#E8F3FF]">
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-full bg-[#E8F3FF] px-3 py-1.5 text-[12px] font-extrabold text-[#3182F6]">
+                유료 상세 해석
+              </span>
+              <span className="text-[12px] font-extrabold text-[#8B95A1]">
+                회원가입 없이 확인
+              </span>
+            </div>
+
+            <h2 className="mt-5 text-[26px] font-extrabold leading-[1.22] text-[#191F28]">
+              내 돈이 막히는 지점을
+              <br />
+              더 좁혀봅니다.
+            </h2>
+            <p className="mt-3 text-[15px] font-semibold leading-7 text-[#4E5968]">
+              무료 결과에서는 돈이 새기 쉬운 장면까지 확인했습니다. 상세 해석에서는 그 장면이 반복되는 이유와 막히는 지점을 더 구체적으로 봅니다.
+            </p>
+
+            <div className="mt-5 grid gap-2">
+              {PAID_REPORT_CHECKLIST.map((item) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-3 rounded-[18px] bg-[#F2F4F6] px-4 py-3 text-[14px] font-extrabold text-[#191F28]"
+                >
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-[#E8F3FF] text-[12px] font-extrabold text-[#3182F6]">
+                    ✓
                   </span>
-                  <span className="rounded-full bg-[#FFFFFF] px-3 py-1 text-xs font-extrabold text-[#F26B3A]">
-                    잠금
-                  </span>
+                  <span>{item}</span>
                 </div>
-                <p className="mt-2 text-[13px] font-semibold leading-5 text-[#667568]">
-                  {item.body}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
 
-        <section className="mt-4 rounded-[32px] bg-[#18251D] p-6 text-[#FFFFFF]">
-          <h2 className="text-[26px] font-extrabold leading-[1.25]">
-            이 동물이 나온 이유에는
-            <br />
-            돈이 반복되는 방식이 숨어 있습니다.
-          </h2>
-          <div className="mt-5 space-y-3 text-[15px] leading-7 text-[#FFFFFF]/82">
-            <p>
-              월급이 들어와도 금방 불안해지는 이유, 카드값 앞에서 매번 비슷한 생각을 하는 이유.
-            </p>
-            <p>
-              좋은 기회 앞에서 망설이거나 반대로 너무 빨리 움직이는 이유.
-            </p>
-            <p>
-              전체 리포트에서는 오행 밸런스와 재물 흐름을 바탕으로 돈이 들어오는 방식과 새어나가는 지점을 더 구체적으로 확인합니다.
-            </p>
-          </div>
-
-          <div className="mt-5 rounded-[24px] bg-[#FFFFFF] p-5 text-[#18251D]">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-extrabold text-[#667568]">
-                  전체 재물 리포트
-                </p>
-                <p className="mt-1 text-3xl font-extrabold text-[#F26B3A]">₩1,900</p>
-              </div>
-              <p className="text-right text-xs font-bold leading-5 text-[#667568]">
-                회원가입 없이
-                <br />
-                바로 확인
+            <div className="mt-6 rounded-[24px] bg-[#F2F4F6] p-5">
+              <p className="text-[13px] font-extrabold text-[#8B95A1]">
+                출시가
               </p>
+              <div className="mt-1 flex items-end gap-2">
+                <span className="pb-1 text-[14px] font-bold text-[#8B95A1] line-through">
+                  정가 ₩8,900
+                </span>
+                <span className="text-[34px] font-extrabold leading-none text-[#3182F6]">
+                  ₩1,900
+                </span>
+              </div>
+              <p className="mt-2 text-[13px] font-bold text-[#8B95A1]">
+                결제 후 바로 결과 확인 가능
+              </p>
+              <div className="mt-5">
+                <PrimaryCta onClick={handlePaidCta}>
+                  내 돈이 막히는 지점 확인하기
+                </PrimaryCta>
+              </div>
             </div>
-            <div className="mt-5">
-              <PrimaryCta onClick={handlePaidCta}>
-                돈 새는 지점 확인하기
-              </PrimaryCta>
-            </div>
-          </div>
-        </section>
+          </ResultCard>
 
-        <p className={`${uiTokens.caption} mt-6 text-center font-semibold`}>
+          <ResultCard>
+            <p className="text-[13px] font-extrabold text-[#3182F6]">
+              상세 해석에서 열리는 것
+            </p>
+            <h2 className="mt-2 text-[24px] font-extrabold leading-[1.25] text-[#191F28]">
+              무료 결과 다음에
+              <br />
+              더 보는 항목
+            </h2>
+            <div className="mt-5 grid gap-3">
+              {LOCKED_REPORT_ITEMS.map((item) => (
+                <LockedReportRow
+                  key={item.title}
+                  title={item.title}
+                  body={item.body}
+                />
+              ))}
+            </div>
+          </ResultCard>
+        </div>
+
+        <p className="mt-6 text-center text-[13px] font-semibold leading-6 text-[#8B95A1]">
           본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다. 금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.
         </p>
 
         <button
           type="button"
           onClick={() => router.push("/")}
-          className={`${uiTokens.secondaryButton} mt-4`}
+          className={`${SECONDARY_BUTTON_CLASS} mt-4`}
         >
           다시 테스트하기
         </button>
@@ -575,13 +597,13 @@ function ResultContent() {
         {toast && (
           <div
             aria-live="polite"
-            className="fixed inset-x-0 bottom-6 z-30 px-5"
+            className="fixed inset-x-0 bottom-24 z-30 px-5"
           >
             <p
-              className={`mx-auto max-w-md rounded-2xl px-4 py-3 text-center text-sm font-bold shadow-2xl ${
+              className={`mx-auto max-w-md rounded-[20px] px-4 py-3 text-center text-sm font-bold shadow-[0_8px_24px_rgba(25,31,40,0.16)] ${
                 toast.tone === "success"
-                  ? "bg-[#18251D] text-[#FFFFFF]"
-                  : "bg-[#9f2d2d] text-[#FFFFFF]"
+                  ? "bg-[#191F28] text-[#FFFFFF]"
+                  : "bg-[#D92D20] text-[#FFFFFF]"
               }`}
             >
               {toast.message}
@@ -590,10 +612,10 @@ function ResultContent() {
         )}
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#D8E2D1] bg-[#F5F7EE] px-5 py-3">
+      <div className="fixed inset-x-0 bottom-0 z-20 bg-[#F2F4F6] px-5 pb-4 pt-3">
         <div className="mx-auto max-w-[430px]">
           <PrimaryCta onClick={handlePaidCta}>
-            돈 새는 지점 확인하기
+            내 돈이 막히는 지점 확인하기
           </PrimaryCta>
         </div>
       </div>
@@ -605,7 +627,7 @@ export default function ResultPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F5F7EE] p-10 text-sm font-bold text-[#667568]">
+        <div className="min-h-screen bg-[#F2F4F6] p-10 text-sm font-bold text-[#4E5968]">
           결과를 불러오는 중입니다...
         </div>
       }
