@@ -83,9 +83,9 @@ function PickerButton({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-[18px] border border-[#D8E1D1] bg-[#F4F7EF] px-3 py-4 text-left text-base font-bold text-[#1F2A22] outline-none transition active:scale-[0.98]"
+      className="w-full rounded-[18px] border border-[#D8E2D1] bg-[#E4EDDA] px-3 py-4 text-left text-base font-bold text-[#18251D] outline-none transition active:scale-[0.98]"
     >
-      <span className={value ? "text-[#1F2A22]" : "text-[#667568]"}>
+      <span className={value ? "text-[#18251D]" : "text-[#667568]"}>
         {value ? label : placeholder}
       </span>
     </button>
@@ -130,14 +130,14 @@ function PickerSheet({
         className="absolute inset-0 bg-black/40"
       />
 
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[430px] max-h-[calc(100svh-24px)] max-w-md flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFFFF] shadow-2xl">
-        <div className="shrink-0 flex items-center justify-between border-b border-[#D8E1D1] px-5 py-4">
-          <h3 className="text-lg font-extrabold text-[#1F2A22]">{title}</h3>
+      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[430px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFFFF] shadow-2xl">
+        <div className="shrink-0 flex items-center justify-between border-b border-[#D8E2D1] px-5 py-4">
+          <h3 className="text-lg font-extrabold text-[#18251D]">{title}</h3>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[#DDE8D2] px-4 py-2 text-sm font-bold text-[#2F6B4F]"
+            className="rounded-full bg-[#E4EDDA] px-4 py-2 text-sm font-bold text-[#2F6B4F]"
           >
             닫기
           </button>
@@ -158,7 +158,7 @@ function PickerSheet({
                 className={`mb-2 w-full rounded-2xl px-4 py-4 text-left text-base font-bold transition ${
                   isSelected
                     ? "bg-[#2F6B4F] text-[#FFFFFF]"
-                    : "bg-[#F4F7EF] text-[#1F2A22]"
+                    : "bg-[#F5F7EE] text-[#18251D]"
                 }`}
               >
                 {option.label}
@@ -354,7 +354,7 @@ export default function BirthForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#1F2A22]">
+          <label className="mb-2 block text-sm font-bold text-[#18251D]">
             생년월일
           </label>
 
@@ -378,7 +378,7 @@ export default function BirthForm() {
             }}
             placeholder="예: 1990-03-15 / 19900315"
             aria-invalid={birthDateError ? "true" : "false"}
-            className="mb-2 w-full rounded-[18px] border border-[#D8E1D1] bg-[#F4F7EF] px-4 py-4 text-base font-bold text-[#1F2A22] outline-none transition placeholder:text-[#667568] focus:border-[#2F6B4F]"
+            className="mb-2 w-full rounded-[18px] border border-[#D8E2D1] bg-[#E4EDDA] px-4 py-4 text-base font-bold text-[#18251D] outline-none transition placeholder:text-[#667568] focus:border-[#2F6B4F]"
           />
 
           {birthDateError && (
@@ -412,11 +412,11 @@ export default function BirthForm() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#1F2A22]">
+          <label className="mb-2 block text-sm font-bold text-[#18251D]">
             날짜 기준
           </label>
 
-          <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#F4F7EF] p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#E4EDDA] p-1">
             {[
               { label: "양력", value: "solar" },
               { label: "음력", value: "lunar" },
@@ -442,7 +442,7 @@ export default function BirthForm() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#1F2A22]">
+          <label className="mb-2 block text-sm font-bold text-[#18251D]">
             태어난 시간
           </label>
 
@@ -455,7 +455,7 @@ export default function BirthForm() {
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#1F2A22]">
+          <label className="mb-2 block text-sm font-bold text-[#18251D]">
             성별
           </label>
 
@@ -472,7 +472,7 @@ export default function BirthForm() {
                 className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
                   gender === item.value
                     ? "bg-[#2F6B4F] text-[#FFFFFF]"
-                    : "bg-[#F4F7EF] text-[#667568]"
+                    : "bg-[#E4EDDA] text-[#667568]"
                 }`}
               >
                 {item.label}

@@ -3,51 +3,46 @@ import { uiTokens } from "../src/lib/uiTokens";
 
 export default function Home() {
   return (
-    <main className={uiTokens.page}>
+    <main className={`${uiTokens.page} py-7`}>
       <section className={uiTokens.shell}>
-        <section className="overflow-hidden rounded-[32px] border border-[#D8E1D1] bg-[#FFFFFF] shadow-[0_8px_24px_rgba(31,42,34,0.06)]">
-          <div className="px-6 pb-8 pt-7 text-[#1F2A22]">
-            <div className="mb-5 inline-flex rounded-full bg-[#DDE8D2] px-4 py-2 text-xs font-bold text-[#2F6B4F]">
-              사주와 오행으로 보는 재물 동물 테스트
-            </div>
-
-            <h1 className="text-[34px] font-extrabold leading-[1.25]">
-              돈 앞에서 사람은
-              <br />
-              자기만의 동물이 됩니다.
-            </h1>
-
-            <p className="mt-5 text-[16px] leading-8 text-[#667568]">
-              누군가는 바로 낚아채고,
-              <br />
-              누군가는 차곡차곡 모으고,
-              <br />
-              누군가는 냄새를 맡고도 망설입니다.
-            </p>
-
-            <p className="mt-5 text-[16px] font-bold leading-8 text-[#1F2A22]">
-              나는 돈을 모으는 쪽일까요,
-              <br />
-              흘려보내는 쪽일까요?
-            </p>
-
-            <p className="mt-5 text-[15px] leading-7 text-[#667568]">
-              사주와 오행으로 보는
-              <br />
-              나의 돈버는 동물 테스트.
-            </p>
-
-            <a
-              href="#test-start"
-              className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-[#2F6B4F] px-[22px] py-4 text-base font-bold text-[#FFFFFF] transition hover:bg-[#25563F] active:scale-[0.98] active:bg-[#25563F]"
-            >
-              내 유형 확인하기
-            </a>
+        <section className="px-1 pb-4 pt-2">
+          <div className="mb-5 inline-flex rounded-full bg-[#E4EDDA] px-4 py-2 text-xs font-bold text-[#2F6B4F]">
+            사주와 오행으로 보는 재물 동물 테스트
           </div>
 
-          <div className="border-t border-[#D8E1D1] bg-[#DDE8D2] px-6 py-4 text-[13px] font-semibold leading-6 text-[#2F6B4F]">
+          <h1 className="text-[36px] font-extrabold leading-[1.18] text-[#18251D]">
+            돈 앞에서 사람은
+            <br />
+            자기만의 동물이 됩니다.
+          </h1>
+
+          <p className="mt-6 text-[16px] leading-8 text-[#667568]">
+            누군가는 바로 낚아채고,
+            <br />
+            누군가는 차곡차곡 모으고,
+            <br />
+            누군가는 냄새를 맡고도 망설입니다.
+          </p>
+
+          <p className="mt-6 text-[17px] font-extrabold leading-8 text-[#18251D]">
+            나는 돈을 모으는 쪽일까요,
+            <br />
+            흘려보내는 쪽일까요?
+          </p>
+
+          <p className="mt-5 text-[15px] leading-7 text-[#667568]">
+            사주와 오행으로 보는
+            <br />
+            나의 돈버는 동물 테스트.
+          </p>
+
+          <a href="#test-start" className={`${uiTokens.button} mt-7`}>
+            내 유형 확인하기
+          </a>
+
+          <p className="mt-4 text-[13px] font-semibold leading-6 text-[#667568]">
             사주와 오행을 바탕으로 재물 성향을 하나의 동물 유형으로 보여줍니다.
-          </div>
+          </p>
         </section>
 
         <section id="test-start" className={`${uiTokens.card} mt-6`}>
