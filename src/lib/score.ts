@@ -4,6 +4,7 @@ import {
   analyzeSajuLikeProfile,
   type CalendarType,
   type KoreanBranch,
+  type SajuSal,
   type TenGodCategory,
   type VisibleSajuCharacter,
 } from "./saju";
@@ -85,6 +86,11 @@ export type WealthSajuSummary = {
     label: string;
     rootBranches: string[];
   };
+  usefulGod: ElementKey;
+  favorableElements: ElementKey[];
+  unfavorableElements: ElementKey[];
+  strengthType: "weak" | "balanced" | "strong";
+  salList: SajuSal[];
   monthSeason: {
     branch: string;
     element: ElementKey;
@@ -99,6 +105,13 @@ export type WealthResult = {
   templateId: TemplateId;
   percentile: number;
   topPercent: number;
+  baseWealthScore: number;
+  sajuAdjustmentScore: number;
+  adjustedWealthScore: number;
+  baseTopPercentBeforeAdjustment: number;
+  topPercentAfterAdjustment: number;
+  baseTopPercent: number;
+  adjustedTopPercent: number;
   rawWealthScore: number;
   displayWealthScore: number;
   wealthScore: number;
@@ -117,8 +130,14 @@ export type WealthResult = {
     dayMaster: string;
     pillars: WealthSajuSummary["pillars"];
     elementScores: WealthElementScores;
+    baseWealthScore: number;
+    sajuAdjustmentScore: number;
+    adjustedWealthScore: number;
+    baseTopPercentBeforeAdjustment: number;
+    topPercentAfterAdjustment: number;
     rawWealthScore: number;
     baseTopPercent: number;
+    adjustedTopPercent: number;
     displayWealthScore: number;
     topPercent: number;
     elements: {
@@ -141,6 +160,11 @@ export type WealthResult = {
     resultSignals: ResultSignals;
     legacyLogic: string[];
   };
+  usefulGod: ElementKey;
+  favorableElements: ElementKey[];
+  unfavorableElements: ElementKey[];
+  strengthType: "weak" | "balanced" | "strong";
+  salList: SajuSal[];
   dominantElement: ElementKey;
   weakElement: ElementKey;
   logic: string[];
@@ -165,6 +189,14 @@ const ELEMENT_LABEL: Record<ElementKey, string> = {
   earth: "토",
   metal: "금",
   water: "수",
+};
+
+const WEALTH_ELEMENT_BY_DAY_ELEMENT: Record<ElementKey, ElementKey> = {
+  wood: "earth",
+  fire: "metal",
+  earth: "water",
+  metal: "wood",
+  water: "fire",
 };
 
 const RELATION_REASON: Record<TenGodCategory, string> = {
@@ -340,6 +372,64 @@ function calculateTypeSelectionWealthScore(rawScore: number) {
   return clamp(rawScore);
 }
 
+function calculateSajuAdjustmentScore(analysis: SajuAnalysis) {
+  const dayElement = analysis.dayElement as ElementKey;
+  const wealthElement = WEALTH_ELEMENT_BY_DAY_ELEMENT[dayElement];
+  const usefulGod = analysis.usefulGod as ElementKey | undefined;
+  const favorableElements = (analysis.favorableElements ?? []) as ElementKey[];
+  const unfavorableElements = (analysis.unfavorableElements ?? []) as ElementKey[];
+  const strengthType = analysis.strengthType ?? analysis.dayStrength.level;
+  const salList = (analysis.salList ?? []) as SajuSal[];
+  let elementAdjustment = 0;
+
+  if (usefulGod === wealthElement) elementAdjustment += 3;
+  if (favorableElements.includes(wealthElement)) elementAdjustment += 2;
+  if (favorableElements.includes(analysis.monthSeason.element as ElementKey)) {
+    elementAdjustment += 1;
+  }
+  if (unfavorableElements.includes(wealthElement)) elementAdjustment -= 3;
+  if (unfavorableElements.includes(usefulGod as ElementKey)) {
+    elementAdjustment -= 2;
+  }
+
+  elementAdjustment = clamp(elementAdjustment, -6, 6);
+
+  let strengthAdjustment = 0;
+  if (strengthType === "balanced") {
+    strengthAdjustment += 1;
+  } else if (strengthType === "weak" && analysis.relationScores.wealth >= 24) {
+    strengthAdjustment -= 1;
+  } else if (strengthType === "strong" && analysis.relationScores.wealth <= 18) {
+    strengthAdjustment -= 1;
+  }
+
+  const elementAndStrengthAdjustment = clamp(
+    elementAdjustment + strengthAdjustment,
+    -6,
+    6
+  );
+  const salAdjustment = clamp(
+    salList.reduce((total, sal) => {
+      const intensityWeight =
+        sal.intensity === "high" ? 0.8 : sal.intensity === "medium" ? 0.6 : 0.4;
+
+      if (["도화살", "역마살", "화개살"].includes(sal.name)) {
+        return total + intensityWeight;
+      }
+
+      if (sal.name === "양인살") return total - intensityWeight;
+      if (sal.name === "백호살") return total - intensityWeight * 1.5;
+      if (sal.name === "원진살") return total - intensityWeight * 1.2;
+
+      return total;
+    }, 0),
+    -2,
+    2
+  );
+
+  return clamp(elementAndStrengthAdjustment + salAdjustment, -8, 8);
+}
+
 function normalizeWealthScore(rawScore: number) {
   const safeScore = Math.max(RAW_SCORE_MIN, Math.min(RAW_SCORE_MAX, rawScore));
 
@@ -356,6 +446,26 @@ function calculateBaseTopPercent(rawScore: number) {
     1,
     99
   );
+}
+
+function calculateDisplayTopPercent(displayWealthScore: number) {
+  const score = clamp(displayWealthScore, 0, 100);
+  const scale = (
+    minScore: number,
+    maxScore: number,
+    minPercent: number,
+    maxPercent: number
+  ) => {
+    const ratio = (score - minScore) / (maxScore - minScore);
+
+    return clamp(maxPercent - ratio * (maxPercent - minPercent), minPercent, maxPercent);
+  };
+
+  if (score >= 90) return scale(90, 100, 1, 5);
+  if (score >= 80) return scale(80, 90, 6, 14);
+  if (score >= 70) return scale(70, 80, 15, 19);
+
+  return scale(0, 70, 20, 29);
 }
 
 function calibrateDisplayTopPercent(baseTopPercent: number) {
@@ -720,6 +830,11 @@ function buildSajuSummary(analysis: SajuAnalysis): WealthSajuSummary {
     visibleCharacterCount: analysis.visibleCharacterCount,
     balanceScore: analysis.balanceScore,
     dayStrength: analysis.dayStrength,
+    usefulGod: analysis.usefulGod as ElementKey,
+    favorableElements: analysis.favorableElements as ElementKey[],
+    unfavorableElements: analysis.unfavorableElements as ElementKey[],
+    strengthType: analysis.strengthType,
+    salList: analysis.salList,
     monthSeason: {
       branch: analysis.monthSeason.branch,
       element: analysis.monthSeason.element as ElementKey,
@@ -871,12 +986,18 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
   });
   const elements = calculateElementsFromAnalysis(analysis);
   const profile = calculateProfile(elements, analysis);
-  const rawWealthScore = calculateWealthScore(profile);
-  const displayWealthScore = calculateDisplayWealthScore(rawWealthScore);
-  const baseTopPercent = calculateBaseTopPercent(rawWealthScore);
-  const topPercent = calibrateDisplayTopPercent(baseTopPercent);
+  const baseWealthScore = calculateWealthScore(profile);
+  const baseTopPercent = calculateBaseTopPercent(baseWealthScore);
+  const baseTopPercentBeforeAdjustment = baseTopPercent;
+  const sajuAdjustmentScore = calculateSajuAdjustmentScore(analysis);
+  const adjustedWealthScore = baseWealthScore + sajuAdjustmentScore;
+  const rawWealthScore = adjustedWealthScore;
+  const displayWealthScore = calculateDisplayWealthScore(adjustedWealthScore);
+  const adjustedTopPercent = calculateBaseTopPercent(adjustedWealthScore);
+  const topPercent = calculateDisplayTopPercent(displayWealthScore);
+  const topPercentAfterAdjustment = topPercent;
   const typeSelectionWealthScore =
-    calculateTypeSelectionWealthScore(rawWealthScore);
+    calculateTypeSelectionWealthScore(baseWealthScore);
   const typeScores = calculateTypeScores(
     profile,
     elements,
@@ -908,6 +1029,13 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     templateId,
     percentile: topPercent,
     topPercent,
+    baseWealthScore,
+    sajuAdjustmentScore,
+    adjustedWealthScore,
+    baseTopPercentBeforeAdjustment,
+    topPercentAfterAdjustment,
+    baseTopPercent,
+    adjustedTopPercent,
     rawWealthScore,
     displayWealthScore,
     wealthScore: displayWealthScore,
@@ -921,13 +1049,24 @@ export function calculateWealthResult(input: CalculateInput): WealthResult {
     resultSignals,
     interpretation,
     copy,
+    usefulGod: saju.usefulGod,
+    favorableElements: saju.favorableElements,
+    unfavorableElements: saju.unfavorableElements,
+    strengthType: saju.strengthType,
+    salList: saju.salList,
     debug: {
       birthInput: safeInput,
       dayMaster: saju.dayMaster,
       pillars: saju.pillars,
       elementScores: elements,
+      baseWealthScore,
+      sajuAdjustmentScore,
+      adjustedWealthScore,
+      baseTopPercentBeforeAdjustment,
+      topPercentAfterAdjustment,
       rawWealthScore,
       baseTopPercent,
+      adjustedTopPercent,
       displayWealthScore,
       topPercent,
       elements: {

@@ -24,6 +24,7 @@ export type TenGodCategory =
 export type ElementScoreMap = Record<ElementType, number>;
 export type RelationScoreMap = Record<TenGodCategory, number>;
 export type DayStrengthLevel = "weak" | "balanced" | "strong";
+export type SalIntensity = "low" | "medium" | "high";
 export type SajuPillarRole = "year" | "month" | "day" | "hour";
 export type SajuCharacterRole =
   | "yearStem"
@@ -51,6 +52,13 @@ export type SajuContribution = {
   weight: number;
   relation: TenGodCategory;
   branch?: KoreanBranch;
+};
+
+export type SajuSal = {
+  name: string;
+  intensity: SalIntensity;
+  reason: string;
+  moneyInterpretation: string;
 };
 
 export type SajuLikeInput = {
@@ -768,6 +776,209 @@ function getCharacterRole(role: SajuPillarRole, kind: "stem" | "branch") {
   return `${role}${kind === "stem" ? "Stem" : "Branch"}` as SajuCharacterRole;
 }
 
+function getControllingElement(element: ElementType) {
+  return Object.entries(controls).find(([, target]) => target === element)?.[0] as
+    | ElementType
+    | undefined;
+}
+
+function getGeneratingElement(element: ElementType) {
+  return Object.entries(creates).find(([, target]) => target === element)?.[0] as
+    | ElementType
+    | undefined;
+}
+
+function uniqueElements(elements: ElementType[]) {
+  return Array.from(new Set(elements));
+}
+
+function buildUsefulGodSummary(
+  dayElement: ElementType,
+  dayStrength: { level: DayStrengthLevel },
+  elementScores: ElementScoreMap
+) {
+  const resourceElement = getGeneratingElement(dayElement) ?? dayElement;
+  const outputElement = creates[dayElement];
+  const wealthElement = controls[dayElement];
+  const careerElement = getControllingElement(dayElement) ?? dayElement;
+  const sortedElements = (Object.entries(elementScores) as Array<
+    [ElementType, number]
+  >).sort((a, b) => a[1] - b[1]);
+  const weakestElement = sortedElements[0][0];
+  const strongestElement = sortedElements[sortedElements.length - 1][0];
+
+  if (dayStrength.level === "weak") {
+    return {
+      usefulGod: resourceElement,
+      favorableElements: uniqueElements([resourceElement, dayElement]),
+      unfavorableElements: uniqueElements([wealthElement, careerElement]),
+    };
+  }
+
+  if (dayStrength.level === "strong") {
+    return {
+      usefulGod: careerElement,
+      favorableElements: uniqueElements([outputElement, wealthElement, careerElement]),
+      unfavorableElements: uniqueElements([dayElement, resourceElement, strongestElement]),
+    };
+  }
+
+  return {
+    usefulGod: weakestElement,
+    favorableElements: uniqueElements([weakestElement, wealthElement]),
+    unfavorableElements:
+      elementScores[strongestElement] - elementScores[weakestElement] >= 18
+        ? [strongestElement]
+        : [],
+  };
+}
+
+function getThreeHarmonyGroup(branch: KoreanBranch) {
+  if (["신", "자", "진"].includes(branch)) return "water";
+  if (["인", "오", "술"].includes(branch)) return "fire";
+  if (["해", "묘", "미"].includes(branch)) return "wood";
+  return "metal";
+}
+
+function getGroupTarget(
+  branch: KoreanBranch,
+  targets: Record<string, KoreanBranch>
+) {
+  return targets[getThreeHarmonyGroup(branch)];
+}
+
+function getBranchIntensity(
+  target: KoreanBranch,
+  branches: Array<{ role: SajuPillarRole; branch: KoreanBranch }>
+): SalIntensity {
+  const matches = branches.filter((item) => item.branch === target);
+  if (matches.some((item) => item.role === "day" || item.role === "month")) {
+    return "high";
+  }
+  return matches.length > 1 ? "high" : "medium";
+}
+
+function hasBranchPair(
+  branches: KoreanBranch[],
+  first: KoreanBranch,
+  second: KoreanBranch
+) {
+  return branches.includes(first) && branches.includes(second);
+}
+
+function buildSalList({
+  dayStem,
+  dayBranch,
+  dayPillar,
+  branches,
+}: {
+  dayStem: string;
+  dayBranch: KoreanBranch;
+  dayPillar: string;
+  branches: Array<{ role: SajuPillarRole; branch: KoreanBranch }>;
+}): SajuSal[] {
+  const salList: SajuSal[] = [];
+  const branchNames = branches.map((item) => item.branch);
+  const addBranchSal = (
+    name: string,
+    target: KoreanBranch,
+    reason: string,
+    moneyInterpretation: string
+  ) => {
+    if (!branchNames.includes(target)) return;
+    salList.push({
+      name,
+      intensity: getBranchIntensity(target, branches),
+      reason,
+      moneyInterpretation,
+    });
+  };
+
+  addBranchSal(
+    "도화살",
+    getGroupTarget(dayBranch, {
+      water: "유",
+      fire: "묘",
+      wood: "자",
+      metal: "오",
+    }),
+    `일지 ${dayBranch} 기준 도화 글자가 사주에 보입니다.`,
+    "관심, 호감, 노출을 돈의 입구로 쓰기 쉽습니다."
+  );
+  addBranchSal(
+    "역마살",
+    getGroupTarget(dayBranch, {
+      water: "인",
+      fire: "신",
+      wood: "사",
+      metal: "해",
+    }),
+    `일지 ${dayBranch} 기준 역마 글자가 사주에 보입니다.`,
+    "이동, 확장, 새로운 시장에서 돈의 반응이 생기기 쉽습니다."
+  );
+  addBranchSal(
+    "화개살",
+    getGroupTarget(dayBranch, {
+      water: "진",
+      fire: "술",
+      wood: "미",
+      metal: "축",
+    }),
+    `일지 ${dayBranch} 기준 화개 글자가 사주에 보입니다.`,
+    "혼자 쌓은 전문성, 기록, 취향이 수익 소재가 되기 쉽습니다."
+  );
+
+  const yangBladeBranch: Partial<Record<string, KoreanBranch>> = {
+    갑: "묘",
+    병: "오",
+    무: "오",
+    경: "유",
+    임: "자",
+  };
+  const bladeTarget = yangBladeBranch[dayStem];
+  if (bladeTarget) {
+    addBranchSal(
+      "양인살",
+      bladeTarget,
+      `일간 ${dayStem} 기준 양인 글자 ${bladeTarget}가 사주에 보입니다.`,
+      "밀어붙이는 힘이 돈을 만들 수 있지만, 지출과 결정도 거칠어질 수 있습니다."
+    );
+  }
+
+  if (["갑진", "을미", "병술", "정축", "무진", "임술", "계축"].includes(dayPillar)) {
+    salList.push({
+      name: "백호살",
+      intensity: "high",
+      reason: `일주 ${dayPillar}가 백호 조건에 해당합니다.`,
+      moneyInterpretation:
+        "강한 압박과 승부 감각이 돈의 집중력을 만들지만, 무리한 선택은 줄여야 합니다.",
+    });
+  }
+
+  const wonjinPairs: Array<[KoreanBranch, KoreanBranch]> = [
+    ["자", "미"],
+    ["축", "오"],
+    ["인", "유"],
+    ["묘", "신"],
+    ["진", "해"],
+    ["사", "술"],
+  ];
+  const wonjinPair = wonjinPairs.find(([first, second]) =>
+    hasBranchPair(branchNames, first, second)
+  );
+  if (wonjinPair) {
+    salList.push({
+      name: "원진살",
+      intensity: "medium",
+      reason: `${wonjinPair[0]}-${wonjinPair[1]} 원진 조합이 사주에 함께 보입니다.`,
+      moneyInterpretation:
+        "관계나 감정 피로가 소비, 가격 협상, 수익 결정에 영향을 주기 쉽습니다.",
+    });
+  }
+
+  return salList;
+}
+
 function buildVisibleCharacters(
   pillars: Array<{
     role: SajuPillarRole;
@@ -921,6 +1132,21 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
     monthBranchIndex,
     pillars
   );
+  const usefulGodSummary = buildUsefulGodSummary(
+    dayElement,
+    dayStrength,
+    elementScores
+  );
+  const branchList = pillars.map(({ role, pillar }) => ({
+    role,
+    branch: pillar.branch.name as KoreanBranch,
+  }));
+  const salList = buildSalList({
+    dayStem: dayPillar.stem.name,
+    dayBranch: dayPillar.branch.name as KoreanBranch,
+    dayPillar: `${dayPillar.stem.name}${dayPillar.branch.name}`,
+    branches: branchList,
+  });
 
   return {
     dayMaster: dayPillar.stem.name,
@@ -946,6 +1172,11 @@ export function analyzeSajuLikeProfile(input: SajuLikeInput) {
     seasonalSupport,
     balanceScore,
     dayStrength,
+    usefulGod: usefulGodSummary.usefulGod,
+    favorableElements: usefulGodSummary.favorableElements,
+    unfavorableElements: usefulGodSummary.unfavorableElements,
+    strengthType: dayStrength.level,
+    salList,
     monthSeason: {
       branch: earthlyBranches[monthBranchIndex].name,
       element: earthlyBranches[monthBranchIndex].element as ElementType,

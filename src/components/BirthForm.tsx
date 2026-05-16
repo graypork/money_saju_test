@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import {
+  FormEvent,
+  MouseEvent,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { uiTokens } from "../lib/uiTokens";
 
@@ -17,6 +24,10 @@ type ParsedBirthDate = {
   day: string;
   normalized: string;
 };
+
+const PICKER_SHEET_HEIGHT = 420;
+const PICKER_VIEWPORT_MARGIN = 16;
+const DEFAULT_PICKER_TOP = 96;
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
@@ -77,15 +88,15 @@ function PickerButton({
   label: string;
   value: string;
   placeholder: string;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-[18px] border border-[#D8E2D1] bg-[#E4EDDA] px-3 py-4 text-left text-base font-bold text-[#18251D] outline-none transition active:scale-[0.98]"
+      className="w-full rounded-[18px] border border-[rgba(97,74,55,0.18)] bg-[#F1EADE] px-3 py-4 text-left text-base font-bold text-[#191F28] outline-none transition active:scale-[0.98]"
     >
-      <span className={value ? "text-[#18251D]" : "text-[#667568]"}>
+      <span className={value ? "text-[#191F28]" : "text-[rgba(97,74,55,0.72)]"}>
         {value ? label : placeholder}
       </span>
     </button>
@@ -96,15 +107,33 @@ function PickerSheet({
   title,
   options,
   selectedValue,
+  anchorTop,
   onSelect,
   onClose,
 }: {
   title: string;
   options: PickerOption[];
   selectedValue: string;
+  anchorTop: number;
   onSelect: (value: string) => void;
   onClose: () => void;
 }) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [draftValue, setDraftValue] = useState(selectedValue || options[0]?.value || "");
+  const sheetTop =
+    typeof window === "undefined"
+      ? DEFAULT_PICKER_TOP
+      : Math.max(
+          PICKER_VIEWPORT_MARGIN,
+          Math.min(
+            anchorTop,
+            Math.max(
+              PICKER_VIEWPORT_MARGIN,
+              window.innerHeight - PICKER_SHEET_HEIGHT - PICKER_VIEWPORT_MARGIN
+            )
+          )
+        );
+
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;
     const originalPosition = document.body.style.position;
@@ -121,6 +150,42 @@ function PickerSheet({
     };
   }, []);
 
+  useEffect(() => {
+    setDraftValue(selectedValue || options[0]?.value || "");
+  }, [options, selectedValue]);
+
+  useEffect(() => {
+    const selectedIndex = Math.max(
+      0,
+      options.findIndex((option) => option.value === draftValue)
+    );
+
+    window.requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        top: selectedIndex * 48,
+        behavior: "auto",
+      });
+    });
+  }, [draftValue, options]);
+
+  const handleScroll = () => {
+    const scrollTop = scrollRef.current?.scrollTop ?? 0;
+    const index = Math.max(
+      0,
+      Math.min(options.length - 1, Math.round(scrollTop / 48))
+    );
+    const nextValue = options[index]?.value;
+
+    if (nextValue && nextValue !== draftValue) {
+      setDraftValue(nextValue);
+    }
+  };
+
+  const confirmValue = () => {
+    onSelect(draftValue);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50">
       <button
@@ -130,41 +195,68 @@ function PickerSheet({
         className="absolute inset-0 bg-black/40"
       />
 
-      <div className="absolute inset-x-0 bottom-0 mx-auto flex h-[430px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-t-[2rem] bg-[#FFFFFF] shadow-2xl">
-        <div className="shrink-0 flex items-center justify-between border-b border-[#D8E2D1] px-5 py-4">
-          <h3 className="text-lg font-extrabold text-[#18251D]">{title}</h3>
+      <div
+        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] bg-[#FFFDF8] shadow-2xl"
+        style={{ top: sheetTop }}
+      >
+        <div className="shrink-0 flex items-center justify-between border-b border-[rgba(97,74,55,0.18)] px-5 py-4">
+          <h3 className="text-lg font-extrabold text-[#614A37]">{title}</h3>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[#E4EDDA] px-4 py-2 text-sm font-bold text-[#2F6B4F]"
+            className="rounded-full bg-[#F1EADE] px-4 py-2 text-sm font-bold text-[#779682]"
           >
             닫기
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-3">
-          {options.map((option) => {
-            const isSelected = option.value === selectedValue;
+        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[#F1EADE]">
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[rgba(97,74,55,0.18)] bg-[#FFFDF8]/90 shadow-[0_8px_20px_rgba(97,74,55,0.08)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#F1EADE] to-[#F1EADE]/0" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#F1EADE] to-[#F1EADE]/0" />
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onSelect(option.value);
-                  onClose();
-                }}
-                className={`mb-2 w-full rounded-2xl px-4 py-4 text-left text-base font-bold transition ${
-                  isSelected
-                    ? "bg-[#2F6B4F] text-[#FFFFFF]"
-                    : "bg-[#F5F7EE] text-[#18251D]"
-                }`}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+          <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto overscroll-contain px-4 py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {options.map((option) => {
+              const isSelected = option.value === draftValue;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDraftValue(option.value)}
+                  className={`flex h-12 w-full snap-center items-center justify-center rounded-2xl text-[18px] font-extrabold transition ${
+                    isSelected
+                      ? "text-[#614A37]"
+                      : "text-[rgba(97,74,55,0.34)]"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-auto grid grid-cols-2 gap-3 px-5 pb-5 pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-12 rounded-full bg-[#F1EADE] text-sm font-extrabold text-[#614A37]"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={confirmValue}
+            className="min-h-12 rounded-full bg-[#779682] text-sm font-extrabold text-[#FFFDF8]"
+          >
+            선택 완료
+          </button>
         </div>
       </div>
     </div>
@@ -185,6 +277,7 @@ export default function BirthForm() {
   const [gender, setGender] = useState("unknown");
   const [calendarType, setCalendarType] = useState<CalendarType>("solar");
   const [openPicker, setOpenPicker] = useState<PickerKey>(null);
+  const [pickerAnchorTop, setPickerAnchorTop] = useState(DEFAULT_PICKER_TOP);
 
   const maxDay = getDaysInMonth(year, month);
 
@@ -242,6 +335,14 @@ export default function BirthForm() {
 
   const selectedTimeLabel =
     timeOptions.find((option) => option.value === birthTime)?.label || "모름";
+
+  const openPickerAt = (
+    picker: Exclude<PickerKey, null>,
+    event: MouseEvent<HTMLButtonElement>
+  ) => {
+    setPickerAnchorTop(event.currentTarget.getBoundingClientRect().top);
+    setOpenPicker(picker);
+  };
 
   const syncBirthDateText = (
     nextYear: string,
@@ -354,7 +455,7 @@ export default function BirthForm() {
     <>
       <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#18251D]">
+          <label className="mb-2 block text-sm font-bold text-[#614A37]">
             생년월일
           </label>
 
@@ -378,7 +479,7 @@ export default function BirthForm() {
             }}
             placeholder="예: 1990-03-15 / 19900315"
             aria-invalid={birthDateError ? "true" : "false"}
-            className="mb-2 w-full rounded-[18px] border border-[#D8E2D1] bg-[#E4EDDA] px-4 py-4 text-base font-bold text-[#18251D] outline-none transition placeholder:text-[#667568] focus:border-[#2F6B4F]"
+            className="mb-2 w-full rounded-[18px] border border-[rgba(97,74,55,0.18)] bg-[#F1EADE] px-4 py-4 text-base font-bold text-[#191F28] outline-none transition placeholder:text-[rgba(97,74,55,0.72)] focus:border-[#779682]"
           />
 
           {birthDateError && (
@@ -392,31 +493,31 @@ export default function BirthForm() {
               label={`${year}년`}
               value={year}
               placeholder="년도"
-              onClick={() => setOpenPicker("year")}
+              onClick={(event) => openPickerAt("year", event)}
             />
 
             <PickerButton
               label={`${Number(month)}월`}
               value={month}
               placeholder="월"
-              onClick={() => setOpenPicker("month")}
+              onClick={(event) => openPickerAt("month", event)}
             />
 
             <PickerButton
               label={`${Number(day)}일`}
               value={day}
               placeholder="일"
-              onClick={() => setOpenPicker("day")}
+              onClick={(event) => openPickerAt("day", event)}
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#18251D]">
+          <label className="mb-2 block text-sm font-bold text-[#614A37]">
             날짜 기준
           </label>
 
-          <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#E4EDDA] p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#F1EADE] p-1">
             {[
               { label: "양력", value: "solar" },
               { label: "음력", value: "lunar" },
@@ -427,8 +528,8 @@ export default function BirthForm() {
                 onClick={() => setCalendarType(item.value as CalendarType)}
                 className={`rounded-xl px-3 py-3 text-sm font-black transition ${
                   calendarType === item.value
-                    ? "bg-[#2F6B4F] text-[#FFFFFF]"
-                    : "text-[#667568]"
+                    ? "bg-[#779682] text-[#FFFDF8]"
+                    : "text-[rgba(97,74,55,0.72)]"
                 }`}
               >
                 {item.label}
@@ -436,13 +537,13 @@ export default function BirthForm() {
             ))}
           </div>
 
-          <p className="mt-2 text-xs leading-5 text-[#667568]">
+          <p className="mt-2 text-xs leading-5 text-[rgba(97,74,55,0.72)]">
             음력은 윤달을 제외한 일반 음력 날짜 기준으로 변환합니다.
           </p>
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#18251D]">
+          <label className="mb-2 block text-sm font-bold text-[#614A37]">
             태어난 시간
           </label>
 
@@ -450,12 +551,12 @@ export default function BirthForm() {
             label={selectedTimeLabel}
             value={birthTime}
             placeholder="태어난 시간 선택"
-            onClick={() => setOpenPicker("time")}
+            onClick={(event) => openPickerAt("time", event)}
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-bold text-[#18251D]">
+          <label className="mb-2 block text-sm font-bold text-[#614A37]">
             성별
           </label>
 
@@ -471,8 +572,8 @@ export default function BirthForm() {
                 onClick={() => setGender(item.value)}
                 className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
                   gender === item.value
-                    ? "bg-[#2F6B4F] text-[#FFFFFF]"
-                    : "bg-[#E4EDDA] text-[#667568]"
+                    ? "bg-[#779682] text-[#FFFDF8]"
+                    : "bg-[#F1EADE] text-[rgba(97,74,55,0.72)]"
                 }`}
               >
                 {item.label}
@@ -488,7 +589,7 @@ export default function BirthForm() {
           내 유형 확인하기
         </button>
 
-        <p className="text-center text-xs leading-5 text-[#667568]">
+        <p className="text-center text-xs leading-5 text-[rgba(97,74,55,0.72)]">
           입력한 정보는 현재 MVP 단계에서 저장하지 않습니다.
         </p>
       </form>
@@ -498,6 +599,7 @@ export default function BirthForm() {
           title={pickerConfig.title}
           options={pickerConfig.options}
           selectedValue={pickerConfig.selectedValue}
+          anchorTop={pickerAnchorTop}
           onSelect={pickerConfig.onSelect}
           onClose={() => setOpenPicker(null)}
         />
