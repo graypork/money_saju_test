@@ -1,4 +1,4 @@
-const APP_VERSION = "v0.9.5";
+const APP_VERSION = "v0.9.10";
 const APP_VERSION_NOTE = "UI flow update";
 
 export default function AppVersionBadge() {

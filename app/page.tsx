@@ -31,57 +31,97 @@ function getNextStatsIndex(index: number) {
   return (index + 2) % statsCards.length;
 }
 
-function StatsCardFace({
-  card,
-  state,
+function StatsCubeCard({
+  currentCard,
+  nextCard,
+  isRolling,
 }: {
-  card: (typeof statsCards)[number];
-  state: "current" | "next" | "currentRolling" | "nextRolling";
+  currentCard: (typeof statsCards)[number];
+  nextCard: (typeof statsCards)[number];
+  isRolling: boolean;
 }) {
-  const stateClass = {
-    current: "opacity-100 [transform:rotateX(0deg)_translateY(0)]",
-    next: "opacity-0 [transform:rotateX(82deg)_translateY(14px)]",
-    currentRolling: "opacity-0 [transform:rotateX(-82deg)_translateY(-14px)]",
-    nextRolling: "opacity-100 [transform:rotateX(0deg)_translateY(0)]",
-  }[state];
+  const faceClass =
+    `${uiTokens.card} absolute inset-0 h-[116px] overflow-hidden rounded-[24px] p-5 [backface-visibility:hidden]`;
 
   return (
-    <div
-      className={`${uiTokens.card} absolute inset-0 h-[116px] p-5 [backface-visibility:hidden] transition-all duration-[620ms] ease-out ${stateClass}`}
-    >
-      <p className={uiTokens.eyebrow}>{card.label}</p>
-      <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#191F28]">
-        {card.text}
-      </p>
+    <div className="h-[116px] overflow-hidden rounded-[24px] [clip-path:inset(0_round_24px)] [perspective:900px]">
+      <div
+        className={`relative h-[116px] rounded-[24px] [transform-origin:center_center] [transform-style:preserve-3d] [will-change:transform] ${
+          isRolling ? "animate-[stats-cube-roll_620ms_ease-in-out_1]" : ""
+        }`}
+      >
+        <div className={`${faceClass} [transform:translateZ(58px)]`}>
+          <p className={uiTokens.eyebrow}>{currentCard.label}</p>
+          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#191F28]">
+            {currentCard.text}
+          </p>
+        </div>
+        <div
+          className={`${faceClass} [transform:rotateX(90deg)_translateZ(58px)]`}
+        >
+          <p className={uiTokens.eyebrow}>{nextCard.label}</p>
+          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#191F28]">
+            {nextCard.text}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
 
 export default function Home() {
   const [statsIndices, setStatsIndices] = useState([0, 1]);
-  const [rollingSlot, setRollingSlot] = useState<number | null>(null);
+  const [rollingInfo, setRollingInfo] = useState<{
+    slot: number;
+    nextIndex: number;
+  } | null>(null);
   const nextRollingSlotRef = useRef(0);
+  const statsIndicesRef = useRef(statsIndices);
+  const scheduleTimeoutRef = useRef<number | undefined>(undefined);
+  const animationTimeoutRef = useRef<number | undefined>(undefined);
+  const isAnimatingRef = useRef(false);
 
   useEffect(() => {
-    let timeoutId: number | undefined;
-    const intervalId = window.setInterval(() => {
-      const slot = nextRollingSlotRef.current;
+    statsIndicesRef.current = statsIndices;
+  }, [statsIndices]);
 
-      setRollingSlot(slot);
-      timeoutId = window.setTimeout(() => {
-        setStatsIndices((current) =>
-          current.map((index, itemSlot) =>
-            itemSlot === slot ? getNextStatsIndex(index) : index
-          )
-        );
-        setRollingSlot(null);
-        nextRollingSlotRef.current = (slot + 1) % 2;
-      }, 620);
-    }, 2200);
+  useEffect(() => {
+    const scheduleNextRoll = () => {
+      scheduleTimeoutRef.current = window.setTimeout(() => {
+        if (isAnimatingRef.current) {
+          scheduleNextRoll();
+          return;
+        }
+
+        const slot = nextRollingSlotRef.current;
+        const nextIndex = getNextStatsIndex(statsIndicesRef.current[slot]);
+        isAnimatingRef.current = true;
+        setRollingInfo({ slot, nextIndex });
+
+        animationTimeoutRef.current = window.setTimeout(() => {
+          setStatsIndices((current) =>
+            current.map((index, itemSlot) =>
+              itemSlot === slot ? nextIndex : index
+            )
+          );
+          setRollingInfo(null);
+          nextRollingSlotRef.current = (slot + 1) % 2;
+          isAnimatingRef.current = false;
+          scheduleNextRoll();
+        }, 620);
+      }, 2200);
+    };
+
+    scheduleNextRoll();
 
     return () => {
-      window.clearInterval(intervalId);
-      if (timeoutId) window.clearTimeout(timeoutId);
+      if (scheduleTimeoutRef.current) {
+        window.clearTimeout(scheduleTimeoutRef.current);
+      }
+      if (animationTimeoutRef.current) {
+        window.clearTimeout(animationTimeoutRef.current);
+      }
+      isAnimatingRef.current = false;
     };
   }, []);
 
@@ -106,24 +146,20 @@ export default function Home() {
 
           <div className="mt-8 grid h-[244px] gap-3 overflow-hidden">
             {statsIndices.map((cardIndex, slot) => {
-              const isRolling = rollingSlot === slot;
+              const isRolling = rollingInfo?.slot === slot;
               const currentCard = statsCards[cardIndex];
-              const nextCard = statsCards[getNextStatsIndex(cardIndex)];
+              const nextCard =
+                isRolling && rollingInfo
+                  ? statsCards[rollingInfo.nextIndex]
+                  : statsCards[getNextStatsIndex(cardIndex)];
 
               return (
-                <div
+                <StatsCubeCard
                   key={slot}
-                  className="relative h-[116px] [perspective:900px] [transform-style:preserve-3d]"
-                >
-                  <StatsCardFace
-                    card={currentCard}
-                    state={isRolling ? "currentRolling" : "current"}
-                  />
-                  <StatsCardFace
-                    card={nextCard}
-                    state={isRolling ? "nextRolling" : "next"}
-                  />
-                </div>
+                  currentCard={currentCard}
+                  nextCard={nextCard}
+                  isRolling={isRolling}
+                />
               );
             })}
           </div>
@@ -140,6 +176,16 @@ export default function Home() {
         </section>
       </section>
       <AppVersionBadge />
+      <style jsx global>{`
+        @keyframes stats-cube-roll {
+          0% {
+            transform: rotateX(0deg);
+          }
+          100% {
+            transform: rotateX(-90deg);
+          }
+        }
+      `}</style>
     </main>
   );
 }
