@@ -27,6 +27,24 @@ const statsCards = [
   },
 ];
 
+const proofCards = [
+  {
+    label: "BIRTH",
+    title: "생년월일시 기반",
+    body: "입력한 생년월일과 태어난 시간으로 기본 사주 흐름을 봅니다.",
+  },
+  {
+    label: "ELEMENT",
+    title: "오행 밸런스 분석",
+    body: "목·화·토·금·수의 강약을 돈 패턴 언어로 바꿉니다.",
+  },
+  {
+    label: "ANIMAL",
+    title: "동물 유형 리포트",
+    body: "계산 결과를 하나의 돈버는 동물 유형으로 정리합니다.",
+  },
+];
+
 function getNextStatsIndex(index: number) {
   return (index + 2) % statsCards.length;
 }
@@ -126,25 +144,64 @@ export default function Home() {
   }, []);
 
   return (
-    <main className={`${uiTokens.page} py-7`}>
-      <section className={`${uiTokens.shell} min-h-[calc(100vh-56px)]`}>
-        <section className="flex min-h-[calc(100vh-96px)] flex-col justify-center px-1 py-8">
-          <div className="mb-5 inline-flex rounded-full bg-[#FFFDF8] px-4 py-2 text-xs font-bold text-[#779682]">
-            사주와 오행으로 보는 재물 동물 테스트
+    <main className={`${uiTokens.page} py-6`}>
+      <section className={`${uiTokens.shell} space-y-5 pb-8`}>
+        <section className="px-1 pb-2 pt-5">
+          <div className="mb-5 inline-flex rounded-full border border-black/10 bg-[#FFFDF8] px-4 py-2 text-xs font-extrabold text-[#285C42] shadow-[0_8px_20px_rgba(31,42,34,0.06)]">
+            사주와 오행으로 보는 돈 패턴 테스트
           </div>
 
-          <h1 className="text-[36px] font-extrabold leading-[1.18] text-[#614A37]">
+          <h1 className="text-[38px] font-black leading-[1.12] tracking-[-0.01em] text-[#171C18]">
             돈 앞에서 깨어나는
             <br />
             내 내면의 동물은?
           </h1>
 
-          <p className="mt-6 text-[16px] font-semibold leading-8 text-[rgba(97,74,55,0.72)]">
-            사주와 오행을 바탕으로 돈을 대하는 방식과 새기 쉬운 지점을
-            하나의 동물 유형으로 보여줍니다.
+          <p className="mt-5 text-[16px] font-semibold leading-8 text-[#6F6253]">
+            돈을 버는 방식, 쓰는 습관, 놓치기 쉬운 기회를
+            사주와 오행 기반의 동물 유형으로 보여줍니다.
           </p>
 
-          <div className="mt-8 grid h-[244px] gap-3 overflow-hidden">
+          <a href="/input" className={`${uiTokens.button} mt-7`}>
+            내 돈버는 동물 확인하기
+          </a>
+        </section>
+
+        <section className="grid grid-cols-3 gap-2">
+          {proofCards.map((card) => (
+            <article
+              key={card.label}
+              className="rounded-[22px] border border-black/10 bg-[#FFFDF8] p-4 shadow-[0_8px_22px_rgba(31,42,34,0.05)]"
+            >
+              <p className="text-[10px] font-black tracking-[0.08em] text-[#285C42]">
+                {card.label}
+              </p>
+              <h2 className="mt-2 text-[14px] font-black leading-5 text-[#171C18]">
+                {card.title}
+              </h2>
+              <p className="mt-2 text-[12px] font-semibold leading-5 text-[#7D7469]">
+                {card.body}
+              </p>
+            </article>
+          ))}
+        </section>
+
+        <section className={uiTokens.card}>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className={uiTokens.eyebrow}>TYPE PREVIEW</p>
+              <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#171C18]">
+                지금 많이 보이는
+                <br />
+                돈버는 동물들
+              </h2>
+            </div>
+            <div className="grid h-12 w-12 place-items-center rounded-2xl bg-[#E7F1E7] text-xl">
+              ◌
+            </div>
+          </div>
+
+          <div className="mt-5 grid h-[244px] gap-3 overflow-hidden">
             {statsIndices.map((cardIndex, slot) => {
               const isRolling = rollingInfo?.slot === slot;
               const currentCard = statsCards[cardIndex];
@@ -163,12 +220,18 @@ export default function Home() {
               );
             })}
           </div>
+        </section>
 
-          <a href="/input" className={`${uiTokens.button} mt-8`}>
+        <section className="rounded-[28px] border border-black/10 bg-[#FFFDF8] p-5 text-center shadow-[0_10px_28px_rgba(31,42,34,0.06)]">
+          <p className="text-[18px] font-black leading-7 text-[#171C18]">
+            나의 돈 패턴은
+            <br />
+            어떤 동물에 가까울까요?
+          </p>
+          <a href="/input" className={`${uiTokens.button} mt-4`}>
             나의 내면 동물 유형은 뭘까요?
           </a>
-
-          <p className={`${uiTokens.caption} mt-5 text-center`}>
+          <p className={`${uiTokens.caption} mt-4`}>
             본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다.
             <br />
             금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.
