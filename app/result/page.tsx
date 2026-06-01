@@ -7,7 +7,7 @@ import {
   type WealthResult,
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
-import { buildResultCopy } from "../../src/lib/copyEngine";
+import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
 
 const PAGE_BASE_CLASS =
   "min-h-screen break-keep px-5 pb-10 pt-4 text-[#171C18]";
@@ -25,6 +25,8 @@ const PRIMARY_BUTTON_CLASS =
   "min-h-14 w-full rounded-full bg-[#285C42] px-5 py-4 text-center text-[16px] font-extrabold text-[#FFFDF8] shadow-[0_10px_24px_rgba(40,92,66,0.18)] transition active:bg-[#214B36]";
 const SECONDARY_BUTTON_CLASS =
   "min-h-14 w-full rounded-full border border-black/10 bg-[#FFFDF8] px-5 py-4 text-center text-[15px] font-extrabold text-[#5E4936] transition active:bg-[#F8F4EC]";
+const COPY_VERSION = "animalTypeBank-v0.10.1";
+const LOGIC_VERSION = "score-v0.10.1";
 
 function parseBirthDate(birthDate: string) {
   const parts = birthDate.split("-").map(Number);
@@ -34,6 +36,24 @@ function parseBirthDate(birthDate: string) {
     month: parts[1] || 1,
     day: parts[2] || 1,
   };
+}
+
+function normalizeBirthDateWithAdminMarker(rawBirthDate: string) {
+  const cleaned = rawBirthDate.replace(/\D/g, "");
+
+  if (/^22\d{8}$/.test(cleaned)) {
+    return { birthDate: cleaned.slice(2), isAdminTestCase: true };
+  }
+
+  if (/^\d{8}22$/.test(cleaned)) {
+    return { birthDate: cleaned.slice(0, 8), isAdminTestCase: true };
+  }
+
+  return { birthDate: cleaned, isAdminTestCase: false };
+}
+
+function formatBirthDate(birthDate: string) {
+  return `${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}`;
 }
 
 function parseBirthTime(birthTime: string) {
@@ -69,6 +89,137 @@ function ResultDebugLogger({
       console.log("[money-saju result debug]", debug);
     }
   }, [debugKey, debug]);
+
+  return null;
+}
+
+function summaryText(value: string, maxLength = 140) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+
+  return normalized.length > maxLength
+    ? `${normalized.slice(0, maxLength - 1)}…`
+    : normalized;
+}
+
+function ResultLogSaver({
+  result,
+  builtCopy,
+  birthDate,
+  rawBirthDate,
+  birthTime,
+  calendarType,
+  gender,
+  isAdminTestCase,
+  adminCode,
+  testMode,
+}: {
+  result: WealthResult;
+  builtCopy: BuiltResultCopy;
+  birthDate: string;
+  rawBirthDate: string;
+  birthTime: string;
+  calendarType: string;
+  gender: string;
+  isAdminTestCase: boolean;
+  adminCode: string;
+  testMode: string;
+}) {
+  useEffect(() => {
+    if (isAdminTestCase || adminCode === "22" || testMode === "1") return;
+
+    const logKey = [
+      "money-saju-test-log",
+      birthDate,
+      birthTime,
+      calendarType,
+      gender,
+      builtCopy.animalKey,
+    ].join(":");
+
+    if (window.sessionStorage.getItem(logKey)) return;
+
+    window.sessionStorage.setItem(logKey, "pending");
+
+    const salList = result.salList?.map((sal) => sal.name) ?? [];
+    const payload = {
+      createdAt: new Date().toISOString(),
+      birthDate,
+      rawBirthDate,
+      calendarType,
+      birthTime,
+      gender,
+      animalKey: builtCopy.animalKey,
+      animalTitle: builtCopy.title,
+      resultSummary: `${builtCopy.title} · ${builtCopy.archetype} · ${builtCopy.rankText}`,
+      firstImpressionSummary: summaryText(builtCopy.firstImpression),
+      resultExplanationSnapshot: {
+        title: builtCopy.title,
+        subtitle: `${builtCopy.archetype} · ${builtCopy.rankText}`,
+        firstImpression: builtCopy.firstImpression,
+        moneyPattern: builtCopy.moneyFlow,
+        elementText: builtCopy.elementReading,
+        salText: builtCopy.salText,
+        closingNote: builtCopy.closingNote,
+      },
+      dayStem: result.saju.dayMaster,
+      element: result.saju.dayElement,
+      salList,
+      scoreSnapshot: {
+        topPercent: result.topPercent,
+        percentile: result.percentile,
+        rawWealthScore: result.rawWealthScore,
+        displayWealthScore: result.displayWealthScore,
+        wealthScore: result.wealthScore,
+        baseWealthScore: result.baseWealthScore,
+        sajuAdjustmentScore: result.sajuAdjustmentScore,
+        adjustedWealthScore: result.adjustedWealthScore,
+        baseTopPercent: result.baseTopPercent,
+        adjustedTopPercent: result.adjustedTopPercent,
+        dominantElement: result.dominantElement,
+        weakElement: result.weakElement,
+        usefulGod: result.usefulGod,
+        favorableElements: result.favorableElements,
+        unfavorableElements: result.unfavorableElements,
+        strengthType: result.strengthType,
+      },
+      copyVersion: COPY_VERSION,
+      logicVersion: LOGIC_VERSION,
+      userAgent: window.navigator.userAgent,
+      referrer: document.referrer,
+      path: `${window.location.pathname}${window.location.search}`,
+      adminCode,
+      testMode,
+      isAdminTestCase,
+    };
+
+    fetch("/api/test-logs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+      .then((response) => {
+        if (response.ok) {
+          window.sessionStorage.setItem(logKey, "saved");
+          return;
+        }
+
+        window.sessionStorage.removeItem(logKey);
+      })
+      .catch(() => {
+        window.sessionStorage.removeItem(logKey);
+      });
+  }, [
+    adminCode,
+    birthDate,
+    birthTime,
+    builtCopy,
+    calendarType,
+    gender,
+    isAdminTestCase,
+    rawBirthDate,
+    result,
+    testMode,
+  ]);
 
   return null;
 }
@@ -145,10 +296,17 @@ function ResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const birthDate = searchParams.get("birthDate") || "";
+  const rawBirthDate = searchParams.get("birthDate") || "";
+  const normalizedBirthDate = normalizeBirthDateWithAdminMarker(rawBirthDate);
+  const birthDate =
+    normalizedBirthDate.birthDate.length === 8
+      ? formatBirthDate(normalizedBirthDate.birthDate)
+      : "";
   const birthTime = searchParams.get("birthTime") || "0";
   const genderParam = searchParams.get("gender") || "unknown";
   const calendarTypeParam = searchParams.get("calendarType") || "solar";
+  const adminCode = searchParams.get("adminCode") || "";
+  const testMode = searchParams.get("testMode") || "";
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     return <InvalidResult />;
@@ -176,6 +334,18 @@ function ResultContent() {
   return (
     <main className={PAGE_BASE_CLASS} style={{ backgroundColor: pageBg }}>
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
+      <ResultLogSaver
+        result={result}
+        builtCopy={builtCopy}
+        birthDate={birthDate}
+        rawBirthDate={rawBirthDate}
+        birthTime={birthTime}
+        calendarType={calendarTypeParam}
+        gender={genderParam}
+        isAdminTestCase={normalizedBirthDate.isAdminTestCase}
+        adminCode={adminCode}
+        testMode={testMode}
+      />
 
       <section className="mx-auto max-w-[430px] pb-8">
         <header className="mb-5 flex items-center justify-between">
