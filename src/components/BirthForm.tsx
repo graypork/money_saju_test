@@ -276,6 +276,7 @@ export default function BirthForm() {
   const [birthTime, setBirthTime] = useState("0");
   const [gender, setGender] = useState("unknown");
   const [calendarType, setCalendarType] = useState<CalendarType>("solar");
+  const [testCaseCode, setTestCaseCode] = useState("");
   const [openPicker, setOpenPicker] = useState<PickerKey>(null);
   const [pickerAnchorTop, setPickerAnchorTop] = useState(DEFAULT_PICKER_TOP);
 
@@ -416,6 +417,11 @@ export default function BirthForm() {
       calendarType,
       gender,
     });
+    const normalizedTestCaseCode = testCaseCode.trim();
+
+    if (normalizedTestCaseCode) {
+      params.set("testCaseCode", normalizedTestCaseCode);
+    }
 
     router.push(`/result?${params.toString()}`);
   };
@@ -591,12 +597,25 @@ export default function BirthForm() {
           </div>
         </div>
 
+        <div className="rounded-[24px] bg-[#FFFDF8]">
+          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+            테스트 코드
+          </label>
+          <input
+            type="text"
+            value={testCaseCode}
+            onChange={(event) => setTestCaseCode(event.target.value)}
+            placeholder="선택 입력"
+            className="w-full rounded-[18px] border border-black/10 bg-[#F8F4EC] px-4 py-4 text-base font-extrabold text-[#171C18] outline-none transition placeholder:text-[#9C9185] focus:border-[#285C42]"
+          />
+        </div>
+
         <button type="submit" className={`${uiTokens.button} mt-6`}>
           내 유형 확인하기
         </button>
 
         <p className="text-center text-xs font-medium leading-5 text-[#7D7469]">
-          입력한 정보는 현재 MVP 단계에서 저장하지 않습니다.
+          테스트 품질 개선을 위해 입력값과 결과 유형이 익명으로 저장될 수 있어요.
         </p>
       </form>
 

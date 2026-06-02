@@ -38,20 +38,6 @@ function parseBirthDate(birthDate: string) {
   };
 }
 
-function normalizeBirthDateWithAdminMarker(rawBirthDate: string) {
-  const cleaned = rawBirthDate.replace(/\D/g, "");
-
-  if (/^22\d{8}$/.test(cleaned)) {
-    return { birthDate: cleaned.slice(2), isAdminTestCase: true };
-  }
-
-  if (/^\d{8}22$/.test(cleaned)) {
-    return { birthDate: cleaned.slice(0, 8), isAdminTestCase: true };
-  }
-
-  return { birthDate: cleaned, isAdminTestCase: false };
-}
-
 function formatBirthDate(birthDate: string) {
   return `${birthDate.slice(0, 4)}-${birthDate.slice(4, 6)}-${birthDate.slice(6, 8)}`;
 }
@@ -109,9 +95,7 @@ function ResultLogSaver({
   birthTime,
   calendarType,
   gender,
-  isAdminTestCase,
-  adminCode,
-  testMode,
+  testCaseCode,
 }: {
   result: WealthResult;
   builtCopy: BuiltResultCopy;
@@ -120,12 +104,13 @@ function ResultLogSaver({
   birthTime: string;
   calendarType: string;
   gender: string;
-  isAdminTestCase: boolean;
-  adminCode: string;
-  testMode: string;
+  testCaseCode: string;
 }) {
   useEffect(() => {
-    if (isAdminTestCase || adminCode === "22" || testMode === "1") return;
+    if (testCaseCode.trim() === "admin22") {
+      console.log("[testLogs] save skipped", { reason: "test-case-code" });
+      return;
+    }
 
     const logKey = [
       "money-saju-test-log",
@@ -139,6 +124,7 @@ function ResultLogSaver({
     if (window.sessionStorage.getItem(logKey)) return;
 
     window.sessionStorage.setItem(logKey, "pending");
+    console.log("[testLogs] save requested");
 
     const salList = result.salList?.map((sal) => sal.name) ?? [];
     const payload = {
@@ -187,9 +173,7 @@ function ResultLogSaver({
       userAgent: window.navigator.userAgent,
       referrer: document.referrer,
       path: `${window.location.pathname}${window.location.search}`,
-      adminCode,
-      testMode,
-      isAdminTestCase,
+      testCaseCode,
     };
 
     fetch("/api/test-logs", {
@@ -200,25 +184,28 @@ function ResultLogSaver({
       .then((response) => {
         if (response.ok) {
           window.sessionStorage.setItem(logKey, "saved");
+          console.log("[testLogs] append success");
           return;
         }
 
         window.sessionStorage.removeItem(logKey);
+        console.error("[testLogs] append failed", { message: response.statusText });
       })
-      .catch(() => {
+      .catch((error) => {
         window.sessionStorage.removeItem(logKey);
+        console.error("[testLogs] append failed", {
+          message: error instanceof Error ? error.message : "unknown",
+        });
       });
   }, [
-    adminCode,
     birthDate,
     birthTime,
     builtCopy,
     calendarType,
     gender,
-    isAdminTestCase,
     rawBirthDate,
     result,
-    testMode,
+    testCaseCode,
   ]);
 
   return null;
@@ -297,16 +284,15 @@ function ResultContent() {
   const router = useRouter();
 
   const rawBirthDate = searchParams.get("birthDate") || "";
-  const normalizedBirthDate = normalizeBirthDateWithAdminMarker(rawBirthDate);
+  const normalizedBirthDate = rawBirthDate.replace(/\D/g, "");
   const birthDate =
-    normalizedBirthDate.birthDate.length === 8
-      ? formatBirthDate(normalizedBirthDate.birthDate)
+    normalizedBirthDate.length === 8
+      ? formatBirthDate(normalizedBirthDate)
       : "";
   const birthTime = searchParams.get("birthTime") || "0";
   const genderParam = searchParams.get("gender") || "unknown";
   const calendarTypeParam = searchParams.get("calendarType") || "solar";
-  const adminCode = searchParams.get("adminCode") || "";
-  const testMode = searchParams.get("testMode") || "";
+  const testCaseCode = searchParams.get("testCaseCode") || "";
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
     return <InvalidResult />;
@@ -342,9 +328,7 @@ function ResultContent() {
         birthTime={birthTime}
         calendarType={calendarTypeParam}
         gender={genderParam}
-        isAdminTestCase={normalizedBirthDate.isAdminTestCase}
-        adminCode={adminCode}
-        testMode={testMode}
+        testCaseCode={testCaseCode}
       />
 
       <section className="mx-auto max-w-[430px] pb-8">

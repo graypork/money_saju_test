@@ -13,20 +13,6 @@ import type { TestLogPayload, TestLogQuery } from "../../../src/lib/testLogs/typ
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function normalizeBirthDateWithAdminMarker(rawBirthDate: string) {
-  const cleaned = rawBirthDate.replace(/\D/g, "");
-
-  if (/^22\d{8}$/.test(cleaned)) {
-    return { birthDate: cleaned.slice(2), isAdminTestCase: true };
-  }
-
-  if (/^\d{8}22$/.test(cleaned)) {
-    return { birthDate: cleaned.slice(0, 8), isAdminTestCase: true };
-  }
-
-  return { birthDate: cleaned, isAdminTestCase: false };
-}
-
 function hasAdminCookie(request: NextRequest) {
   const token =
     request.cookies.get(ADMIN_COOKIE_NAME)?.value ||
@@ -47,17 +33,6 @@ function readQuery(request: NextRequest): TestLogQuery {
     dayStem: searchParams.get("dayStem") || undefined,
     limit,
   };
-}
-
-function isTestModeRequest(request: NextRequest, body: Record<string, unknown>) {
-  const searchParams = request.nextUrl.searchParams;
-
-  return (
-    searchParams.get("adminCode") === "22" ||
-    searchParams.get("testMode") === "1" ||
-    body.adminCode === "22" ||
-    body.testMode === "1"
-  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -125,16 +100,13 @@ function storageErrorResponse(error: unknown) {
 
 export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
-  const marker = normalizeBirthDateWithAdminMarker(String(body.birthDate || ""));
 
-  if (
-    hasAdminCookie(request) ||
-    isTestModeRequest(request, body) ||
-    marker.isAdminTestCase ||
-    body.isAdminTestCase === true
-  ) {
+  if (String(body.testCaseCode || "").trim() === "admin22") {
+    console.log("[testLogs] save skipped", { reason: "test-case-code" });
     return NextResponse.json({ ok: true, skipped: true });
   }
+
+  console.log("[testLogs] save requested");
 
   if (!isValidPayload(body)) {
     return NextResponse.json(
@@ -146,8 +118,13 @@ export async function POST(request: NextRequest) {
   try {
     const saved = await getTestLogStorage().create(toPayload(body));
 
+    console.log("[testLogs] append success");
+
     return NextResponse.json({ ok: true, skipped: false, log: saved });
   } catch (error) {
+    console.error("[testLogs] append failed", {
+      message: error instanceof Error ? error.message : "unknown",
+    });
     return storageErrorResponse(error);
   }
 }
