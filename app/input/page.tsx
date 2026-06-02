@@ -40,7 +40,7 @@ export default function InputPage() {
 
         <section className={`${uiTokens.card} p-6`}>
           <p className="mb-5 rounded-2xl bg-[#F8F4EC] px-4 py-3 text-[13px] font-bold leading-5 text-[#7D7469]">
-            테스트 품질 개선을 위해 입력값과 결과 유형이 익명으로 저장될 수 있어요.
+            솔직한 피드백이 필요합니다!
           </p>
           <BirthForm />
         </section>
