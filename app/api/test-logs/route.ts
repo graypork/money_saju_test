@@ -86,15 +86,17 @@ function toPayload(body: Record<string, unknown>): TestLogPayload {
 }
 
 function storageErrorResponse(error: unknown) {
+  const message = error instanceof Error ? error.message : "storage_error";
+
   if (isStorageConfigError(error)) {
     return NextResponse.json(
-      { ok: false, error: "storage_config_missing" },
+      { ok: false, error: "storage_config_missing", message },
       { status: 503 },
     );
   }
 
   return NextResponse.json(
-    { ok: false, error: error instanceof Error ? error.message : "storage_error" },
+    { ok: false, error: "storage_error", message },
     { status: 500 },
   );
 }
@@ -153,6 +155,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ ok: true, logs });
   } catch (error) {
+    console.error("[testLogs] list failed", {
+      message: error instanceof Error ? error.message : "unknown",
+    });
     return storageErrorResponse(error);
   }
 }

@@ -294,6 +294,10 @@ function parseJsonCell<T>(value: string, fallback: T): T {
   }
 }
 
+function isNonEmptyRow(row: string[]) {
+  return row.some((cell) => String(cell ?? "").trim());
+}
+
 function toSheetRow(log: TestLogPayload) {
   return SHEET_HEADERS.map((header) => serializeCell(log[header]));
 }
@@ -359,19 +363,31 @@ class GoogleSheetsTestLogStorage implements TestLogStorage {
   async list(query: TestLogQuery = {}): Promise<TestLogRecord[]> {
     const config = getGoogleSheetsConfig();
 
-    await ensureHeaders(config);
+    console.log("[testLogs] list start");
 
-    const limit = getLimit(query.limit);
-    const range = `${escapeSheetName(config.sheetName)}!A2:${columnName(SHEET_HEADERS.length)}`;
-    const response = await googleSheetsFetch(config, `/values/${encodeURIComponent(range)}`);
-    const data = (await response.json()) as { values?: string[][] };
-    const rows = data.values ?? [];
+    try {
+      await ensureHeaders(config);
 
-    return rows
-      .map(fromSheetRow)
-      .reverse()
-      .filter((log) => matchesFilter(log, query))
-      .slice(0, limit);
+      const limit = getLimit(query.limit);
+      const range = `${escapeSheetName(config.sheetName)}!A2:${columnName(SHEET_HEADERS.length)}`;
+      const response = await googleSheetsFetch(config, `/values/${encodeURIComponent(range)}`);
+      const data = (await response.json()) as { values?: string[][] };
+      const rows = (data.values ?? []).filter(isNonEmptyRow);
+      const logs = rows
+        .map(fromSheetRow)
+        .reverse()
+        .filter((log) => matchesFilter(log, query))
+        .slice(0, limit);
+
+      console.log("[testLogs] list success", { count: logs.length });
+
+      return logs;
+    } catch (error) {
+      console.error("[testLogs] list failed", {
+        message: error instanceof Error ? error.message : "unknown",
+      });
+      throw error;
+    }
   }
 }
 

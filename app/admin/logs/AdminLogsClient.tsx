@@ -5,17 +5,21 @@ import type { TestLogRecord } from "../../../src/lib/testLogs/types";
 
 type LogsResponse =
   | { ok: true; logs: TestLogRecord[] }
-  | { ok: false; error: string };
+  | { ok: false; error: string; message?: string };
 
 const FILTER_KEYS = ["animalKey", "calendarType", "birthTime", "dayStem"] as const;
 
 function formatDate(value: string) {
   if (!value) return "-";
 
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
   return new Intl.DateTimeFormat("ko-KR", {
     dateStyle: "short",
     timeStyle: "medium",
-  }).format(new Date(value));
+  }).format(date);
 }
 
 function uniqueOptions(logs: TestLogRecord[], key: (typeof FILTER_KEYS)[number]) {
@@ -58,13 +62,16 @@ export default function AdminLogsClient() {
       const response = await fetch(`/api/test-logs?${queryString}`, {
         cache: "no-store",
       });
-      const data = (await response.json()) as LogsResponse;
+      const data = (await response.json().catch(() => ({
+        ok: false,
+        error: "invalid_response",
+      }))) as LogsResponse;
 
       if (!response.ok || !data.ok) {
-        throw new Error(data.ok ? "load_failed" : data.error);
+        throw new Error(data.ok ? "load_failed" : data.message || data.error);
       }
 
-      setLogs(data.logs);
+      setLogs(Array.isArray(data.logs) ? data.logs : []);
       setUpdatedAt(new Date().toLocaleTimeString("ko-KR"));
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : "load_failed");
@@ -164,17 +171,24 @@ export default function AdminLogsClient() {
             </thead>
             <tbody>
               {logs.map((log, index) => (
-                <tr key={`${log.createdAt}-${index}`} className="border-b border-black/5">
+                <tr
+                  key={String(log.id ?? `${log.createdAt || "row"}-${index}`)}
+                  className="border-b border-black/5"
+                >
                   <td className="px-3 py-3 font-bold">{formatDate(log.createdAt)}</td>
                   <td className="px-3 py-3">{log.birthDate}</td>
                   <td className="px-3 py-3">{log.calendarType}</td>
                   <td className="px-3 py-3">{log.birthTime}</td>
                   <td className="px-3 py-3">{log.gender}</td>
-                  <td className="px-3 py-3 font-extrabold">{log.animalTitle}</td>
+                  <td className="px-3 py-3 font-extrabold">
+                    {log.animalTitle || log.animalKey || "-"}
+                  </td>
                   <td className="max-w-[260px] truncate px-3 py-3">{log.resultSummary}</td>
                   <td className="px-3 py-3">{log.dayStem}</td>
                   <td className="px-3 py-3">{log.element}</td>
-                  <td className="px-3 py-3">{log.salList?.join(", ")}</td>
+                  <td className="px-3 py-3">
+                    {Array.isArray(log.salList) ? log.salList.join(", ") : ""}
+                  </td>
                   <td className="px-3 py-3">
                     <button
                       type="button"
@@ -189,7 +203,7 @@ export default function AdminLogsClient() {
               {logs.length === 0 ? (
                 <tr>
                   <td className="px-4 py-10 text-center font-bold text-[#7D7469]" colSpan={11}>
-                    표시할 로그가 없습니다.
+                    저장된 로그가 없습니다.
                   </td>
                 </tr>
               ) : null}
@@ -205,7 +219,9 @@ export default function AdminLogsClient() {
               <p className="text-xs font-extrabold tracking-[0.08em] text-[#285C42]">
                 DETAIL
               </p>
-              <h2 className="mt-2 text-2xl font-black">{selected.animalTitle}</h2>
+              <h2 className="mt-2 text-2xl font-black">
+                {selected.animalTitle || selected.animalKey || "상세 로그"}
+              </h2>
             </div>
             <button
               type="button"
