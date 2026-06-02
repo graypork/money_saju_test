@@ -6,6 +6,7 @@ import {
 } from "../../../src/lib/testLogs/adminAuth";
 import {
   getTestLogStorage,
+  isAppendError,
   isStorageConfigError,
 } from "../../../src/lib/testLogs/storage";
 import type { TestLogPayload, TestLogQuery } from "../../../src/lib/testLogs/types";
@@ -87,7 +88,7 @@ function toPayload(body: Record<string, unknown>): TestLogPayload {
 function storageErrorResponse(error: unknown) {
   if (isStorageConfigError(error)) {
     return NextResponse.json(
-      { ok: false, error: "storage_not_configured" },
+      { ok: false, error: "storage_config_missing" },
       { status: 503 },
     );
   }
@@ -103,10 +104,10 @@ export async function POST(request: NextRequest) {
 
   if (String(body.testCaseCode || "").trim() === "admin22") {
     console.log("[testLogs] save skipped", { reason: "test-case-code" });
-    return NextResponse.json({ ok: true, skipped: true });
+    return NextResponse.json({ ok: true, skipped: true, reason: "test-case-code" });
   }
 
-  console.log("[testLogs] save requested");
+  console.log("[testLogs] post received");
 
   if (!isValidPayload(body)) {
     return NextResponse.json(
@@ -118,13 +119,26 @@ export async function POST(request: NextRequest) {
   try {
     const saved = await getTestLogStorage().create(toPayload(body));
 
-    console.log("[testLogs] append success");
-
     return NextResponse.json({ ok: true, skipped: false, log: saved });
   } catch (error) {
     console.error("[testLogs] append failed", {
       message: error instanceof Error ? error.message : "unknown",
     });
+
+    if (isStorageConfigError(error)) {
+      return NextResponse.json(
+        { ok: false, error: "storage_config_missing" },
+        { status: 503 },
+      );
+    }
+
+    if (isAppendError(error)) {
+      return NextResponse.json(
+        { ok: false, error: "append_failed" },
+        { status: 500 },
+      );
+    }
+
     return storageErrorResponse(error);
   }
 }

@@ -52,6 +52,13 @@ export class TestLogStorageConfigError extends Error {
   }
 }
 
+export class TestLogAppendError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "TestLogAppendError";
+  }
+}
+
 function getLimit(limit?: number) {
   if (!limit || !Number.isFinite(limit)) return DEFAULT_LIMIT;
 
@@ -121,12 +128,6 @@ function getGoogleSheetsConfig(): GoogleSheetsConfig {
     ? normalizePrivateKey(process.env.GOOGLE_SHEETS_PRIVATE_KEY)
     : serviceAccount?.privateKey;
   const sheetName = process.env.GOOGLE_SHEETS_LOG_SHEET_NAME || DEFAULT_SHEET_NAME;
-
-  console.log("[testLogs] Google Sheets env loaded", {
-    spreadsheetId: Boolean(spreadsheetId),
-    clientEmail: Boolean(clientEmail),
-    privateKey: Boolean(privateKey),
-  });
 
   if (!spreadsheetId || !clientEmail || !privateKey) {
     throw new TestLogStorageConfigError();
@@ -341,15 +342,16 @@ class GoogleSheetsTestLogStorage implements TestLogStorage {
 
     await ensureHeaders(config);
 
+    console.log("[testLogs] append start");
+
     const range = `${escapeSheetName(config.sheetName)}!A:${columnName(SHEET_HEADERS.length)}`;
-    await googleSheetsFetch(
-      config,
-      `/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
-      {
-        method: "POST",
-        body: JSON.stringify({ values: [toSheetRow(log)] }),
-      },
-    );
+
+    try {
+      await appendRows(config, range, [toSheetRow(log)]);
+      console.log("[testLogs] append success");
+    } catch (error) {
+      throw new TestLogAppendError(error instanceof Error ? error.message : "append_failed");
+    }
 
     return log;
   }
@@ -377,6 +379,30 @@ export function getTestLogStorage(): TestLogStorage {
   return new GoogleSheetsTestLogStorage();
 }
 
+async function appendRows(config: GoogleSheetsConfig, range: string, values: string[][]) {
+  await googleSheetsFetch(
+    config,
+    `/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    {
+      method: "POST",
+      body: JSON.stringify({ values }),
+    },
+  );
+}
+
+export async function appendGoogleSheetsDebugRow() {
+  const config = getGoogleSheetsConfig();
+
+  await ensureHeaders(config);
+
+  const range = `${escapeSheetName(config.sheetName)}!A:${columnName(SHEET_HEADERS.length)}`;
+  await appendRows(config, range, [["debug", new Date().toISOString(), "sheets-test"]]);
+}
+
 export function isStorageConfigError(error: unknown) {
   return error instanceof TestLogStorageConfigError;
+}
+
+export function isAppendError(error: unknown) {
+  return error instanceof TestLogAppendError;
 }

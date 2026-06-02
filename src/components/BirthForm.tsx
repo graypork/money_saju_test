@@ -615,7 +615,7 @@ export default function BirthForm() {
         </button>
 
         <p className="text-center text-xs font-medium leading-5 text-[#7D7469]">
-          테스트 품질 개선을 위해 입력값과 결과 유형이 익명으로 저장될 수 있어요.
+          내가 솔직한 피드백이 필요합니다!
         </p>
       </form>
 

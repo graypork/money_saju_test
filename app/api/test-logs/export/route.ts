@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (isStorageConfigError(error)) {
       return NextResponse.json(
-        { ok: false, error: "storage_not_configured" },
+        { ok: false, error: "storage_config_missing" },
         { status: 503 },
       );
     }
