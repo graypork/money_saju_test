@@ -132,7 +132,7 @@ export default function AdminLogsClient() {
         {error ? (
           <p className="mt-3 rounded-2xl bg-[#F8E4DF] px-4 py-3 text-sm font-bold text-[#9A3F2C]">
             {error === "storage_not_configured"
-              ? "Supabase 저장소 env가 아직 설정되지 않았습니다."
+              ? "Google Sheets 저장 env가 아직 설정되지 않았습니다."
               : error}
           </p>
         ) : null}
