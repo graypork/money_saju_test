@@ -122,6 +122,12 @@ function getGoogleSheetsConfig(): GoogleSheetsConfig {
     : serviceAccount?.privateKey;
   const sheetName = process.env.GOOGLE_SHEETS_LOG_SHEET_NAME || DEFAULT_SHEET_NAME;
 
+  console.log("[testLogs] Google Sheets env loaded", {
+    spreadsheetId: Boolean(spreadsheetId),
+    clientEmail: Boolean(clientEmail),
+    privateKey: Boolean(privateKey),
+  });
+
   if (!spreadsheetId || !clientEmail || !privateKey) {
     throw new TestLogStorageConfigError();
   }
