@@ -1,18 +1,13 @@
+const glassControl =
+  "border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.08)_35%,rgba(255,255,255,0.03)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.68),inset_0_-1px_0_rgba(255,255,255,0.12),0_9px_22px_rgba(48,42,34,0.08)] [backdrop-filter:blur(16px)_saturate(150%)] [-webkit-backdrop-filter:blur(16px)_saturate(150%)]";
+const glassGreenButton =
+  "border border-white/64 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.09)_34%,rgba(255,255,255,0.035)_100%),linear-gradient(180deg,rgba(24,134,82,0.28)_0%,rgba(24,134,82,0.18)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.76),inset_1px_0_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(255,255,255,0.16),0_12px_28px_rgba(36,84,59,0.15),0_2px_0_rgba(255,255,255,0.18)] [backdrop-filter:blur(16px)_saturate(150%)] [-webkit-backdrop-filter:blur(16px)_saturate(150%)]";
+
 export const uiTokens = {
-  page:
-    "min-h-screen bg-[#F8F4EC] px-5 py-8 text-[#171C18] [word-break:keep-all]",
-  shell: "mx-auto max-w-[460px]",
-  card:
-    "rounded-[26px] border border-black/10 bg-[#FFFDF8] p-5 shadow-[0_12px_32px_rgba(31,42,34,0.07)]",
-  softCard:
-    "rounded-[22px] border border-black/10 bg-[#FFFDF8] p-5",
   button:
-    "flex min-h-14 w-full items-center justify-center rounded-full bg-[#285C42] px-[22px] py-4 text-base font-extrabold text-[#FFFDF8] shadow-[0_10px_24px_rgba(40,92,66,0.18)] transition hover:bg-[#214B36] active:scale-[0.98] active:bg-[#214B36]",
-  secondaryButton:
-    "flex min-h-14 w-full items-center justify-center rounded-full bg-[#5E4936] px-[22px] py-4 text-base font-extrabold text-[#FFFDF8] transition active:scale-[0.98]",
-  eyebrow: "text-xs font-extrabold uppercase tracking-[0.08em] text-[#285C42]",
-  headline: "text-[34px] font-extrabold leading-[1.18] text-[#171C18]",
-  sectionTitle: "text-[23px] font-extrabold leading-[1.25] text-[#171C18]",
-  body: "text-[15px] leading-7 text-[#6F6253]",
-  caption: "text-[13px] leading-5 text-[#7D7469]",
+    `flex min-h-14 w-full items-center justify-center rounded-full px-[22px] py-4 text-base font-extrabold text-[#F7FFF9] transition active:translate-y-0.5 ${glassGreenButton}`,
+  eyebrow:
+    "inline-flex rounded-full bg-[#F3F8F4] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#1E6A48]",
+  glassControl,
+  glassGreenButton,
 };

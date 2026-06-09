@@ -28,6 +28,15 @@ type ParsedBirthDate = {
 const PICKER_SHEET_HEIGHT = 420;
 const PICKER_VIEWPORT_MARGIN = 16;
 const DEFAULT_PICKER_TOP = 96;
+const FIELD_GROUP_CLASS =
+  "rounded-[28px] border border-[#E5E7EB] bg-white p-5";
+const INPUT_BOX_CLASS =
+  "w-full rounded-[18px] border border-[#E5E7EB] bg-white px-4 py-4 text-base font-extrabold text-[#111827] outline-none transition placeholder:text-[#9CA3AF] focus:border-[#1E6A48] focus:ring-4 focus:ring-[#1E6A48]/10";
+const OPTION_BOX_CLASS =
+  "w-full rounded-[18px] border border-[#E5E7EB] bg-white px-3 py-4 text-left text-base font-extrabold text-[#111827] outline-none transition active:translate-y-0.5 active:bg-[#F3F8F4] focus:border-[#1E6A48] focus:ring-4 focus:ring-[#1E6A48]/10";
+const SELECTED_OPTION_CLASS = `text-[#F7FFF9] ${uiTokens.glassGreenButton}`;
+const MUTED_OPTION_CLASS =
+  "border border-[#E5E7EB] bg-white text-[#4B5563] active:bg-[#F3F8F4]";
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
@@ -94,9 +103,9 @@ function PickerButton({
     <button
       type="button"
       onClick={onClick}
-      className="w-full rounded-[18px] border border-black/10 bg-[#F8F4EC] px-3 py-4 text-left text-base font-extrabold text-[#171C18] outline-none transition active:scale-[0.98] active:bg-[#EEF3EA]"
+      className={OPTION_BOX_CLASS}
     >
-      <span className={value ? "text-[#171C18]" : "text-[#7D7469]"}>
+      <span className={value ? "text-[#111827]" : "text-[#6B7280]"}>
         {value ? label : placeholder}
       </span>
     </button>
@@ -192,29 +201,29 @@ function PickerSheet({
         type="button"
         aria-label="닫기"
         onClick={onClose}
-        className="absolute inset-0 bg-[#171C18]/36"
+        className="absolute inset-0 bg-[#111827]/28"
       />
 
       <div
-        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-black/10 bg-[#FFFDF8] shadow-[0_24px_70px_rgba(23,28,24,0.22)]"
+        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-[#E5E7EB] bg-white shadow-[0_24px_70px_rgba(15,23,42,0.14)]"
         style={{ top: sheetTop }}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-black/10 px-5 py-4">
-          <h3 className="text-lg font-extrabold text-[#171C18]">{title}</h3>
+        <div className="flex shrink-0 items-center justify-between border-b border-[#E5E7EB] bg-white px-5 py-4">
+          <h3 className="text-lg font-extrabold text-[#111827]">{title}</h3>
 
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full bg-[#EEF3EA] px-4 py-2 text-sm font-bold text-[#285C42]"
+            className={`rounded-full px-4 py-2 text-sm font-bold text-[#1E6A48] ${uiTokens.glassControl}`}
           >
             닫기
           </button>
         </div>
 
-        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[#F8F4EC]">
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-black/10 bg-[#FFFDF8]/95 shadow-[0_8px_20px_rgba(31,42,34,0.07)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#F8F4EC] to-[#F8F4EC]/0" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#F8F4EC] to-[#F8F4EC]/0" />
+        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[#F7F8F5]">
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[#D1D5DB] bg-white/92 shadow-[0_8px_20px_rgba(15,23,42,0.06)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#F7F8F5] to-[#F7F8F5]/0" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#F7F8F5] to-[#F7F8F5]/0" />
 
           <div
             ref={scrollRef}
@@ -231,8 +240,8 @@ function PickerSheet({
                   onClick={() => setDraftValue(option.value)}
                   className={`flex h-12 w-full snap-center items-center justify-center rounded-2xl text-[18px] font-extrabold transition ${
                     isSelected
-                      ? "text-[#171C18]"
-                      : "text-[#A79C8E]"
+                      ? "text-[#111827]"
+                      : "text-[#9CA3AF]"
                   }`}
                 >
                   {option.label}
@@ -246,14 +255,14 @@ function PickerSheet({
           <button
             type="button"
             onClick={onClose}
-            className="min-h-12 rounded-full bg-[#F8F4EC] text-sm font-extrabold text-[#5E4936]"
+            className={`min-h-12 rounded-full text-sm font-extrabold text-[#374151] ${uiTokens.glassControl}`}
           >
             취소
           </button>
           <button
             type="button"
             onClick={confirmValue}
-            className="min-h-12 rounded-full bg-[#285C42] text-sm font-extrabold text-[#FFFDF8]"
+            className={`min-h-12 rounded-full text-sm font-extrabold text-[#F7FFF9] ${uiTokens.glassGreenButton}`}
           >
             선택 완료
           </button>
@@ -460,11 +469,11 @@ export default function BirthForm() {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="rounded-[24px] bg-[#FFFDF8]">
-          <p className="mb-4 text-[13px] font-extrabold text-[#285C42]">
+        <div className={FIELD_GROUP_CLASS}>
+          <p className="mb-4 text-[13px] font-extrabold text-[#1E6A48]">
             태어난 날
           </p>
-          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+          <label className="mb-2 block text-sm font-bold text-[#374151]">
             생년월일
           </label>
 
@@ -488,11 +497,11 @@ export default function BirthForm() {
             }}
             placeholder="예: 1990-03-15 / 19900315"
             aria-invalid={birthDateError ? "true" : "false"}
-            className="mb-2 w-full rounded-[18px] border border-black/10 bg-[#F8F4EC] px-4 py-4 text-base font-extrabold text-[#171C18] outline-none transition placeholder:text-[#9C9185] focus:border-[#285C42]"
+            className={`${INPUT_BOX_CLASS} mb-2`}
           />
 
           {birthDateError && (
-            <p className="mb-2 text-xs font-semibold leading-5 text-[#9f2d2d]">
+            <p className="mb-2 text-xs font-semibold leading-5 text-[#F26B3A]">
               {birthDateError}
             </p>
           )}
@@ -521,12 +530,12 @@ export default function BirthForm() {
           </div>
         </div>
 
-        <div className="rounded-[24px] bg-[#F8F4EC] p-4">
-          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+        <div className={FIELD_GROUP_CLASS}>
+          <label className="mb-2 block text-sm font-bold text-[#374151]">
             날짜 기준
           </label>
 
-          <div className="grid grid-cols-2 gap-2 rounded-[18px] bg-[#FFFDF8] p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-[18px] border border-[#E5E7EB] bg-white p-1">
             {[
               { label: "양력", value: "solar" },
               { label: "음력", value: "lunar" },
@@ -537,8 +546,8 @@ export default function BirthForm() {
                 onClick={() => setCalendarType(item.value as CalendarType)}
                 className={`rounded-xl px-3 py-3 text-sm font-black transition ${
                   calendarType === item.value
-                    ? "bg-[#285C42] text-[#FFFDF8]"
-                    : "text-[#7D7469]"
+                    ? SELECTED_OPTION_CLASS
+                    : "text-[#4B5563]"
                 }`}
               >
                 {item.label}
@@ -546,16 +555,16 @@ export default function BirthForm() {
             ))}
           </div>
 
-          <p className="mt-2 text-xs leading-5 text-[#7D7469]">
+          <p className="mt-2 text-xs leading-5 text-[#6B7280]">
             음력은 윤달을 제외한 일반 음력 날짜 기준으로 변환합니다.
           </p>
         </div>
 
-        <div className="rounded-[24px] bg-[#FFFDF8]">
-          <p className="mb-4 text-[13px] font-extrabold text-[#285C42]">
+        <div className={FIELD_GROUP_CLASS}>
+          <p className="mb-4 text-[13px] font-extrabold text-[#1E6A48]">
             태어난 시간
           </p>
-          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+          <label className="mb-2 block text-sm font-bold text-[#374151]">
             태어난 시간
           </label>
 
@@ -567,11 +576,11 @@ export default function BirthForm() {
           />
         </div>
 
-        <div className="rounded-[24px] bg-[#FFFDF8]">
-          <p className="mb-4 text-[13px] font-extrabold text-[#285C42]">
+        <div className={FIELD_GROUP_CLASS}>
+          <p className="mb-4 text-[13px] font-extrabold text-[#1E6A48]">
             결과 보정 정보
           </p>
-          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+          <label className="mb-2 block text-sm font-bold text-[#374151]">
             성별
           </label>
 
@@ -587,8 +596,8 @@ export default function BirthForm() {
                 onClick={() => setGender(item.value)}
                 className={`rounded-2xl px-3 py-4 text-sm font-bold transition ${
                   gender === item.value
-                    ? "bg-[#285C42] text-[#FFFDF8]"
-                    : "bg-[#F8F4EC] text-[#7D7469]"
+                    ? SELECTED_OPTION_CLASS
+                    : MUTED_OPTION_CLASS
                 }`}
               >
                 {item.label}
@@ -597,8 +606,8 @@ export default function BirthForm() {
           </div>
         </div>
 
-        <div className="rounded-[24px] bg-[#FFFDF8]">
-          <label className="mb-2 block text-sm font-bold text-[#5E4936]">
+        <div className={FIELD_GROUP_CLASS}>
+          <label className="mb-2 block text-sm font-bold text-[#374151]">
             테스트 코드
           </label>
           <input
@@ -606,7 +615,7 @@ export default function BirthForm() {
             value={testCaseCode}
             onChange={(event) => setTestCaseCode(event.target.value)}
             placeholder="선택 입력"
-            className="w-full rounded-[18px] border border-black/10 bg-[#F8F4EC] px-4 py-4 text-base font-extrabold text-[#171C18] outline-none transition placeholder:text-[#9C9185] focus:border-[#285C42]"
+            className={INPUT_BOX_CLASS}
           />
         </div>
 
@@ -614,7 +623,7 @@ export default function BirthForm() {
           내 유형 확인하기
         </button>
 
-        <p className="text-center text-xs font-medium leading-5 text-[#7D7469]">
+        <p className="text-center text-xs font-medium leading-5 text-[#6B7280]">
           내가 솔직한 피드백이 필요합니다!
         </p>
       </form>

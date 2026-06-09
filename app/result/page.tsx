@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect, useState, type ReactNode } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   calculateWealthResult,
@@ -8,25 +8,25 @@ import {
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
 import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
+import { getRandomAnimalMainPhoto } from "../../src/lib/animalAssets";
+import { uiTokens } from "../../src/lib/uiTokens";
 
 const PAGE_BASE_CLASS =
-  "min-h-screen break-keep px-5 pb-10 pt-4 text-[#171C18]";
-const DEFAULT_PAGE_BACKGROUND = "#F8F4EC";
-const ELEMENT_BACKGROUND: Record<string, string> = {
-  fire: "#F3C6C4",
-  wood: "#E3F0DF",
-  water: "#DDECF3",
-  earth: "#E5D2BD",
-  metal: "#F5E6A8",
-};
-const CARD_CLASS =
-  "rounded-[28px] border border-black/10 bg-[#FFFDF8] p-6 shadow-[0_12px_32px_rgba(31,42,34,0.07)]";
+  "min-h-screen break-keep bg-white px-5 pb-10 pt-4 text-[#191F28]";
 const PRIMARY_BUTTON_CLASS =
-  "min-h-14 w-full rounded-full bg-[#285C42] px-5 py-4 text-center text-[16px] font-extrabold text-[#FFFDF8] shadow-[0_10px_24px_rgba(40,92,66,0.18)] transition active:bg-[#214B36]";
+  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#F7FFF9] transition active:translate-y-0.5 ${uiTokens.glassGreenButton}`;
 const SECONDARY_BUTTON_CLASS =
-  "min-h-14 w-full rounded-full border border-black/10 bg-[#FFFDF8] px-5 py-4 text-center text-[15px] font-extrabold text-[#5E4936] transition active:bg-[#F8F4EC]";
+  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[15px] font-extrabold text-[#374151] transition active:translate-y-0.5 ${uiTokens.glassControl}`;
 const COPY_VERSION = "animalTypeBank-v0.10.1";
 const LOGIC_VERSION = "score-v0.10.1";
+const ELEMENT_ORDER = ["wood", "fire", "earth", "metal", "water"] as const;
+const ELEMENT_LABEL: Record<(typeof ELEMENT_ORDER)[number], string> = {
+  wood: "목",
+  fire: "화",
+  earth: "토",
+  metal: "금",
+  water: "수",
+};
 
 function parseBirthDate(birthDate: string) {
   const parts = birthDate.split("-").map(Number);
@@ -54,15 +54,6 @@ function parseBirthTime(birthTime: string) {
   return Number.isFinite(hour) ? hour : undefined;
 }
 
-function getStrongestElement(result: WealthResult) {
-  return (
-    result.dominantElement ||
-    result.debug?.strongestElement ||
-    result.interpretation?.strongestElement ||
-    ""
-  );
-}
-
 function ResultDebugLogger({
   debugKey,
   debug,
@@ -85,6 +76,20 @@ function summaryText(value: string, maxLength = 140) {
   return normalized.length > maxLength
     ? `${normalized.slice(0, maxLength - 1)}…`
     : normalized;
+}
+
+function sentenceSummary(value: string, maxLength = 180) {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  const sentences = normalized
+    .split(/(?<=[.!?。요다니다습니다])\s+/)
+    .filter(Boolean);
+  const summary = sentences.slice(0, 3).join(" ") || normalized;
+
+  return summaryText(summary, maxLength);
+}
+
+function getAssetBasename(path: string | null) {
+  return path?.split("/").filter(Boolean).pop() ?? "animal-main-1.webp";
 }
 
 function ResultLogSaver({
@@ -218,32 +223,223 @@ function ResultCard({
   children: ReactNode;
   className?: string;
 }) {
-  return <section className={`${CARD_CLASS} ${className}`}>{children}</section>;
+  return <section className={className}>{children}</section>;
 }
 
-function InsightRow({
-  icon,
+function ResultAnimalImage({
+  animalKey,
   title,
-  body,
+  emoji,
 }: {
-  icon: string;
+  animalKey: string;
   title: string;
-  body: string;
+  emoji: string;
 }) {
+  const [photo] = useState(() => getRandomAnimalMainPhoto(animalKey));
+  const [failed, setFailed] = useState(false);
+  const basename = getAssetBasename(photo);
+
   return (
-    <div className="flex gap-4 rounded-[22px] bg-[#F8F4EC] p-4">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#FFFDF8] text-sm font-black text-[#285C42]">
-        {icon}
-      </span>
-      <div>
-        <h3 className="text-[16px] font-extrabold leading-6 text-[#171C18]">
-          {title}
-        </h3>
-        <p className="mt-1 whitespace-pre-line text-[14px] font-semibold leading-6 text-[#6F6253]">
-          {body}
-        </p>
+    <div className="relative overflow-hidden rounded-[32px] bg-[#F4F7F2]">
+      <div className="aspect-[4/3]">
+        {photo && !failed ? (
+          <img
+            src={photo}
+            alt={title}
+            draggable={false}
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="grid h-full place-items-center border border-dashed border-[#D5DBD2] px-4 text-center font-mono text-[11px] font-bold leading-5 text-[#8A9288]">
+            {basename}
+          </div>
+        )}
+      </div>
+      <div className="absolute bottom-3 right-3 grid h-[52px] w-[52px] place-items-center rounded-full bg-white/82 text-[28px] shadow-[0_10px_24px_rgba(15,23,42,0.12)] [backdrop-filter:blur(10px)]">
+        {emoji}
       </div>
     </div>
+  );
+}
+
+function ElementBalanceSummary({ result }: { result: WealthResult }) {
+  const dominant = result.dominantElement;
+  const weak = result.weakElement;
+
+  return (
+    <ResultCard className="space-y-5 border-t border-[#E5E7EB] pt-10">
+      <div>
+        <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+          ELEMENT BALANCE
+        </p>
+        <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#111827]">
+          오행 밸런스 요약
+        </h2>
+      </div>
+
+      <div className="grid gap-3">
+        {ELEMENT_ORDER.map((element) => {
+          const value = Math.max(0, Math.min(100, result.elements[element]));
+          const isDominant = element === dominant;
+
+          return (
+            <div key={element} className="grid gap-1.5">
+              <div className="flex items-center justify-between text-[13px] font-black">
+                <span className="text-[#374151]">{ELEMENT_LABEL[element]}</span>
+                <span className={isDominant ? "text-[#F26B3A]" : "text-[#6B7280]"}>
+                  {Math.round(value)}
+                </span>
+              </div>
+              <div className="h-2.5 overflow-hidden rounded-full bg-[#EEF3EA]">
+                <div
+                  className={`h-full rounded-full ${
+                    isDominant ? "bg-[#F26B3A]" : "bg-[#1E6A48]"
+                  }`}
+                  style={{ width: `${value}%` }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-2 rounded-[24px] bg-[#F7F8F5] p-4">
+        <p className="text-[14px] font-extrabold text-[#111827]">
+          강한 기운: {ELEMENT_LABEL[dominant]} · 약한 기운:{" "}
+          {ELEMENT_LABEL[weak]}
+        </p>
+        <p className="text-[14px] font-semibold leading-6 text-[#4B5563]">
+          {ELEMENT_LABEL[dominant]} 기운이 가장 또렷하고,{" "}
+          {ELEMENT_LABEL[weak]} 기운은 보완이 필요한 흐름으로 나타납니다.
+          무료 결과에서는 방향만 짧게 보여드립니다.
+        </p>
+      </div>
+    </ResultCard>
+  );
+}
+
+function SummaryBlock({
+  label,
+  title,
+  children,
+}: {
+  label: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <ResultCard className="space-y-4 border-t border-[#E5E7EB] pt-10">
+      <div>
+        <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+          {label}
+        </p>
+        <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#111827]">
+          {title}
+        </h2>
+      </div>
+      {children}
+    </ResultCard>
+  );
+}
+
+function LockedPreviewItem({ title }: { title: string }) {
+  return (
+    <li className="flex items-center justify-between gap-3 rounded-[20px] border border-[#E5E7EB] bg-white px-4 py-3">
+      <span className="text-[14px] font-extrabold text-[#111827]">{title}</span>
+      <span className="rounded-full bg-[#F3F8F4] px-3 py-1 text-[12px] font-black text-[#1E6A48]">
+        잠금
+      </span>
+    </li>
+  );
+}
+
+function DetailPreview({ reportHref }: { reportHref: string }) {
+  const lockedItems = [
+    "돈이 커지는 조건",
+    "돈이 새는 지점",
+    "강하게 써야 할 능력",
+    "놓치기 쉬운 패턴",
+    "신살 보조 해석",
+    "현실적인 실천 계획",
+    "유형별 마무리 노트",
+  ];
+
+  return (
+    <SummaryBlock label="DETAIL REPORT" title="상세 리포트에서 더 보는 것">
+      <p className="text-[15px] font-semibold leading-7 text-[#4B5563]">
+        무료 결과는 큰 방향만 보여줍니다. 상세 리포트에서는 막히는 지점과
+        바로 바꿔볼 행동을 더 좁혀봅니다.
+      </p>
+      <ul className="grid gap-2">
+        {lockedItems.map((item) => (
+          <LockedPreviewItem key={item} title={item} />
+        ))}
+      </ul>
+      <a href={reportHref} className={PRIMARY_BUTTON_CLASS}>
+        상세 리포트 확인하기
+      </a>
+      <p className="text-center text-[13px] font-semibold leading-5 text-[#6B7280]">
+        돈이 커지는 조건과 새는 패턴을 한 번 더 구체적으로 확인합니다.
+      </p>
+    </SummaryBlock>
+  );
+}
+
+function StrengthCaution({
+  builtCopy,
+}: {
+  builtCopy: BuiltResultCopy;
+}) {
+  const strength = sentenceSummary(builtCopy.firstImpression, 96);
+  const caution = builtCopy.repeatedPatterns[0] ?? sentenceSummary(builtCopy.elementReading, 96);
+
+  return (
+    <SummaryBlock label="CORE POINT" title="강점과 주의 패턴">
+      <div className="grid gap-3">
+        <div className="rounded-[24px] bg-[#F3F8F4] p-5">
+          <p className="text-[13px] font-black text-[#1E6A48]">
+            잘 쓰면 강한 점
+          </p>
+          <h3 className="mt-2 text-[18px] font-black text-[#111827]">
+            {builtCopy.archetype}
+          </h3>
+          <p className="mt-2 text-[14px] font-semibold leading-6 text-[#4B5563]">
+            {strength}
+          </p>
+        </div>
+        <div className="rounded-[24px] bg-[#FFF7F2] p-5">
+          <p className="text-[13px] font-black text-[#F26B3A]">
+            돈이 새기 쉬운 지점
+          </p>
+          <p className="mt-2 text-[15px] font-extrabold leading-6 text-[#111827]">
+            {caution}
+          </p>
+        </div>
+      </div>
+    </SummaryBlock>
+  );
+}
+
+function MoneyFlowSummary({ builtCopy }: { builtCopy: BuiltResultCopy }) {
+  const scene = builtCopy.repeatedPatterns[1] ?? builtCopy.repeatedPatterns[0];
+
+  return (
+    <SummaryBlock label="MONEY FLOW" title="돈을 버는 기본 방식">
+      <p className="text-[15px] font-semibold leading-7 text-[#4B5563]">
+        {sentenceSummary(builtCopy.moneyFlow, 260)}
+      </p>
+      {scene ? (
+        <div className="rounded-[24px] border border-[#E5E7EB] bg-white p-4">
+          <p className="text-[13px] font-black text-[#F26B3A]">
+            자주 보이는 장면
+          </p>
+          <p className="mt-2 text-[15px] font-extrabold leading-6 text-[#111827]">
+            {scene}
+          </p>
+        </div>
+      ) : null}
+    </SummaryBlock>
   );
 }
 
@@ -251,19 +447,16 @@ function InvalidResult() {
   const router = useRouter();
 
   return (
-    <main
-      className={PAGE_BASE_CLASS}
-      style={{ backgroundColor: DEFAULT_PAGE_BACKGROUND }}
-    >
+    <main className={PAGE_BASE_CLASS}>
       <section className="mx-auto max-w-[430px] pt-16">
-        <ResultCard>
-          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#6F6253]">
+        <ResultCard className="rounded-[28px] border border-[#E5E7EB] bg-white p-6">
+          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#1E6A48]">
             RESULT
           </p>
-          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#171C18]">
+          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#111827]">
             아직 만들 결과가 없어요
           </h1>
-          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#6F6253]">
+          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#4B5563]">
             생년월일과 태어난 시간을 먼저 선택하면 재물 동물 유형을 볼 수 있습니다.
           </p>
           <button
@@ -313,12 +506,12 @@ function ResultContent() {
         : "unknown",
   });
   const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
-  const strongestElement = getStrongestElement(result);
-  const pageBg = ELEMENT_BACKGROUND[strongestElement] ?? DEFAULT_PAGE_BACKGROUND;
   const builtCopy = buildResultCopy(result);
+  const heroSummary = sentenceSummary(builtCopy.firstImpression, 96);
+  const reportHref = `/report?${searchParams.toString()}`;
 
   return (
-    <main className={PAGE_BASE_CLASS} style={{ backgroundColor: pageBg }}>
+    <main className={PAGE_BASE_CLASS}>
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
       <ResultLogSaver
         result={result}
@@ -331,190 +524,73 @@ function ResultContent() {
         testCaseCode={testCaseCode}
       />
 
-      <section className="mx-auto max-w-[430px] pb-8">
+      <section className="mx-auto max-w-[430px] space-y-12 pb-8">
         <header className="mb-5 flex items-center justify-between">
           <button
             type="button"
             onClick={() => router.back()}
             aria-label="뒤로 가기"
-            className="grid h-11 w-11 place-items-center rounded-full border border-black/10 bg-[#FFFDF8] text-xl font-extrabold text-[#5E4936] shadow-[0_8px_20px_rgba(31,42,34,0.05)] transition active:bg-[#F8F4EC]"
+            className="grid h-11 w-11 place-items-center rounded-full border border-[#E5E7EB] bg-white text-xl font-extrabold text-[#374151] transition active:translate-y-0.5"
           >
             ←
           </button>
-          <p className="text-[14px] font-extrabold text-[#6F6253]">
-            결과 리포트
+          <p className="text-[14px] font-extrabold text-[#6B7280]">
+            무료 결과
           </p>
           <div className="h-10 w-10" />
         </header>
 
-        <div className="grid gap-5">
-          <ResultCard className="overflow-hidden p-0">
-            <div className="p-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-                    RESULT ANIMAL
-                  </p>
-                  <h1 className="mt-3 text-[34px] font-black leading-[1.12] text-[#171C18]">
-                    {builtCopy.title}
-                  </h1>
-                  <p className="mt-3 text-[15px] font-extrabold leading-6 text-[#6F6253]">
-                    {builtCopy.archetype}
-                  </p>
-                </div>
-                <div className="grid h-[78px] w-[78px] shrink-0 place-items-center rounded-[26px] bg-[#F8F4EC] text-4xl">
-                  {builtCopy.emoji}
-                </div>
-              </div>
+        <ResultCard className="space-y-6">
+          <div>
+            <p className="text-[14px] font-black text-[#1E6A48]">
+              결과가 나왔어요
+            </p>
+            <h1 className="mt-3 text-[34px] font-black leading-[1.12] tracking-[-0.03em] text-[#111827]">
+              {builtCopy.title}
+            </h1>
+            <p className="mt-3 text-[18px] font-black text-[#1E6A48]">
+              재물 감각 상위 {result.topPercent}%
+            </p>
+            <p className="mt-4 text-[16px] font-semibold leading-7 text-[#4B5563]">
+              {heroSummary}
+            </p>
+          </div>
 
-              <div className="mt-6 grid grid-cols-[1fr_auto] items-end gap-4 rounded-[24px] bg-[#EEF3EA] p-5">
-                <div>
-                  <p className="text-[12px] font-black tracking-[0.08em] text-[#285C42]">
-                    MONEY SENSE
-                  </p>
-                  <p className="mt-1 text-[16px] font-extrabold text-[#6F6253]">
-                    {builtCopy.rankText}
-                  </p>
-                </div>
-                <p className="text-[42px] font-black leading-none text-[#285C42]">
-                  {result.topPercent}%
-                </p>
-              </div>
-            </div>
-          </ResultCard>
+          <ResultAnimalImage
+            animalKey={builtCopy.animalKey}
+            title={builtCopy.title}
+            emoji={builtCopy.emoji}
+          />
 
-          <ResultCard>
-            <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-              FIRST IMPRESSION
+          <div className="rounded-[26px] bg-[#F3F8F4] p-5">
+            <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+              핵심 한 줄
             </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.25] text-[#171C18]">
-              첫 인상
-            </h2>
-            <p className="mt-4 whitespace-pre-line text-[15px] font-semibold leading-7 text-[#6F6253]">
-              {builtCopy.firstImpression}
+            <p className="mt-2 text-[17px] font-black leading-7 text-[#111827]">
+              {builtCopy.archetype} · {builtCopy.rankText}
             </p>
-          </ResultCard>
+          </div>
+        </ResultCard>
 
-          <ResultCard>
-            <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-              MONEY PATTERN
-            </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.25] text-[#171C18]">
-              돈이 들어오는 문과
-              <br />
-              새는 구멍
-            </h2>
-            <p className="mt-4 whitespace-pre-line text-[15px] font-semibold leading-7 text-[#6F6253]">
-              {builtCopy.moneyFlow}
-            </p>
-            <div className="mt-5 grid gap-3">
-              <InsightRow
-                icon="벌"
-                title="돈이 들어오는 방식"
-                body={builtCopy.moneyFlow}
-              />
-              <InsightRow
-                icon="새"
-                title="돈이 막히거나 새는 지점"
-                body={builtCopy.elementReading}
-              />
-              <div className="rounded-[22px] bg-[#F8F4EC] p-4">
-                <p className="text-[13px] font-extrabold text-[#285C42]">
-                  반복되기 쉬운 장면
-                </p>
-                <ul className="mt-3 grid gap-2">
-                  {builtCopy.repeatedPatterns.map((pattern) => (
-                    <li
-                      key={pattern}
-                      className="flex gap-2 text-[14px] font-semibold leading-6 text-[#6F6253]"
-                    >
-                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#285C42]" />
-                      <span>{pattern}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </ResultCard>
+        <ElementBalanceSummary result={result} />
+        <MoneyFlowSummary builtCopy={builtCopy} />
+        <StrengthCaution builtCopy={builtCopy} />
+        <DetailPreview reportHref={reportHref} />
 
-          {builtCopy.salText ? (
-            <ResultCard>
-              <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-                SAJU SUPPORT
-              </p>
-              <h2 className="mt-2 text-[24px] font-black leading-[1.25] text-[#171C18]">
-                신살 보조 해석
-              </h2>
-              <div className="mt-5 grid gap-3">
-                <InsightRow
-                  icon="살"
-                  title="신살 보조 해석"
-                  body={builtCopy.salText}
-                />
-              </div>
-            </ResultCard>
-          ) : null}
+        <div className="grid gap-3">
+          <p className="text-center text-[13px] font-semibold leading-6 text-[#6B7280]">
+            본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다. 금융, 투자,
+            법률, 직업 선택에 대한 전문 조언이 아닙니다.
+          </p>
 
-          <ResultCard>
-            <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-              ADVICE
-            </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.25] text-[#171C18]">
-              지금 바로 볼 지점
-            </h2>
-            <p className="mt-4 whitespace-pre-line text-[15px] font-semibold leading-7 text-[#6F6253]">
-              {builtCopy.advice}
-            </p>
-          </ResultCard>
-
-          <ResultCard>
-            <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-              ACTION CHECK
-            </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.25] text-[#171C18]">
-              이번 주 실행 체크
-            </h2>
-            <div className="mt-5 grid gap-3">
-              <InsightRow
-                icon="3"
-                title={`3일 실천 · ${builtCopy.threeDayAction.title}`}
-                body={builtCopy.threeDayAction.body}
-              />
-              <InsightRow
-                icon="5"
-                title={`5일 점검 · ${builtCopy.fiveDayCheck.title}`}
-                body={builtCopy.fiveDayCheck.body}
-              />
-              <InsightRow
-                icon="7"
-                title={`1주 실험 · ${builtCopy.oneWeekExperiment.title}`}
-                body={builtCopy.oneWeekExperiment.body}
-              />
-            </div>
-          </ResultCard>
-
-          <ResultCard className="border-[#285C42]/20 bg-[#F7FBF5]">
-            <p className="text-[13px] font-extrabold tracking-[0.08em] text-[#285C42]">
-              CLOSING NOTE
-            </p>
-            <p className="mt-5 whitespace-pre-line text-[14px] font-semibold leading-6 text-[#6F6253]">
-              {builtCopy.closingNote}
-            </p>
-          </ResultCard>
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className={SECONDARY_BUTTON_CLASS}
+          >
+            다시 테스트하기
+          </button>
         </div>
-
-        <p className="mt-6 text-center text-[13px] font-semibold leading-6 text-[#7D7469]">
-          본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다. 금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.
-        </p>
-
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          className={`${SECONDARY_BUTTON_CLASS} mt-4`}
-        >
-          다시 테스트하기
-        </button>
-
       </section>
       <AppVersionBadge />
     </main>
@@ -525,7 +601,7 @@ export default function ResultPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F8F4EC] p-10 text-sm font-bold text-[#6F6253]">
+        <div className="min-h-screen bg-white p-10 text-sm font-bold text-[#6B7280]">
           결과를 불러오는 중입니다...
         </div>
       }

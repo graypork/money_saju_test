@@ -1,4 +1,6 @@
-const APP_VERSION = "v0.10.1";
+import packageInfo from "../../package.json";
+
+const APP_VERSION = packageInfo.version;
 const APP_VERSION_NOTE = "UI flow update";
 
 export default function AppVersionBadge() {
