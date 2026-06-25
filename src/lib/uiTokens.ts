@@ -1,13 +1,45 @@
-const glassControl =
-  "border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.08)_35%,rgba(255,255,255,0.03)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.68),inset_0_-1px_0_rgba(255,255,255,0.12),0_9px_22px_rgba(48,42,34,0.08)] [backdrop-filter:blur(16px)_saturate(150%)] [-webkit-backdrop-filter:blur(16px)_saturate(150%)]";
-const glassGreenButton =
-  "border border-white/64 bg-[linear-gradient(180deg,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0.09)_34%,rgba(255,255,255,0.035)_100%),linear-gradient(180deg,rgba(24,134,82,0.28)_0%,rgba(24,134,82,0.18)_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.76),inset_1px_0_0_rgba(255,255,255,0.18),inset_0_-1px_0_rgba(255,255,255,0.16),0_12px_28px_rgba(36,84,59,0.15),0_2px_0_rgba(255,255,255,0.18)] [backdrop-filter:blur(16px)_saturate(150%)] [-webkit-backdrop-filter:blur(16px)_saturate(150%)]";
+export const palette = {
+  highlight: "#ffff00",
+  panel: "#ccff00",
+  ink: "#000000",
+  surface: "#dfff00",
+} as const;
+
+const controlSurface =
+  "border-2 border-[rgba(204,255,0,0.32)] bg-[rgba(0,0,0,0.72)]";
+const buttonSurface =
+  "border-2 border-[#000000] bg-[#000000] shadow-[6px_6px_0_#ffff00]";
+const secondaryButtonSurface =
+  "border-2 border-[#000000] bg-[#dfff00] shadow-[4px_4px_0_#000000]";
+const sectionRule = "border-t border-[rgba(204,255,0,0.18)] pt-12";
 
 export const uiTokens = {
   button:
-    `flex min-h-14 w-full items-center justify-center rounded-full px-[22px] py-4 text-base font-extrabold text-[#F7FFF9] transition active:translate-y-0.5 ${glassGreenButton}`,
+    `flex min-h-14 w-full items-center justify-center rounded-full px-[22px] py-4 text-base font-black text-[#ccff00] transition active:translate-y-0.5 ${buttonSurface}`,
+  secondaryButton:
+    `flex min-h-14 w-full items-center justify-center rounded-full px-[22px] py-4 text-base font-black text-[#000000] transition active:translate-y-0.5 ${secondaryButtonSurface}`,
   eyebrow:
-    "inline-flex rounded-full bg-[#F3F8F4] px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#1E6A48]",
-  glassControl,
-  glassGreenButton,
+    "inline-flex rounded-full bg-[rgba(255,255,0,0.14)] px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#000000]",
+  controlSurface,
+  greenButtonSurface: buttonSurface,
+  secondaryButtonSurface,
+  page:
+    "relative min-h-screen overflow-x-hidden bg-[#000000] text-[#dfff00]",
+  header:
+    "rounded-[28px] bg-[#000000] px-5 py-4 text-[#ccff00]",
+  heroPanel:
+    "rounded-[36px] border border-[rgba(204,255,0,0.24)] bg-[#000000] p-6 text-[#ccff00]",
+  sectionRule,
+  sectionEyebrow:
+    "text-[12px] font-black uppercase tracking-[0.14em] text-[#ccff00]",
+  sectionTitle:
+    "mt-2 text-[38px] font-black leading-[1.02] tracking-[-0.045em] text-[#dfff00]",
+  label: "text-[#ccff00]",
+  title: "text-[#dfff00]",
+  body: "text-[rgba(223,255,0,0.72)]",
+  muted: "text-[rgba(223,255,0,0.56)]",
+  border: "border-[rgba(204,255,0,0.22)]",
+  surface: "bg-[rgba(0,0,0,0.72)]",
+  orangeText: "text-[#ffff00]",
+  orangeSurface: "bg-[rgba(255,255,0,0.08)]",
 };

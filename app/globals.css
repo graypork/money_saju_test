@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #000000;
+  --foreground: #dfff00;
 }
 
 @theme inline {
@@ -12,15 +12,109 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes organic-float-a {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-14px, 18px, 0);
+  }
+}
+
+@keyframes organic-float-b {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(16px, -12px, 0);
+  }
+}
+
+@keyframes organic-float-c {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(-10px, -18px, 0);
+  }
+}
+
+.organic-float-a {
+  animation: organic-float-a 13s ease-in-out infinite alternate;
+}
+
+.organic-float-b {
+  animation: organic-float-b 16s ease-in-out infinite alternate;
+}
+
+.organic-float-c {
+  animation: organic-float-c 19s ease-in-out infinite alternate;
+}
+
+.organic-depth-right {
+  box-shadow:
+    calc(var(--scroll-progress, 0) * -24px)
+    calc(var(--scroll-progress, 0) * 28px)
+    44px
+    rgba(11,61,46,0.45),
+    calc(var(--scroll-progress, 0) * -10px)
+    calc(var(--scroll-progress, 0) * 12px)
+    28px
+    rgba(204,255,0,0.16);
+}
+
+.organic-depth-left {
+  box-shadow:
+    calc(var(--scroll-progress, 0) * 24px)
+    calc(var(--scroll-progress, 0) * 28px)
+    44px
+    rgba(11,61,46,0.45),
+    calc(var(--scroll-progress, 0) * 10px)
+    calc(var(--scroll-progress, 0) * 12px)
+    28px
+    rgba(223,255,0,0.14);
+}
+
+.organic-depth-top {
+  filter:
+    drop-shadow(
+      calc(var(--scroll-progress, 0) * -18px)
+      calc(var(--scroll-progress, 0) * 30px)
+      34px
+      rgba(14,27,20,0.45)
+    );
+}
+
+.organic-depth-bottom {
+  box-shadow:
+    calc(var(--scroll-progress, 0) * 18px)
+    calc(var(--scroll-progress, 0) * -24px)
+    36px
+    rgba(11,61,46,0.45),
+    calc(var(--scroll-progress, 0) * 6px)
+    calc(var(--scroll-progress, 0) * -8px)
+    24px
+    rgba(204,255,0,0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .organic-float-a,
+  .organic-float-b,
+  .organic-float-c {
+    animation: none;
+  }
+
+  .organic-depth-right,
+  .organic-depth-left,
+  .organic-depth-top,
+  .organic-depth-bottom {
+    box-shadow: none;
+    filter: none;
+  }
 }

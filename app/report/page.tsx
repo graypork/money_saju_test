@@ -1,6 +1,13 @@
 "use client";
 
-import { Suspense, type ReactNode } from "react";
+import {
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   calculateWealthResult,
@@ -8,14 +15,102 @@ import {
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
 import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
+import { getAvailableAnimalMainPhotos } from "../../src/lib/animalAssets";
 import { uiTokens } from "../../src/lib/uiTokens";
 
 const PAGE_BASE_CLASS =
-  "min-h-screen break-keep bg-white px-5 pb-10 pt-4 text-[#191F28]";
+  `${uiTokens.page} break-keep px-5 pb-10 pt-4`;
 const PRIMARY_BUTTON_CLASS =
-  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#F7FFF9] transition active:translate-y-0.5 ${uiTokens.glassGreenButton}`;
+  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#ccff00] transition active:translate-y-0.5 ${uiTokens.greenButtonSurface}`;
 const SECONDARY_BUTTON_CLASS =
-  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[15px] font-extrabold text-[#374151] transition active:translate-y-0.5 ${uiTokens.glassControl}`;
+  `min-h-14 w-full rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#ccff00] transition active:translate-y-0.5 ${uiTokens.greenButtonSurface}`;
+const DARK_PANEL_CLASS =
+  "rounded-[28px] bg-[#000000] p-5 text-[#ccff00]";
+const DARK_DIVIDER_CLASS = "border-[rgba(204,255,0,0.16)]";
+
+function OrganicBackdrop() {
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = backdropRef.current;
+    if (!element) return;
+
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (motionQuery.matches) {
+      element.style.setProperty("--scroll-progress", "0");
+      return;
+    }
+
+    let frame = 0;
+
+    const updateProgress = () => {
+      frame = 0;
+      const scrollableHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const progress =
+        scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0;
+
+      element.style.setProperty(
+        "--scroll-progress",
+        String(Math.min(1, Math.max(0, progress)).toFixed(3))
+      );
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={backdropRef}
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ "--scroll-progress": "0" } as CSSProperties}
+    >
+      <div className="organic-float-a organic-depth-right absolute -right-44 -top-36 h-[420px] w-[420px] bg-[rgba(204,255,0,0.12)] [border-radius:52%_48%_58%_42%/44%_56%_44%_56%]" />
+      <div className="organic-float-b organic-depth-left absolute -left-44 top-[36rem] h-[190px] w-[330px] rotate-[-18deg] rounded-[999px] border-[44px] border-[rgba(255,255,0,0.1)]" />
+      <div className="organic-float-c organic-depth-right absolute right-[-16rem] top-[86rem] h-[170px] w-[420px] rotate-[24deg] rounded-[999px] bg-[rgba(223,255,0,0.08)]" />
+    </div>
+  );
+}
+
+function SiteHeader({
+  label,
+  onBack,
+}: {
+  label: string;
+  onBack: () => void;
+}) {
+  return (
+    <header className={`${uiTokens.header} flex items-center justify-between`}>
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label="뒤로 가기"
+        className="grid h-8 w-8 place-items-center rounded-full bg-[rgba(204,255,0,0.12)] text-lg font-black text-[#ccff00]"
+      >
+        ←
+      </button>
+      <span className="text-[13px] font-black tracking-[-0.01em]">
+        MONEY SAJU
+      </span>
+      <span className="text-[11px] font-black tracking-[0.12em] text-[#ffff00]">
+        {label}
+      </span>
+    </header>
+  );
+}
 
 function parseBirthDate(birthDate: string) {
   const parts = birthDate.split("-").map(Number);
@@ -60,12 +155,12 @@ function ReportSection({
   children: ReactNode;
 }) {
   return (
-    <section className="space-y-5 border-t border-[#E5E7EB] pt-10">
+    <section className={`${uiTokens.sectionRule} space-y-6`}>
       <div>
-        <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+        <p className={uiTokens.sectionEyebrow}>
           {label}
         </p>
-        <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#111827]">
+        <h2 className={uiTokens.sectionTitle}>
           {title}
         </h2>
       </div>
@@ -74,17 +169,81 @@ function ReportSection({
   );
 }
 
-function CopyText({ value }: { value: string }) {
+function CopyText({
+  value,
+  tone = "default",
+}: {
+  value: string;
+  tone?: "default" | "dark";
+}) {
   return (
     <div className="grid gap-4">
       {textParagraphs(value).map((paragraph, index) => (
         <p
           key={`${paragraph.slice(0, 18)}-${index}`}
-          className="whitespace-pre-line text-[15px] font-semibold leading-7 text-[#4B5563]"
+          className={`whitespace-pre-line text-[15px] font-semibold leading-7 ${
+            tone === "dark"
+              ? "text-[rgba(204,255,0,0.72)]"
+              : "text-[rgba(223,255,0,0.72)]"
+          }`}
         >
           {paragraph}
         </p>
       ))}
+    </div>
+  );
+}
+
+function assetBasename(path: string | null, animalKey: string) {
+  return path?.split("/").filter(Boolean).pop() ?? `${animalKey}-1.webp`;
+}
+
+function getReportAnimalPhoto(animalKey: string, preferredIndex: number) {
+  const candidates = getAvailableAnimalMainPhotos(animalKey);
+
+  if (candidates.length === 0) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  return candidates[preferredIndex % candidates.length] ?? candidates[0];
+}
+
+function ReportAnimalImage({
+  animalKey,
+  title,
+  preferredIndex,
+  size = "small",
+}: {
+  animalKey: string;
+  title: string;
+  preferredIndex: number;
+  size?: "hero" | "small";
+}) {
+  const [failed, setFailed] = useState(false);
+  const photo = getReportAnimalPhoto(animalKey, preferredIndex);
+  const imageClass =
+    size === "hero"
+      ? "h-[260px] max-h-[260px] max-w-full"
+      : "h-[150px] max-h-[150px] max-w-[220px]";
+  const fallbackClass =
+    size === "hero" ? "h-[220px] w-full" : "h-[140px] w-[180px]";
+
+  return (
+    <div className="flex w-full justify-center overflow-visible bg-transparent">
+      {photo && !failed ? (
+        <img
+          src={photo}
+          alt={title}
+          draggable={false}
+          onError={() => setFailed(true)}
+          className={`${imageClass} w-auto object-contain`}
+        />
+      ) : (
+        <div
+          className={`${fallbackClass} grid place-items-center border border-dashed border-[rgba(204,255,0,0.3)] px-3 text-center font-mono text-[11px] font-bold leading-5 text-[rgba(223,255,0,0.64)]`}
+        >
+          {assetBasename(photo, animalKey)}
+        </div>
+      )}
     </div>
   );
 }
@@ -97,13 +256,13 @@ function ActionItem({
   item: BuiltResultCopy["threeDayAction"];
 }) {
   return (
-    <div className="rounded-[24px] bg-[#F7F8F5] p-5">
-      <p className="text-[13px] font-black text-[#1E6A48]">{label}</p>
-      <h3 className="mt-2 text-[16px] font-black leading-6 text-[#111827]">
+    <div className={DARK_PANEL_CLASS}>
+      <p className="text-[13px] font-black text-[#ffff00]">{label}</p>
+      <h3 className="mt-2 text-[16px] font-black leading-6 text-[#ccff00]">
         {item.title}
       </h3>
       <div className="mt-3">
-        <CopyText value={item.body} />
+        <CopyText value={item.body} tone="dark" />
       </div>
     </div>
   );
@@ -114,15 +273,17 @@ function InvalidReport() {
 
   return (
     <main className={PAGE_BASE_CLASS}>
-      <section className="mx-auto max-w-[430px] pt-16">
-        <div className="rounded-[28px] border border-[#E5E7EB] bg-white p-6">
-          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#1E6A48]">
+      <OrganicBackdrop />
+      <section className="relative z-10 mx-auto max-w-[430px] space-y-10 pt-1">
+        <SiteHeader label="REPORT" onBack={() => router.push("/")} />
+        <div className={DARK_PANEL_CLASS}>
+          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#ffff00]">
             REPORT
           </p>
-          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#111827]">
+          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#ccff00]">
             상세 리포트를 만들 결과가 없어요
           </h1>
-          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#4B5563]">
+          <p className="mt-4 text-[15px] font-semibold leading-7 text-[rgba(204,255,0,0.72)]">
             먼저 테스트 결과를 만든 뒤 상세 리포트를 확인할 수 있습니다.
           </p>
           <button
@@ -146,26 +307,28 @@ function ReportHeader({
   builtCopy: BuiltResultCopy;
 }) {
   return (
-    <header className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-[14px] font-black text-[#1E6A48]">
-            상세 리포트
-          </p>
-          <h1 className="mt-3 text-[34px] font-black leading-[1.12] tracking-[-0.03em] text-[#111827]">
-            {builtCopy.title}
-          </h1>
-        </div>
-        <div className="grid h-[64px] w-[64px] shrink-0 place-items-center rounded-[24px] bg-[#F3F8F4] text-[34px]">
-          {builtCopy.emoji}
-        </div>
+    <header className={`${uiTokens.heroPanel} space-y-5`}>
+      <div>
+        <p className="text-[12px] font-black tracking-[0.14em] text-[#ffff00]">
+          FULL REPORT
+        </p>
+        <h1 className="mt-4 text-[50px] font-black leading-[0.92] tracking-[-0.06em] text-[#ccff00]">
+          {builtCopy.title}
+        </h1>
       </div>
 
-      <div className="rounded-[28px] bg-[#F3F8F4] p-5">
-        <p className="text-[13px] font-black text-[#1E6A48]">
+      <ReportAnimalImage
+        animalKey={builtCopy.animalKey}
+        title={builtCopy.title}
+        preferredIndex={1}
+        size="hero"
+      />
+
+      <div className="rounded-[28px] bg-[rgba(204,255,0,0.1)] p-5">
+        <p className="text-[13px] font-black text-[#ffff00]">
           재물 감각 상위 {result.topPercent}%
         </p>
-        <p className="mt-2 text-[18px] font-black leading-7 text-[#111827]">
+        <p className="mt-2 text-[18px] font-black leading-7 text-[#ccff00]">
           {builtCopy.archetype} · {builtCopy.rankText}
         </p>
       </div>
@@ -212,21 +375,9 @@ function ReportContent() {
 
   return (
     <main className={PAGE_BASE_CLASS}>
-      <section className="mx-auto max-w-[430px] space-y-12 pb-8">
-        <div className="mb-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.push(resultHref)}
-            aria-label="무료 결과로 돌아가기"
-            className="grid h-11 w-11 place-items-center rounded-full border border-[#E5E7EB] bg-white text-xl font-extrabold text-[#374151] transition active:translate-y-0.5"
-          >
-            ←
-          </button>
-          <p className="text-[14px] font-extrabold text-[#6B7280]">
-            상세 리포트
-          </p>
-          <div className="h-10 w-10" />
-        </div>
+      <OrganicBackdrop />
+      <section className="relative z-10 mx-auto max-w-[430px] space-y-12 pb-8">
+        <SiteHeader label="REPORT" onBack={() => router.push(resultHref)} />
 
         <ReportHeader result={result} builtCopy={builtCopy} />
 
@@ -238,13 +389,19 @@ function ReportContent() {
           <CopyText value={builtCopy.moneyFlow} />
         </ReportSection>
 
+        <ReportAnimalImage
+          animalKey={builtCopy.animalKey}
+          title={builtCopy.title}
+          preferredIndex={2}
+        />
+
         <ReportSection label="LEAK POINT" title="돈이 새는 지점">
           <CopyText value={builtCopy.elementReading} />
           <ul className="grid gap-2">
             {moneyLeakPatterns.map((pattern) => (
               <li
                 key={pattern}
-                className="rounded-[20px] bg-[#FFF7F2] px-4 py-3 text-[14px] font-extrabold leading-6 text-[#111827]"
+                className="rounded-[20px] bg-[#000000] px-4 py-3 text-[14px] font-extrabold leading-6 text-[#ccff00]"
               >
                 {pattern}
               </li>
@@ -256,13 +413,19 @@ function ReportContent() {
           <CopyText value={builtCopy.advice} />
         </ReportSection>
 
+        <ReportAnimalImage
+          animalKey={builtCopy.animalKey}
+          title={builtCopy.title}
+          preferredIndex={3}
+        />
+
         {missedPatterns.length > 0 ? (
           <ReportSection label="PATTERN" title="놓치기 쉬운 패턴">
-            <ul className="grid gap-2">
+            <ul className="overflow-hidden rounded-[28px] bg-[#000000] p-1 text-[#ccff00]">
               {missedPatterns.map((pattern) => (
                 <li
                   key={pattern}
-                  className="rounded-[20px] border border-[#E5E7EB] bg-white px-4 py-3 text-[14px] font-extrabold leading-6 text-[#111827]"
+                  className={`border-t px-4 py-4 text-[14px] font-extrabold leading-6 text-[#ccff00] first:border-t-0 ${DARK_DIVIDER_CLASS}`}
                 >
                   {pattern}
                 </li>
@@ -287,8 +450,8 @@ function ReportContent() {
 
         <ReportSection label="CLOSING NOTE" title="마무리 노트">
           <CopyText value={builtCopy.closingNote} />
-          <div className="rounded-[24px] bg-[#F3F8F4] p-5">
-            <CopyText value={builtCopy.cta} />
+          <div className={DARK_PANEL_CLASS}>
+            <CopyText value={builtCopy.cta} tone="dark" />
           </div>
         </ReportSection>
 
@@ -318,7 +481,7 @@ export default function ReportPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-white p-10 text-sm font-bold text-[#6B7280]">
+        <div className="min-h-screen bg-[#000000] p-10 text-sm font-bold text-[rgba(223,255,0,0.56)]">
           상세 리포트를 불러오는 중입니다...
         </div>
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import AppVersionBadge from "../src/components/AppVersionBadge";
 import BirthForm from "../src/components/BirthForm";
 import {
@@ -17,7 +17,7 @@ const statsCards = [
   },
   {
     label: "RARE",
-    text: "가장 적게 나온 동물 유형은 흐름형 고래였어요!",
+    text: "가장 적게 나온 동물 유형은 직감형 수달이었어요!",
   },
   {
     label: "SENSE",
@@ -64,6 +64,77 @@ function getNextStatsIndex(index: number) {
   return (index + 2) % statsCards.length;
 }
 
+function OrganicBackdrop() {
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const element = backdropRef.current;
+    if (!element) return;
+
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (motionQuery.matches) {
+      element.style.setProperty("--scroll-progress", "0");
+      return;
+    }
+
+    let frame = 0;
+
+    const updateProgress = () => {
+      frame = 0;
+      const scrollableHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const progress =
+        scrollableHeight > 0 ? window.scrollY / scrollableHeight : 0;
+
+      element.style.setProperty(
+        "--scroll-progress",
+        String(Math.min(1, Math.max(0, progress)).toFixed(3))
+      );
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={backdropRef}
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      style={{ "--scroll-progress": "0" } as CSSProperties}
+    >
+      <div className="organic-float-a organic-depth-right absolute -right-44 -top-36 h-[420px] w-[420px] bg-[rgba(204,255,0,0.12)] [border-radius:52%_48%_58%_42%/44%_56%_44%_56%]" />
+      <div className="organic-float-b organic-depth-left absolute -left-44 top-[28rem] h-[190px] w-[330px] rotate-[-18deg] rounded-[999px] border-[44px] border-[rgba(255,255,0,0.1)]" />
+      <div className="organic-float-c organic-depth-right absolute right-[-16rem] top-[74rem] h-[170px] w-[420px] rotate-[24deg] rounded-[999px] bg-[rgba(223,255,0,0.08)]" />
+      <div className="organic-float-b organic-depth-left absolute -left-44 top-[112rem] h-[260px] w-[360px] rounded-[50%] bg-[rgba(204,255,0,0.08)]" />
+    </div>
+  );
+}
+
+function SiteHeader() {
+  return (
+    <header className={`${uiTokens.header} flex items-center justify-between`}>
+      <span className="text-[13px] font-black tracking-[-0.01em]">
+        MONEY SAJU
+      </span>
+      <span className="text-[11px] font-black tracking-[0.12em] text-[#ffff00]">
+        ANIMAL TEST
+      </span>
+    </header>
+  );
+}
+
 function StatsCubeCard({
   currentCard,
   nextCard,
@@ -74,7 +145,7 @@ function StatsCubeCard({
   isRolling: boolean;
 }) {
   const faceClass =
-    "absolute inset-0 h-[116px] overflow-hidden rounded-[24px] border border-[#E5E7EB] bg-white p-5 [backface-visibility:hidden]";
+    `absolute inset-0 h-[116px] overflow-hidden rounded-[26px] p-5 [backface-visibility:hidden] ${uiTokens.controlSurface}`;
 
   return (
     <div className="h-[116px] overflow-hidden rounded-[24px] [clip-path:inset(0_round_24px)] [perspective:900px]">
@@ -85,7 +156,7 @@ function StatsCubeCard({
       >
         <div className={`${faceClass} [transform:translateZ(58px)]`}>
           <p className={uiTokens.eyebrow}>{currentCard.label}</p>
-          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#191F28]">
+          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#dfff00]">
             {currentCard.text}
           </p>
         </div>
@@ -93,7 +164,7 @@ function StatsCubeCard({
           className={`${faceClass} [transform:rotateX(90deg)_translateZ(58px)]`}
         >
           <p className={uiTokens.eyebrow}>{nextCard.label}</p>
-          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#191F28]">
+          <p className="mt-2 text-[17px] font-extrabold leading-7 text-[#dfff00]">
             {nextCard.text}
           </p>
         </div>
@@ -107,21 +178,23 @@ function AnimalPreviewImage({ preview }: { preview: LandingAnimalPreview }) {
   const basename = preview.photo.split("/").filter(Boolean).pop() ?? preview.photo;
 
   return (
-    <div className="relative aspect-[3/4] overflow-hidden rounded-[26px] border border-[#E5E7EB] bg-[#F7F8F5]">
-      {failed ? (
-        <div className="grid h-full place-items-center border border-dashed border-[#D5DBD2] px-2 text-center font-mono text-[10px] font-bold leading-4 text-[#8A9288]">
-          {basename}
-        </div>
-      ) : (
-        <img
-          src={preview.photo}
-          alt={`${preview.displayName} 미리보기`}
-          draggable={false}
-          onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      )}
-      <p className="absolute inset-x-2 bottom-2 rounded-full bg-white/78 px-2 py-1 text-center text-[11px] font-black text-[#1E6A48] [backdrop-filter:blur(10px)]">
+    <div className="relative flex min-w-0 flex-col items-center overflow-visible bg-transparent">
+      <div className="flex h-[150px] w-full items-end justify-center overflow-visible bg-transparent">
+        {failed ? (
+          <div className="grid h-[150px] w-[110px] place-items-center border border-dashed border-[rgba(204,255,0,0.32)] px-2 text-center font-mono text-[10px] font-bold leading-4 text-[rgba(223,255,0,0.56)]">
+            {basename}
+          </div>
+        ) : (
+          <img
+            src={preview.photo}
+            alt={`${preview.displayName} 미리보기`}
+            draggable={false}
+            onError={() => setFailed(true)}
+            className="h-[150px] w-auto max-w-[130px] object-contain"
+          />
+        )}
+      </div>
+      <p className="mt-2 text-center font-mono text-[12px] font-black uppercase leading-4 tracking-[0.08em] text-[#ccff00] [text-shadow:1px_1px_0_#000000]">
         {preview.displayName}
       </p>
     </div>
@@ -192,43 +265,48 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-white px-5 py-7 text-[#191F28] [word-break:keep-all]">
-      <section className="mx-auto max-w-[430px] space-y-16 pb-10">
-        <section className="space-y-6 pt-2">
-          <div className="inline-flex rounded-full bg-[#F3F8F4] px-4 py-2 text-[12px] font-black tracking-[-0.01em] text-[#1E6A48]">
-            사주와 오행으로 보는 돈 패턴 테스트
+    <main className={`${uiTokens.page} px-5 py-5 [word-break:keep-all]`}>
+      <OrganicBackdrop />
+      <section className="relative z-10 mx-auto max-w-[430px] space-y-16 pb-10">
+        <SiteHeader />
+
+        <section className={`${uiTokens.heroPanel} space-y-7 pt-7`}>
+          <div className="inline-flex rounded-full bg-[rgba(255,255,0,0.18)] px-4 py-2 text-[12px] font-black tracking-[-0.01em] text-[#ffff00]">
+            사주로 보는 재물운 테스트
           </div>
           <div>
-            <h1 className="text-[38px] font-black leading-[1.08] tracking-[-0.03em] text-[#111827]">
-              돈 앞에서 깨어나는
-              <br />
-              내 안의 동물은?
+            <h1 className="text-[56px] font-black leading-[0.9] tracking-[-0.06em] text-[#ccff00]">
+              돈 앞에서
+              <br />깨어나는
+              <br />내 동물
             </h1>
-            <p className="mt-5 text-[16px] font-semibold leading-7 text-[#4B5563]">
-              생년월일시로 돈을 버는 방식, 쓰는 습관, 놓치기 쉬운 기회를
-              하나의 동물 유형으로 정리해봅니다.
+            <p className="mt-7 max-w-[340px] text-[17px] font-bold leading-7 text-[rgba(204,255,0,0.78)]">
+              생년월일시를 돈의 행동 패턴으로 바꾸고, 하나의 동물 유형으로
+              짧고 선명하게 보여드립니다.
             </p>
           </div>
-          <a href="#birth-form" className={uiTokens.button}>
-            내 돈버는 동물 확인하기
-          </a>
+          <div className="grid grid-cols-2 gap-3">
+            <a href="#birth-form" className={uiTokens.button}>
+              시작하기
+            </a>
+            <a href="#money-percent" className={uiTokens.secondaryButton}>
+              더 보기
+            </a>
+          </div>
         </section>
 
-        <section className="space-y-4">
+        <section className={`${uiTokens.sectionRule} space-y-5`}>
           <div className="flex items-end justify-between gap-4">
             <div>
-              <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
-                ANIMAL PREVIEW
+              <p className={uiTokens.sectionEyebrow}>
+                PREVIEW
               </p>
-              <h2 className="mt-2 text-[24px] font-black leading-[1.18] text-[#111827]">
-                어떤 동물이
+              <h2 className={uiTokens.sectionTitle}>
+                결과는
                 <br />
-                나올까요?
+                동물처럼 보입니다
               </h2>
             </div>
-            <p className="max-w-[138px] text-right text-[12px] font-bold leading-5 text-[#6B7280]">
-              매번 다른 동물 사진 조합을 보여줍니다.
-            </p>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -243,15 +321,15 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-[#E5E7EB] bg-[#F7F8F5] p-5">
+        <section id="type-preview" className={`${uiTokens.sectionRule} space-y-5`}>
           <div>
-            <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+            <p className={uiTokens.sectionEyebrow}>
               TYPE PREVIEW
             </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#111827]">
+            <h2 className={uiTokens.sectionTitle}>
               지금 많이 보이는
               <br />
-              돈버는 동물들
+              돈 패턴
             </h2>
           </div>
 
@@ -276,30 +354,30 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="rounded-[30px] border border-[#E5E7EB] bg-white p-6">
-          <p className="text-[12px] font-black tracking-[0.1em] text-[#F26B3A]">
+        <section id="money-percent" className={`${uiTokens.sectionRule} space-y-4`}>
+          <p className="text-[12px] font-black tracking-[0.14em] text-[#ffff00]">
             MONEY PERCENT
           </p>
-          <h2 className="mt-3 text-[27px] font-black leading-[1.18] tracking-[-0.02em] text-[#111827]">
+          <h2 className="text-[44px] font-black leading-[0.98] tracking-[-0.055em] text-[#dfff00]">
             내 재물 감각은
             <br />
             상위 몇 %일까?
           </h2>
-          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#4B5563]">
-            같은 돈을 쥐어도 키우는 방식은 다릅니다. 사주와 오행의
-            흐름을 돈의 행동 패턴으로 바꿔 보여드릴게요.
+          <p className="max-w-[350px] text-[16px] font-bold leading-7 text-[rgba(223,255,0,0.72)]">
+            같은 돈을 쥐어도 키우는 방식은 다릅니다. 사주와 오행의 흐름을
+            돈의 행동 패턴으로 바꿔봅니다.
           </p>
         </section>
 
-        <section className="space-y-4">
+        <section className={`${uiTokens.sectionRule} space-y-5`}>
           <div>
-            <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
-              HOW IT WORKS
+            <p className={uiTokens.sectionEyebrow}>
+              METHOD
             </p>
-            <h2 className="mt-2 text-[24px] font-black leading-[1.2] text-[#111827]">
+            <h2 className={uiTokens.sectionTitle}>
               계산은 짧게,
               <br />
-              결과는 쉽게 봅니다
+              결과는 쉽게!
             </h2>
           </div>
 
@@ -307,15 +385,15 @@ export default function Home() {
             {proofCards.map((card) => (
               <article
                 key={card.label}
-                className="rounded-[24px] border border-[#E5E7EB] bg-white p-5"
+                className="border-t border-[rgba(204,255,0,0.18)] py-5"
               >
-                <p className="text-[11px] font-black tracking-[0.1em] text-[#1E6A48]">
+                <p className="text-[11px] font-black tracking-[0.1em] text-[#ccff00]">
                   {card.label}
                 </p>
-                <h3 className="mt-2 text-[18px] font-black text-[#111827]">
+                <h3 className="mt-2 text-[18px] font-black text-[#dfff00]">
                   {card.title}
                 </h3>
-                <p className="mt-2 text-[14px] font-semibold leading-6 text-[#6B7280]">
+                <p className="mt-2 text-[14px] font-semibold leading-6 text-[rgba(223,255,0,0.56)]">
                   {card.body}
                 </p>
               </article>
@@ -323,22 +401,24 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="birth-form" className="scroll-mt-6 space-y-5">
+        <section id="birth-form" className={`scroll-mt-6 ${uiTokens.sectionRule} space-y-6`}>
           <div>
-            <p className="text-[12px] font-black tracking-[0.1em] text-[#1E6A48]">
+            <p className={uiTokens.sectionEyebrow}>
               START
             </p>
-            <h2 className="mt-2 text-[30px] font-black leading-[1.12] tracking-[-0.02em] text-[#111827]">
-              내 돈버는 동물 찾기
+            <h2 className="mt-2 text-[48px] font-black leading-[0.96] tracking-[-0.055em] text-[#dfff00]">
+              내 동물
+              <br />
+              바로 찾기
             </h2>
-            <p className="mt-3 text-[15px] font-semibold leading-7 text-[#4B5563]">
-              생년월일, 생시, 성별만 입력하면 결과 페이지로 바로 이동합니다.
+            <p className="mt-4 text-[16px] font-bold leading-7 text-[rgba(223,255,0,0.72)]">
+              간단한 정보만 입력하면 결과 페이지로 이동합니다.
             </p>
           </div>
 
           <BirthForm />
 
-          <p className="text-center text-[13px] font-semibold leading-6 text-[#6B7280]">
+          <p className="text-center text-[13px] font-semibold leading-6 text-[rgba(223,255,0,0.56)]">
             본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다.
             <br />
             금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.

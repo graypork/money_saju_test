@@ -7,10 +7,7 @@ export type AnimalKey =
   | "rabbit"
   | "deer"
   | "swan"
-  | "whale"
   | "otter";
-
-export type AnimalAssetKey = AnimalKey | "bull";
 
 export type AnimalImageEntry = {
   candidates: string[];
@@ -43,16 +40,24 @@ const animalKeys: AnimalKey[] = [
   "rabbit",
   "deer",
   "swan",
-  "whale",
   "otter",
 ];
 
-function numberedMainPath(key: AnimalKey, index: number) {
-  return `/assets/document-ui/animals/${key}-main-${index}.webp`;
-}
+const MAIN_PHOTO_COUNT = 4;
+const animalFileSlug: Record<AnimalKey, string> = {
+  fox: "fox",
+  ox: "ox",
+  squirrel: "squirrel",
+  hawk: "hwak",
+  tiger: "tiger",
+  rabbit: "rabbit",
+  deer: "deer",
+  swan: "swan",
+  otter: "otter",
+};
 
-function legacyMainPath(key: AnimalKey) {
-  return `/assets/document-ui/animals/${key}-main.webp`;
+function mainPath(key: AnimalKey, index: number) {
+  return `/assets/document-ui/animals/${animalFileSlug[key]}-${index}.webp`;
 }
 
 function animalThumbPath(key: AnimalKey) {
@@ -66,13 +71,12 @@ function animalMarkPath(key: AnimalKey) {
 function imageEntry(key: AnimalKey, extraCandidates: string[] = []): AnimalImageEntry {
   return {
     candidates: [
-      numberedMainPath(key, 1),
-      numberedMainPath(key, 2),
-      numberedMainPath(key, 3),
-      legacyMainPath(key),
+      ...Array.from({ length: MAIN_PHOTO_COUNT }, (_, index) =>
+        mainPath(key, index + 1)
+      ),
       ...extraCandidates,
     ],
-    placeholder: `${key}-main-1.webp`,
+    placeholder: `${animalFileSlug[key]}-1.webp`,
   };
 }
 
@@ -80,34 +84,17 @@ export const animalMainImages: Record<AnimalKey, AnimalImageEntry> = {
   fox: imageEntry("fox"),
   ox: imageEntry("ox"),
   squirrel: imageEntry("squirrel"),
-  hawk: imageEntry("hawk", [
-    "/assets/document-ui/animals/hwak-main-1.webp",
-    "/assets/document-ui/animals/hwak-main-2.webp",
-  ]),
+  hawk: imageEntry("hawk"),
   tiger: imageEntry("tiger"),
   rabbit: imageEntry("rabbit"),
   deer: imageEntry("deer"),
   swan: imageEntry("swan"),
-  whale: imageEntry("whale"),
   otter: imageEntry("otter"),
 };
 
-const existingAnimalMainImagePaths = [
-  "/assets/document-ui/animals/deer-main-1.webp",
-  "/assets/document-ui/animals/deer-main-2.webp",
-  "/assets/document-ui/animals/fox-main.webp",
-  "/assets/document-ui/animals/hwak-main-1.webp",
-  "/assets/document-ui/animals/hwak-main-2.webp",
-  "/assets/document-ui/animals/otter-main-1.webp",
-  "/assets/document-ui/animals/ox-main-1.webp",
-  "/assets/document-ui/animals/ox-main-2.webp",
-  "/assets/document-ui/animals/rabbit-main-1.webp",
-  "/assets/document-ui/animals/squirrel-main-1.webp",
-  "/assets/document-ui/animals/squirrel-main-2.webp",
-  "/assets/document-ui/animals/swan-main-1.webp",
-  "/assets/document-ui/animals/swan-main-2.webp",
-  "/assets/document-ui/animals/tiger-main.webp",
-] as const;
+const existingAnimalMainImagePaths = animalKeys.flatMap(
+  (key) => animalMainImages[key].candidates
+);
 
 export const existingAnimalDocumentAssetPaths = [...existingAnimalMainImagePaths];
 
@@ -122,7 +109,7 @@ const animalMeta: Record<
     accentColor: "#C96E41",
   },
   ox: {
-    displayName: "황소",
+    displayName: "소",
     accentColor: "#8A6A3E",
   },
   squirrel: {
@@ -148,10 +135,6 @@ const animalMeta: Record<
   swan: {
     displayName: "백조",
     accentColor: "#8A98A6",
-  },
-  whale: {
-    displayName: "고래",
-    accentColor: "#3F7D9B",
   },
   otter: {
     displayName: "수달",
