@@ -28,16 +28,15 @@ type ParsedBirthDate = {
 const PICKER_SHEET_HEIGHT = 420;
 const PICKER_VIEWPORT_MARGIN = 16;
 const DEFAULT_PICKER_TOP = 96;
-const formTokens = uiTokens.landing;
 const FIELD_GROUP_CLASS =
-  "space-y-3 border-t border-[rgba(51,36,29,0.12)] pt-5 first:border-t-0 first:pt-0";
+  "space-y-3 border-t border-[rgba(240,247,244,0.18)] pt-5 first:border-t-0 first:pt-0";
 const INPUT_BOX_CLASS =
-  "w-full rounded-full border border-[rgba(217,142,115,0.34)] bg-[#FFF8ED] px-5 py-5 text-[17px] font-black text-[#33241D] outline-none transition placeholder:text-[#82685D] focus:border-[#D98E73] focus:ring-4 focus:ring-[rgba(217,142,115,0.16)]";
+  "w-full rounded-full border border-[rgba(240,247,244,0.22)] bg-[rgba(240,247,244,0.12)] px-5 py-5 text-[17px] font-black text-[#F0F7F4] outline-none transition placeholder:text-[rgba(240,247,244,0.64)] focus:border-[#39FF14] focus:ring-4 focus:ring-[rgba(57,255,20,0.12)]";
 const OPTION_BOX_CLASS =
-  "w-full rounded-full border border-[rgba(217,142,115,0.34)] bg-[#FFF8ED] px-4 py-5 text-left text-[16px] font-black text-[#33241D] outline-none transition active:translate-y-0.5 focus:border-[#D98E73] focus:ring-4 focus:ring-[rgba(217,142,115,0.16)]";
-const SELECTED_OPTION_CLASS = `text-[#FFF8ED] ${formTokens.primaryButtonSurface}`;
+  "w-full rounded-full border border-[rgba(240,247,244,0.22)] bg-[rgba(240,247,244,0.12)] px-4 py-5 text-left text-[16px] font-black text-[#F0F7F4] outline-none transition active:translate-y-0.5 focus:border-[#39FF14] focus:ring-4 focus:ring-[rgba(57,255,20,0.12)]";
+const SELECTED_OPTION_CLASS = `text-[#F0F7F4] ${uiTokens.greenButtonSurface}`;
 const MUTED_OPTION_CLASS =
-  "border border-[rgba(217,142,115,0.3)] bg-[rgba(255,248,237,0.78)] text-[#82685D]";
+  "border border-[rgba(240,247,244,0.22)] bg-[rgba(240,247,244,0.12)] text-[#F0F7F4]";
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
@@ -106,7 +105,7 @@ function PickerButton({
       onClick={onClick}
       className={OPTION_BOX_CLASS}
     >
-      <span className={value ? "text-[#33241D]" : "text-[#82685D]"}>
+      <span className={value ? "text-[#F0F7F4]" : "text-[rgba(240,247,244,0.64)]"}>
         {value ? label : placeholder}
       </span>
     </button>
@@ -129,8 +128,8 @@ function PickerSheet({
   onClose: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollStopTimerRef = useRef<number | null>(null);
   const draftValueRef = useRef(selectedValue || options[0]?.value || "");
-  const hasInitializedScrollRef = useRef(false);
   const [highlightValue, setHighlightValue] = useState(draftValueRef.current);
   const sheetTop =
     typeof window === "undefined"
@@ -147,34 +146,30 @@ function PickerSheet({
         );
 
   useEffect(() => {
-    const scrollY = window.scrollY;
     const originalOverflow = document.body.style.overflow;
     const originalPosition = document.body.style.position;
-    const originalTop = document.body.style.top;
     const originalWidth = document.body.style.width;
 
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
     document.body.style.width = "100%";
 
     return () => {
       document.body.style.overflow = originalOverflow;
       document.body.style.position = originalPosition;
-      document.body.style.top = originalTop;
       document.body.style.width = originalWidth;
-      window.scrollTo(0, scrollY);
     };
   }, []);
 
   useEffect(() => {
-    // 시트가 열려 있는 동안 부모(BirthForm)가 다른 이유로 리렌더링되면
-    // options/selectedValue가 새 참조로 바뀌면서 이 effect가 다시 실행될 수 있다.
-    // 그때마다 스크롤을 초기 선택값 위치로 되돌리면 사용자가 휠을 내리는 도중
-    // 계속 맨 위로 튕기는 문제가 생기므로, 마운트당 한 번만 초기 위치를 잡는다.
-    if (hasInitializedScrollRef.current) return;
-    hasInitializedScrollRef.current = true;
+    return () => {
+      if (scrollStopTimerRef.current) {
+        window.clearTimeout(scrollStopTimerRef.current);
+      }
+    };
+  }, []);
 
+  useEffect(() => {
     const initialValue = selectedValue || options[0]?.value || "";
     const selectedIndex = Math.max(
       0,
@@ -205,6 +200,14 @@ function PickerSheet({
     if (nextValue) {
       draftValueRef.current = nextValue;
     }
+
+    if (scrollStopTimerRef.current) {
+      window.clearTimeout(scrollStopTimerRef.current);
+    }
+
+    scrollStopTimerRef.current = window.setTimeout(() => {
+      setHighlightValue(draftValueRef.current);
+    }, 120);
   };
 
   const confirmValue = () => {
@@ -218,36 +221,36 @@ function PickerSheet({
         type="button"
         aria-label="닫기"
         onClick={onClose}
-        className="absolute inset-0 bg-[rgba(51,36,29,0.2)]"
+        className="absolute inset-0 bg-[rgba(14,27,20,0.28)]"
       />
 
       <div
-        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-[rgba(217,142,115,0.22)] bg-[#FFF8ED] shadow-[0_22px_50px_rgba(51,36,29,0.16)]"
+        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-[rgba(14,27,20,0.14)] bg-[#F0F7F4] shadow-[0_24px_70px_rgba(14,27,20,0.14)]"
         style={{ top: sheetTop }}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[rgba(51,36,29,0.12)] bg-[#FFF8ED] px-5 py-4">
-          <h3 className="text-lg font-extrabold text-[#33241D]">{title}</h3>
+        <div className="flex shrink-0 items-center justify-between border-b border-[rgba(30,111,92,0.22)] bg-[#F0F7F4] px-5 py-4">
+          <h3 className="text-lg font-extrabold text-[#0E1B14]">{title}</h3>
 
           <button
             type="button"
             onClick={onClose}
-            className={`rounded-full px-4 py-2 text-sm font-bold ${formTokens.primaryButtonSurface}`}
+            className={`rounded-full px-4 py-2 text-sm font-bold text-[#F0F7F4] ${uiTokens.greenButtonSurface}`}
           >
             닫기
           </button>
         </div>
 
-        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[rgba(243,213,139,0.34)]">
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[rgba(217,142,115,0.34)] bg-[rgba(231,197,184,0.34)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#FFF8ED] to-[rgba(255,248,237,0)]" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#FFF8ED] to-[rgba(255,248,237,0)]" />
+        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[rgba(240,247,244,0.74)]">
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[rgba(30,111,92,0.22)] bg-[rgba(240,247,244,0.92)] shadow-[0_8px_20px_rgba(14,27,20,0.06)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#F0F7F4] to-[rgba(240,247,244,0)]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#F0F7F4] to-[rgba(240,247,244,0)]" />
 
           <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="relative z-20 h-full snap-y snap-mandatory overflow-y-auto overscroll-contain px-4 py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="relative z-20 h-full overflow-y-auto overscroll-contain px-4 py-24 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           >
-            {options.map((option) => {
+            {options.map((option, index) => {
               const isSelected = option.value === highlightValue;
 
               return (
@@ -257,11 +260,15 @@ function PickerSheet({
                   onClick={() => {
                     draftValueRef.current = option.value;
                     setHighlightValue(option.value);
+                    scrollRef.current?.scrollTo({
+                      top: index * 48,
+                      behavior: "smooth",
+                    });
                   }}
-                  className={`flex h-12 w-full snap-center items-center justify-center rounded-2xl text-[18px] font-extrabold transition ${
+                  className={`flex h-12 w-full items-center justify-center rounded-2xl text-[18px] font-extrabold transition ${
                     isSelected
-                      ? "text-[#33241D]"
-                      : "text-[#82685D]"
+                      ? "text-[#0E1B14]"
+                      : "text-[rgba(14,27,20,0.56)]"
                   }`}
                 >
                   {option.label}
@@ -275,14 +282,14 @@ function PickerSheet({
           <button
             type="button"
             onClick={onClose}
-            className={`min-h-12 rounded-full text-sm font-extrabold ${formTokens.secondaryButtonSurface}`}
+            className={`min-h-12 rounded-full text-sm font-extrabold text-[#F0F7F4] ${uiTokens.greenButtonSurface}`}
           >
             취소
           </button>
           <button
             type="button"
             onClick={confirmValue}
-            className={`min-h-12 rounded-full text-sm font-extrabold ${formTokens.primaryButtonSurface}`}
+            className={`min-h-12 rounded-full text-sm font-extrabold text-[#F0F7F4] ${uiTokens.greenButtonSurface}`}
           >
             선택 완료
           </button>
@@ -347,24 +354,21 @@ export default function BirthForm() {
     [maxDay]
   );
 
-  const timeOptions = useMemo<PickerOption[]>(
-    () => [
-      { label: "모름", value: "0" },
-      { label: "자시 / 23:00~01:00", value: "1" },
-      { label: "축시 / 01:00~03:00", value: "2" },
-      { label: "인시 / 03:00~05:00", value: "3" },
-      { label: "묘시 / 05:00~07:00", value: "4" },
-      { label: "진시 / 07:00~09:00", value: "5" },
-      { label: "사시 / 09:00~11:00", value: "6" },
-      { label: "오시 / 11:00~13:00", value: "7" },
-      { label: "미시 / 13:00~15:00", value: "8" },
-      { label: "신시 / 15:00~17:00", value: "9" },
-      { label: "유시 / 17:00~19:00", value: "10" },
-      { label: "술시 / 19:00~21:00", value: "11" },
-      { label: "해시 / 21:00~23:00", value: "12" },
-    ],
-    []
-  );
+  const timeOptions: PickerOption[] = [
+    { label: "모름", value: "0" },
+    { label: "자시 / 23:00~01:00", value: "1" },
+    { label: "축시 / 01:00~03:00", value: "2" },
+    { label: "인시 / 03:00~05:00", value: "3" },
+    { label: "묘시 / 05:00~07:00", value: "4" },
+    { label: "진시 / 07:00~09:00", value: "5" },
+    { label: "사시 / 09:00~11:00", value: "6" },
+    { label: "오시 / 11:00~13:00", value: "7" },
+    { label: "미시 / 13:00~15:00", value: "8" },
+    { label: "신시 / 15:00~17:00", value: "9" },
+    { label: "유시 / 17:00~19:00", value: "10" },
+    { label: "술시 / 19:00~21:00", value: "11" },
+    { label: "해시 / 21:00~23:00", value: "12" },
+  ];
 
   const selectedTimeLabel =
     timeOptions.find((option) => option.value === birthTime)?.label || "모름";
@@ -493,10 +497,10 @@ export default function BirthForm() {
     <>
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-[36px] border border-[rgba(217,142,115,0.18)] bg-[rgba(255,248,237,0.9)] p-6 shadow-[0_18px_42px_rgba(51,36,29,0.1)]"
+        className="space-y-6 rounded-[36px] bg-[#0E1B14] p-6"
       >
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label className="block text-[13px] font-black uppercase tracking-[0.08em] text-[#F0F7F4]">
             태어난 날
           </label>
 
@@ -524,18 +528,18 @@ export default function BirthForm() {
           />
 
           {birthDateError && (
-            <p className="mb-2 text-xs font-semibold leading-5 text-[#D98E73]">
+            <p className="mb-2 text-xs font-semibold leading-5 text-[#FF7A00]">
               {birthDateError}
             </p>
           )}
         </div>
 
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label className="block text-[13px] font-black uppercase tracking-[0.08em] text-[#F0F7F4]">
             날짜 기준
           </label>
 
-          <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(217,142,115,0.28)] bg-[rgba(255,248,237,0.78)] p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(240,247,244,0.22)] bg-[rgba(240,247,244,0.12)] p-1">
             {[
               { label: "양력", value: "solar" },
               { label: "음력", value: "lunar" },
@@ -547,7 +551,7 @@ export default function BirthForm() {
                 className={`rounded-full px-3 py-4 text-sm font-black transition ${
                   calendarType === item.value
                     ? SELECTED_OPTION_CLASS
-                    : "text-[#82685D]"
+                    : "text-[#F0F7F4]"
                 }`}
               >
                 {item.label}
@@ -555,13 +559,13 @@ export default function BirthForm() {
             ))}
           </div>
 
-          <p className="mt-2 text-xs leading-5 text-[#82685D]">
+          <p className="mt-2 text-xs leading-5 text-[rgba(240,247,244,0.64)]">
             음력은 윤달을 제외한 일반 음력 날짜 기준으로 변환합니다.
           </p>
         </div>
 
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label className="block text-[13px] font-black uppercase tracking-[0.08em] text-[#F0F7F4]">
             태어난 시간
           </label>
 
@@ -574,7 +578,7 @@ export default function BirthForm() {
         </div>
 
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label className="block text-[13px] font-black uppercase tracking-[0.08em] text-[#F0F7F4]">
             성별
           </label>
 
@@ -601,7 +605,7 @@ export default function BirthForm() {
         </div>
 
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label className="block text-[13px] font-black uppercase tracking-[0.08em] text-[#F0F7F4]">
             테스트 코드
           </label>
           <input
@@ -613,14 +617,13 @@ export default function BirthForm() {
           />
         </div>
 
-        <button type="submit" className={`${formTokens.button} mt-6`}>
+        <button type="submit" className={`${uiTokens.button} mt-6`}>
           내 유형 확인하기
         </button>
       </form>
 
       {pickerConfig && (
         <PickerSheet
-          key={openPicker}
           title={pickerConfig.title}
           options={pickerConfig.options}
           selectedValue={pickerConfig.selectedValue}
