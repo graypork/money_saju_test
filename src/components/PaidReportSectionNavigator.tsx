@@ -12,7 +12,9 @@ import { getAvailableAnimalMainPhotos } from "../lib/animalAssets";
 import type {
   PaidReport,
   PaidReportBlock,
+  PaidReportHighlightBlock,
   PaidReportSection,
+  PaidReportTableBlock,
   PaidReportWeeklyPlan,
 } from "../content/resultCopy/paidReportTypes";
 
@@ -133,12 +135,350 @@ function highlightStages(text: string) {
     : null;
 }
 
+function DesktopTable({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <div className="hidden max-w-full overflow-x-auto rounded-[22px] border border-[rgba(32,32,32,0.18)] bg-[#EFE9DB] sm:block">
+      <table className="w-full table-fixed border-collapse text-left text-[12px] text-[#202020]">
+        <thead>
+          <tr>
+            {block.headers.map((header, index) => (
+              <th
+                key={`${header}-${index}`}
+                className="break-words border-b border-[rgba(32,32,32,0.22)] px-3 py-3 align-top font-semibold text-[#202020] [overflow-wrap:anywhere]"
+              >
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {block.rows.map((row, rowIndex) => (
+            <tr key={`row-${rowIndex}`}>
+              {block.headers.map((header, columnIndex) => (
+                <td
+                  key={`${header}-${rowIndex}-${columnIndex}`}
+                  className="break-words border-b border-[rgba(32,32,32,0.14)] px-3 py-3 align-top font-semibold leading-5 last:border-b-0 [overflow-wrap:anywhere]"
+                >
+                  {row[columnIndex] ?? ""}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function GenericMobileTable({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <dl className="sm:hidden" data-report-mobile-table="true">
+      {block.rows.map((row, rowIndex) => (
+        <div key={`mobile-row-${rowIndex}`} className="border-t border-[#DDD6C8] first:border-t-0">
+          {block.headers.map((header, columnIndex) => (
+            <div
+              key={`${header}-${rowIndex}-${columnIndex}`}
+              className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-4"
+            >
+              <dt className="text-[12px] font-semibold leading-5 text-[#202020]">
+                {header}
+              </dt>
+              <dd className="break-words text-[15px] font-semibold leading-6 text-[#202020]">
+                {row[columnIndex] ?? ""}
+              </dd>
+            </div>
+          ))}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function metricScaleLevel(value: string) {
+  const normalized = value.replace(/\s+/g, "");
+
+  if (/(매우낮음|매우느림)/.test(normalized)) return 1;
+  if (/(낮음|느림)/.test(normalized)) return 2;
+  if (/(중간~높음|높음|빠름)/.test(normalized)) return 4;
+  return 3;
+}
+
+function MetricScale({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <dl className="grid gap-7 sm:hidden" data-report-mobile-format="metric-scale">
+      {block.rows.map((row, rowIndex) => (
+        <div key={`metric-${rowIndex}`} className="grid gap-2">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="min-w-0 break-words text-[15px] font-semibold leading-6 text-[#202020]">
+              {row[0] ?? ""}
+            </dt>
+            <dd className="shrink-0 text-right text-[14px] font-bold leading-6 text-[#202020]">
+              {row[1] ?? ""}
+            </dd>
+          </div>
+          <div className="grid grid-cols-5 gap-1.5" aria-hidden="true">
+            {Array.from({ length: 5 }, (_, index) => (
+              <span
+                key={`metric-step-${rowIndex}-${index}`}
+                className={
+                  index < metricScaleLevel(row[1] ?? "")
+                    ? "h-1.5 rounded-full bg-[#202020]"
+                    : "h-1.5 rounded-full bg-[#DDD6C8]"
+                }
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function GrowthTimeline({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <ol
+      className="relative ml-2 grid gap-0 border-l-2 border-[#DDD6C8] pl-6 sm:hidden"
+      data-report-mobile-format="growth-timeline"
+    >
+      {block.rows.map((row, rowIndex) => (
+        <li
+          key={`step-${rowIndex}`}
+          className="relative pb-9 last:pb-0"
+        >
+          <span
+            className="absolute -left-[2.2rem] top-0 flex h-7 w-7 items-center justify-center rounded-full border border-[#202020] bg-[#FBF5E7] text-[11px] font-bold tracking-[0.04em] text-[#202020]"
+            aria-hidden="true"
+          >
+            {String(rowIndex + 1).padStart(2, "0")}
+          </span>
+          <p className="break-words text-[17px] font-bold leading-6 text-[#202020]">{row[0] ?? ""}</p>
+          <p className="mt-2 break-words text-[15px] font-semibold leading-6 text-[#746F67]">
+            <span className="sr-only">{block.headers[1] ?? ""}: </span>
+            {row[1] ?? ""}
+          </p>
+          <p className="mt-3 break-words text-[15px] font-semibold leading-7 text-[#202020]">
+            <span className="sr-only">{block.headers[2] ?? ""}: </span>
+            {row[2] ?? ""}
+          </p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function TalentNarrativeList({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <ol className="grid gap-9 sm:hidden" data-report-mobile-format="talent-list">
+      {block.rows.map((row, rowIndex) => (
+        <li key={`talent-${rowIndex}`} className="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-3">
+          <span className="pt-0.5 text-[12px] font-bold tracking-[0.08em] text-[#746F67]" aria-hidden="true">
+            {String(rowIndex + 1).padStart(2, "0")}
+          </span>
+          <div className="min-w-0">
+            <p className="break-words text-[17px] font-bold leading-6 text-[#202020]">
+              <span className="sr-only">{block.headers[0] ?? ""}: </span>
+              {row[0] ?? ""}
+            </p>
+            <p className="mt-2 break-words text-[15px] font-semibold leading-7 text-[#202020]">
+              <span className="sr-only">{block.headers[1] ?? ""}: </span>
+              {row[1] ?? ""}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function ExpansionRoadmap({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <ol
+      className="relative ml-2 border-l-2 border-[#202020] pl-6 sm:hidden"
+      data-report-mobile-format="expansion-roadmap"
+    >
+      {block.rows.map((row, rowIndex) => (
+        <li key={`roadmap-${rowIndex}`} className="relative pb-10 last:pb-0">
+          <span
+            className="absolute -left-[2.2rem] top-0 flex h-7 w-7 items-center justify-center rounded-full bg-[#202020] text-[11px] font-bold tracking-[0.04em] text-[#FFF9ED]"
+            aria-hidden="true"
+          >
+            {String(rowIndex + 1).padStart(2, "0")}
+          </span>
+          <p className="text-[11px] font-semibold tracking-[0.08em] text-[#746F67]">{block.headers[0] ?? ""}</p>
+          <p className="mt-1 break-words text-[17px] font-bold leading-6 text-[#202020]">{row[0] ?? ""}</p>
+          <div className="my-3 flex items-center gap-2 text-[15px] font-bold text-[#202020]" aria-hidden="true">
+            <span className="h-px w-8 bg-[#202020]" />
+            <span>↓</span>
+          </div>
+          <p className="text-[11px] font-semibold tracking-[0.08em] text-[#202020]">{block.headers[1] ?? ""}</p>
+          <p className="mt-1 break-words text-[15px] font-bold leading-7 text-[#202020]">{row[1] ?? ""}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function PatternShift({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <ol className="grid gap-10 sm:hidden" data-report-mobile-format="pattern-shift">
+      {block.rows.map((row, rowIndex) => (
+        <li key={`pattern-${rowIndex}`} className="grid gap-4">
+          <p className="text-[13px] font-bold leading-5 text-[#202020]">
+            <span className="mr-2 text-[11px] font-semibold tracking-[0.08em] text-[#746F67]">
+              {block.headers[0] ?? ""}
+            </span>
+            {row[0] ?? ""}
+          </p>
+          <div className="grid gap-3">
+            <div className="border-l-2 border-[#DDD6C8] pl-4">
+              <p className="text-[11px] font-semibold tracking-[0.08em] text-[#746F67]">{block.headers[1] ?? ""}</p>
+              <p className="mt-1 break-words text-[16px] font-bold leading-6 text-[#202020]">{row[1] ?? ""}</p>
+            </div>
+            <div className="ml-4 flex items-center gap-2 text-[15px] font-bold text-[#202020]" aria-hidden="true">
+              <span className="h-px w-7 bg-[#202020]" />
+              <span>↓</span>
+            </div>
+            <div className="border-l-2 border-[#202020] pl-4">
+              <p className="text-[11px] font-semibold tracking-[0.08em] text-[#202020]">{block.headers[2] ?? ""}</p>
+              <p className="mt-1 break-words text-[15px] font-bold leading-7 text-[#202020]">{row[2] ?? ""}</p>
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function AvoidanceAlternatives({ block }: { block: PaidReportTableBlock }) {
+  return (
+    <ol className="grid gap-10 sm:hidden" data-report-mobile-format="avoid-alternatives">
+      {block.rows.map((row, rowIndex) => (
+        <li key={`avoid-${rowIndex}`} className="grid gap-5">
+          <div className="border-l-2 border-[#202020] pl-4">
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#202020]">
+              {block.headers[0] ?? ""}
+            </p>
+            <p className="mt-1 break-words text-[17px] font-bold leading-6 text-[#202020]">
+              {row[0] ?? ""}
+            </p>
+            <p className="mt-4 text-[11px] font-semibold tracking-[0.08em] text-[#746F67]">
+              {block.headers[1] ?? ""}
+            </p>
+            <p className="mt-1 break-words text-[15px] font-semibold leading-7 text-[#202020]">
+              {row[1] ?? ""}
+            </p>
+          </div>
+          <div className="ml-5 border-l-2 border-[#BACCEC] pl-4">
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#202020]">
+              {block.headers[2] ?? ""}
+            </p>
+            <p className="mt-1 break-words text-[15px] font-bold leading-7 text-[#202020]">
+              {row[2] ?? ""}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+type SituationFlowData = {
+  summary: string;
+  stages: { label: "반복되는 상황" | "손실" | "원인"; text: string }[];
+};
+
+function parseSituationFlow(text: string): SituationFlowData | null {
+  const parts = readingParagraphs(text);
+  const labels = ["반복되는 상황", "손실", "원인"] as const;
+  const indices = labels.map((label) => parts.indexOf(label));
+
+  if (
+    indices.some((index) => index < 1) ||
+    indices.some((index, position) => position > 0 && index <= indices[position - 1])
+  ) {
+    return null;
+  }
+
+  const stages = labels.map((label, index) => ({
+    label,
+    text: parts.slice(indices[index] + 1, indices[index + 1] ?? parts.length).join(" "),
+  }));
+
+  return stages.every((stage) => stage.text)
+    ? { summary: parts.slice(0, indices[0]).join(" "), stages }
+    : null;
+}
+
+function SituationFlow({
+  block,
+  flow,
+}: {
+  block: PaidReportHighlightBlock;
+  flow: SituationFlowData;
+}) {
+  return (
+    <section className="border-l-2 border-[#202020] pl-4" data-report-situation-flow="true">
+      {block.label ? (
+        <p className="text-[11px] font-semibold tracking-[0.08em] text-[#202020]">{block.label}</p>
+      ) : null}
+      <p className="mt-2 break-words text-[16px] font-bold leading-7 text-[#202020]">{flow.summary}</p>
+      <ol className="mt-5">
+        {flow.stages.map((stage, index) => (
+          <li key={stage.label}>
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#746F67]">{stage.label}</p>
+            <p className="mt-1 break-words text-[15px] font-semibold leading-7 text-[#202020]">{stage.text}</p>
+            {index < flow.stages.length - 1 ? (
+              <div className="my-4 flex flex-col items-start gap-1 text-[#202020]" aria-hidden="true">
+                <span className="ml-1 h-4 border-l border-[#202020]" />
+                <span className="text-[15px] leading-none">↓</span>
+              </div>
+            ) : null}
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function ReportTable({
+  block,
+  sectionId,
+}: {
+  block: PaidReportTableBlock;
+  sectionId: string;
+}) {
+  let mobileTable = <GenericMobileTable block={block} />;
+
+  if (sectionId === "section-3") {
+    mobileTable = <MetricScale block={block} />;
+  } else if (sectionId === "section-5") {
+    mobileTable = <GrowthTimeline block={block} />;
+  } else if (sectionId === "section-6") {
+    mobileTable = <TalentNarrativeList block={block} />;
+  } else if (sectionId === "section-7") {
+    mobileTable = <ExpansionRoadmap block={block} />;
+  } else if (sectionId === "section-9") {
+    mobileTable = <PatternShift block={block} />;
+  } else if (sectionId === "section-10") {
+    mobileTable = <AvoidanceAlternatives block={block} />;
+  }
+
+  return (
+    <>
+      {mobileTable}
+      <DesktopTable block={block} />
+    </>
+  );
+}
+
 function ReportBlock({
   block,
   isLead,
+  sectionId,
 }: {
   block: PaidReportBlock;
   isLead: boolean;
+  sectionId: string;
 }) {
   if (block.type === "paragraph") {
     const paragraphs = readingParagraphs(block.text);
@@ -167,8 +507,16 @@ function ReportBlock({
   }
 
   if (block.type === "highlight") {
+    const situationFlow =
+      sectionId === "section-8" && /^문제\s+\d+$/.test(block.label ?? "")
+        ? parseSituationFlow(block.text)
+        : null;
     const stages = highlightStages(block.text);
     const paragraphs = readingParagraphs(block.text);
+
+    if (situationFlow) {
+      return <SituationFlow block={block} flow={situationFlow} />;
+    }
 
     return (
       <div className="border-l-2 border-[#202020] pl-4">
@@ -239,60 +587,7 @@ function ReportBlock({
     );
   }
 
-  return (
-    <>
-      <dl className="sm:hidden" data-report-mobile-table="true">
-        {block.rows.map((row, rowIndex) => (
-          <div key={`mobile-row-${rowIndex}`} className="border-t border-[#DDD6C8] first:border-t-0">
-            {block.headers.map((header, columnIndex) => (
-              <div
-                key={`${header}-${rowIndex}-${columnIndex}`}
-                className="grid grid-cols-[5.5rem_minmax(0,1fr)] gap-3 py-4"
-              >
-                <dt className="text-[12px] font-semibold leading-5 text-[#202020]">
-                  {header}
-                </dt>
-                <dd className="break-words text-[15px] font-semibold leading-6 text-[#202020]">
-                  {row[columnIndex] ?? ""}
-                </dd>
-              </div>
-            ))}
-          </div>
-        ))}
-      </dl>
-
-      <div className="hidden max-w-full overflow-x-auto rounded-[22px] border border-[rgba(32,32,32,0.18)] bg-[#EFE9DB] sm:block">
-        <table className="w-full table-fixed border-collapse text-left text-[12px] text-[#202020]">
-          <thead>
-            <tr>
-              {block.headers.map((header, index) => (
-                <th
-                  key={`${header}-${index}`}
-                  className="break-words border-b border-[rgba(32,32,32,0.22)] px-3 py-3 align-top font-semibold text-[#202020] [overflow-wrap:anywhere]"
-                >
-                  {header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {block.rows.map((row, rowIndex) => (
-              <tr key={`row-${rowIndex}`}>
-                {block.headers.map((header, columnIndex) => (
-                  <td
-                    key={`${header}-${rowIndex}-${columnIndex}`}
-                    className="break-words border-b border-[rgba(32,32,32,0.14)] px-3 py-3 align-top font-semibold leading-5 last:border-b-0 [overflow-wrap:anywhere]"
-                  >
-                    {row[columnIndex] ?? ""}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  );
+  return <ReportTable block={block} sectionId={sectionId} />;
 }
 
 function WeeklyPlan({
@@ -397,6 +692,7 @@ function ReportBody({ section }: { section: PaidReportSection }) {
           key={`${section.id}-block-${index}`}
           block={block}
           isLead={index === 0}
+          sectionId={section.id}
         />
       ))}
     </div>

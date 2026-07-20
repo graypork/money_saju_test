@@ -254,6 +254,32 @@ test("상세 리포트는 모자이크 탐색 안내와 선택 상태를 제공�
   );
 });
 
+test("유료 리포트 모바일 renderer는 정보 성격별 시각 구조를 제공한다", async () => {
+  const navigator = await readFile(
+    new URL("../../src/components/PaidReportSectionNavigator.tsx", import.meta.url),
+    "utf8"
+  );
+
+  for (const marker of [
+    "MetricScale",
+    "GrowthTimeline",
+    "TalentNarrativeList",
+    "ExpansionRoadmap",
+    "SituationFlow",
+    "PatternShift",
+    "AvoidanceAlternatives",
+    'data-report-mobile-format="metric-scale"',
+    'data-report-mobile-format="growth-timeline"',
+    'data-report-mobile-format="talent-list"',
+    'data-report-mobile-format="expansion-roadmap"',
+    'data-report-mobile-format="pattern-shift"',
+    'data-report-mobile-format="avoid-alternatives"',
+    'data-report-situation-flow="true"',
+  ]) {
+    assert.equal(navigator.includes(marker), true, `missing ${marker}`);
+  }
+});
+
 test("유료 리포트는 9개 결과 유형을 모두 제공한다", async () => {
   const [bank, reportPage, ...reportSources] = await Promise.all([
     readFile(
