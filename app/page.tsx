@@ -14,38 +14,33 @@ import { uiTokens } from "../src/lib/uiTokens";
 const stackedExplanationCards = [
   {
     id: "money-percent",
-    label: "MONEY PERCENT",
     title: "월급 밖 수익 가능성",
-    body: "내 사주와 오행 흐름에서 월급 외 수익이 커질 가능성을 확인해요.",
-    surface: "#FFF8ED",
+    body: "내 사주와 오행흐름에서\n월급 외 수익이 커질 가능성을 확인해요.",
+    surface: "#BACCEC",
   },
   {
     id: "method",
-    label: "METHOD",
     title: "돈이 모이는 방식",
-    body: "어떤 방식으로 돈이 붙고, 어떤 흐름에서 수익이 커지는지 보여줘요.",
-    surface: "#E7C5B8",
+    body: "어떤 방식으로 돈이 붙고,\n어떤 흐름에서 수익이 커지는지 보여줘요.",
+    surface: "#EFE9DB",
   },
   {
     id: "birth",
-    label: "BIRTH",
     title: "생년월일 기반 흐름",
-    body: "생년월일과 생시를 바탕으로 나에게 강하게 작동하는 재물 흐름을 읽어요.",
-    surface: "#FFF8ED",
+    body: "생년월일과 생시를 바탕으로\n나에게 강하게 작동하는 재물 흐름을 읽어요.",
+    surface: "#EFE9DB",
   },
   {
     id: "element",
-    label: "ELEMENT",
     title: "오행 밸런스",
-    body: "목·화·토·금·수의 균형을 통해 돈이 막히거나 열리는 지점을 살펴봐요.",
-    surface: "#F3D58B",
+    body: "오행의 균형을 통해\n수익이 막히거나 열리는 지점을 살펴봐요.",
+    surface: "#EFE9DB",
   },
   {
     id: "animal",
-    label: "ANIMAL",
     title: "재물 동물 유형",
-    body: "돈 버는 방식을 9가지 동물 유형으로 비유해 쉽게 이해할 수 있게 보여줘요.",
-    surface: "#FFF8ED",
+    body: "수입의 방식을 9가지 동물 유형으로 비유해\n쉽게 이해할 수 있게 보여줘요.",
+    surface: "#EFE9DB",
   },
 ];
 
@@ -102,6 +97,7 @@ const animalTypeCards: AnimalTypeIntroCardData[] = [
     description: "품격과 이미지로 가치를 높이는 유형",
   },
 ];
+const landingAnimalTypeCards = animalTypeCards.slice(0, 3);
 
 const landingAnimalPreviewOptions = getLandingAnimalPreviewOptions();
 const landingAnimalPreviewMap = new Map(
@@ -121,28 +117,14 @@ const explanationDeckExitDuration = 380;
 const explanationDeckSnapDuration = 300;
 const explanationDeckTransforms = [
   0,
-  -14,
-  -28,
-  -42,
+  -44,
+  -88,
+  -132,
 ];
 const explanationDeckCardClass =
-  "absolute left-0 top-0 flex h-[204px] w-full flex-col justify-between rounded-[30px] border border-[rgba(231,197,184,0.75)] p-[23px] text-left shadow-[0_22px_45px_rgba(51,36,29,0.18),0_8px_18px_rgba(51,36,29,0.10)] transition-transform ease-out will-change-transform";
+  "absolute left-0 top-0 flex h-[204px] w-full flex-col justify-between rounded-[30px] border border-[rgba(246,187,221,0.75)] p-[23px] text-left shadow-[0_22px_45px_rgba(0,0,0,0.18),0_8px_18px_rgba(0,0,0,0.10)] transition-transform ease-out will-change-transform";
 const explanationDeckCardShadow =
-  "0 22px 45px rgba(51,36,29,0.18), 0 8px 18px rgba(51,36,29,0.10)";
-
-function getRandomAnimalTypeCards() {
-  const shuffled = [...animalTypeCards];
-
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex],
-      shuffled[index],
-    ];
-  }
-
-  return shuffled.slice(0, 3);
-}
+  "0 22px 45px rgba(0,0,0,0.18), 0 8px 18px rgba(0,0,0,0.10)";
 
 function AnimalTypeIntroCard({ card }: { card: AnimalTypeIntroCardData }) {
   const [failed, setFailed] = useState(false);
@@ -173,7 +155,7 @@ function AnimalTypeIntroCard({ card }: { card: AnimalTypeIntroCardData }) {
                   borderRadius: "999px 70% 70% 999px",
                   filter: "blur(0.8px)",
                   background:
-                    "linear-gradient(to left, rgba(51,36,29,0.38) 0%, rgba(51,36,29,0.24) 45%, rgba(51,36,29,0.08) 100%)",
+                    "linear-gradient(to left, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.24) 45%, rgba(0,0,0,0.08) 100%)",
                 }}
               />
               <Image
@@ -190,17 +172,17 @@ function AnimalTypeIntroCard({ card }: { card: AnimalTypeIntroCardData }) {
               />
             </div>
           ) : (
-            <div className="relative z-10 grid h-[96px] w-[112px] place-items-center rounded-[24px] border border-dashed border-[rgba(217,142,115,0.34)] bg-[rgba(255,248,237,0.78)] px-2 text-center font-mono text-[10px] font-bold leading-4 text-[#82685D]">
+            <div className="relative z-10 grid h-[96px] w-[112px] place-items-center rounded-[24px] border border-dashed border-[rgba(32,32,32,0.34)] bg-[rgba(239,233,219,0.78)] px-2 text-center text-[10px] font-semibold leading-4 text-[#746F67]">
               {basename}
             </div>
           )}
         </div>
 
-        <div className="min-h-[174px] rounded-[28px] border border-[rgba(231,197,184,0.9)] bg-[#FFF8ED] px-4 pb-5 pt-[74px] shadow-[0_16px_30px_rgba(51,36,29,0.09)]">
-          <p className="text-[18px] font-black leading-6 tracking-[-0.02em] text-[#33241D]">
+        <div className="min-h-[174px] rounded-[28px] border border-[rgba(246,187,221,0.9)] bg-[#EFE9DB] px-4 pb-5 pt-[74px] shadow-[0_16px_30px_rgba(0,0,0,0.09)]">
+          <p className="text-[18px] font-bold leading-6 tracking-[-0.02em] text-[#202020]">
             {card.name}
           </p>
-          <p className="mt-2 text-[13px] font-bold leading-[1.52] text-[#82685D]">
+          <p className="mt-2 text-[13px] font-semibold leading-[1.52] text-[#202020]">
             {card.description}
           </p>
         </div>
@@ -292,7 +274,7 @@ function StackedExplanationSection() {
     resetDrag();
   };
 
-  const startForwardTransition = () => {
+  const startForwardTransition = (startingOffset = 0) => {
     if (isAnimating) {
       return;
     }
@@ -310,7 +292,7 @@ function StackedExplanationSection() {
     setOutgoingCardIndex(activeCardIndex);
     setIncomingCardIndex(null);
     setTransitionTarget(null);
-    setExitStartX(Math.max(0, dragDeltaXRef.current));
+    setExitStartX(Math.max(0, startingOffset));
     setIsExitActive(false);
     resetDrag();
 
@@ -420,7 +402,7 @@ function StackedExplanationSection() {
 
     if (isValidSwipe) {
       if (deltaX > 0) {
-        startForwardTransition();
+        startForwardTransition(deltaX);
         return;
       }
 
@@ -466,9 +448,8 @@ function StackedExplanationSection() {
     ? "0ms"
     : `${explanationDeckSnapDuration}ms`;
   const transitionTimingFunction = isAnimating
-    ? "cubic-bezier(0.22, 1, 0.36, 1)"
+    ? "cubic-bezier(0.16, 1, 0.3, 1)"
     : "ease-out";
-
   const renderCard = (
     card: (typeof stackedExplanationCards)[number],
     options: {
@@ -480,6 +461,7 @@ function StackedExplanationSection() {
       duration: string;
       timingFunction: string;
       exiting?: boolean;
+      onAdvance?: () => void;
     }
   ) => (
     <article
@@ -500,29 +482,50 @@ function StackedExplanationSection() {
         pointerEvents: "none",
       }}
     >
-      <p className="text-[11px] font-black uppercase tracking-[0.1em] text-[#D98E73]">
-        {card.label}
-      </p>
-      <div>
-        <h3 className="text-[25px] font-black leading-[1.08] tracking-[-0.04em] text-[#33241D]">
-          {card.title}
-        </h3>
-        <p className="mt-3 text-[14px] font-bold leading-[1.58] text-[#82685D]">
-          {card.body}
-        </p>
-      </div>
+      {options.stackPosition && !options.isFront ? (
+        <button
+          type="button"
+          aria-label="다음 설명 카드 보기"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={options.onAdvance}
+          className="pointer-events-auto absolute bottom-4 left-7 flex h-8 w-5 items-center justify-start rounded-full text-[#746F67] outline-none transition active:scale-90 focus-visible:outline-2 focus-visible:outline-[#202020]"
+        >
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-3 w-3"
+          >
+            <path d="M10 6H2M5 3 2 6l3 3" />
+          </svg>
+        </button>
+      ) : (
+        <div className="mt-auto text-left">
+          <h3 className="text-[25px] font-bold leading-[1.08] tracking-[-0.04em] text-[#202020]">
+            {card.title}
+          </h3>
+          <p className="mt-3 whitespace-pre-line text-[14px] font-semibold leading-[1.58] text-[#202020]">
+            {card.body}
+          </p>
+        </div>
+      )}
     </article>
   );
 
   return (
     <section className="space-y-4" data-section="explanation">
       <div>
-        <h2 className="text-[24px] font-extrabold leading-[1.1] tracking-[-0.04em] text-[#33241D]">
+        <h2 className="text-[24px] font-bold leading-[1.1] tracking-[-0.04em] text-[#202020]">
           이 테스트로 알 수 있어요
         </h2>
-        <p className="mt-2.5 max-w-[350px] text-[14px] font-bold leading-[1.45] tracking-[-0.02em] text-[#82685D]">
-          사주와 오행 흐름을 바탕으로, 월급 밖 수익 가능성과 돈이 커지는
-          방식을 가볍지만 현실적으로 확인해요.
+        <p className="mt-2.5 max-w-[350px] text-[14px] font-semibold leading-[1.45] tracking-[-0.02em] text-[#202020]">
+          사주와 오행 흐름을 바탕으로,
+          <br />
+          월급 밖 수익 가능성과 돈이 들어오는 방식을 현실적으로 확인해요.
         </p>
       </div>
 
@@ -537,6 +540,7 @@ function StackedExplanationSection() {
           className="relative ml-5 h-[250px] touch-pan-y overflow-visible"
           style={{ width: "min(410px, calc(100vw - 20px))" }}
         >
+          {/* eslint-disable-next-line react-hooks/refs -- onAdvance runs only from the rear-card button click. */}
           {visibleCards.map((card, stackPosition) => {
             const isFront = stackPosition === 0;
             const dragOffset =
@@ -550,6 +554,7 @@ function StackedExplanationSection() {
               isFront,
               duration: transitionDuration,
               timingFunction: transitionTimingFunction,
+              onAdvance: () => startForwardTransition(),
             });
           })}
           {outgoingCardIndex !== null && transitionMode === "forward"
@@ -562,7 +567,7 @@ function StackedExplanationSection() {
                 duration: isExitActive
                   ? `${explanationDeckExitDuration}ms`
                   : "0ms",
-                timingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
+                timingFunction: "cubic-bezier(0.16, 1, 0.3, 1)",
                 exiting: true,
               })
             : null}
@@ -581,7 +586,7 @@ function StackedExplanationSection() {
                     ? `${explanationDeckExitDuration}ms`
                     : `${explanationDeckSnapDuration}ms`,
                 timingFunction: isAnimating
-                  ? "cubic-bezier(0.22, 1, 0.36, 1)"
+                  ? "cubic-bezier(0.16, 1, 0.3, 1)"
                   : "ease-out",
               })
             : null}
@@ -592,26 +597,6 @@ function StackedExplanationSection() {
 }
 
 export default function Home() {
-  const [visibleAnimalTypeCards, setVisibleAnimalTypeCards] = useState(() =>
-    animalTypeCards.slice(0, 3)
-  );
-  const hasPickedAnimalTypesRef = useRef(false);
-
-  useEffect(() => {
-    if (hasPickedAnimalTypesRef.current) {
-      return;
-    }
-
-    hasPickedAnimalTypesRef.current = true;
-    const animationFrame = window.requestAnimationFrame(() => {
-      setVisibleAnimalTypeCards(getRandomAnimalTypeCards());
-    });
-
-    return () => {
-      window.cancelAnimationFrame(animationFrame);
-    };
-  }, []);
-
   return (
     <main
       className={`${landingTokens.page} min-h-dvh px-5 pb-10 [word-break:keep-all]`}
@@ -619,38 +604,44 @@ export default function Home() {
       <section className="relative z-10 mx-auto max-w-[430px] space-y-16 pb-12 pt-8">
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(231,197,184,0.82)] bg-[#FFF8ED] text-[15px] font-black text-[#D98E73] shadow-[0_8px_18px_rgba(51,36,29,0.08)]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(246,187,221,0.82)] bg-[#EFE9DB] text-[15px] font-bold text-[#202020] shadow-[0_8px_18px_rgba(0,0,0,0.08)]">
               ₩
             </span>
             <div>
-              <p className="text-[15px] font-black leading-5 tracking-[-0.01em] text-[#33241D]">
-                월급 밖 수익 가능성 테스트
+              <p className="text-[15px] font-bold leading-5 tracking-[-0.01em] text-[#202020]">
+                내 인생 수익 가능성 테스트
               </p>
-              <p className="mt-0.5 text-[13px] font-bold leading-5 text-[#82685D]">
-                생년월일과 생시로 보는 재물 흐름
+              <p className="mt-0.5 text-[13px] font-semibold leading-5 text-[#746F67]">
+                사주로 보면 나는 얼마나 벌 수 있을까?
               </p>
             </div>
           </div>
           <a
             href="#birth-form"
-            className="shrink-0 rounded-full bg-[#D98E73] px-3.5 py-2 text-[12px] font-black text-[#FFF8ED] shadow-[0_10px_18px_rgba(51,36,29,0.12)] transition active:translate-y-0.5"
+            className="shrink-0 rounded-full bg-[#222222] px-3.5 py-2 text-[12px] font-bold text-[#FFF9ED] shadow-[0_10px_18px_rgba(32,32,32,0.12)] transition active:translate-y-0.5"
           >
             시작
           </a>
         </header>
 
         <section className="space-y-6" data-section="hero">
-          <h1 className="max-w-[360px] text-[clamp(46px,11vw,52px)] font-black leading-[0.95] tracking-[-0.06em] text-[#33241D]">
-            나는 월급보다
+          <h1 className="max-w-[360px] text-[clamp(46px,11vw,52px)] font-bold leading-[0.95] tracking-[-0.06em] text-[#202020]">
+            내 사주는 어떻게 
             <br />
-            더 많이 벌 수
+            돈이 들어올까?
             <br />
-            있을까?
           </h1>
-          <p className="max-w-[345px] text-[15px] font-bold leading-[1.66] text-[#82685D] min-[414px]:text-[16px]">
-            돈이 모이는 방식과 수익이 커지는 조건을 따뜻한 리포트로
-            확인해요.
+          <p className="max-w-[345px] text-[15px] font-semibold leading-[1.66] text-[#202020] min-[414px]:text-[16px]">
+            돈이 모이는 방식과 수익을 증가시키는 방법을
+            <br />
+            리포트로 확인해요.
           </p>
+          <a
+            href="#birth-form"
+            className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#222222] px-5 text-[15px] font-bold text-[#FFF9ED] shadow-[0_12px_24px_rgba(32,32,32,0.12)] transition active:translate-y-0.5"
+          >
+            사주 확인
+          </a>
         </section>
 
         <StackedExplanationSection />
@@ -660,21 +651,19 @@ export default function Home() {
           data-section="animal-intro"
         >
           <div>
-            <p className={landingTokens.sectionEyebrow}>
-              ANIMAL TYPES
-            </p>
-            <h2 className={landingTokens.sectionTitle}>
-              9가지 재물 동물 유형
+            <h2 className="text-[38px] font-bold leading-[1.04] tracking-[-0.042em] text-[#202020]">
+              9가지 동물 유형
             </h2>
-            <p className="mt-3 max-w-[350px] text-[15px] font-bold leading-7 text-[#82685D]">
-              돈이 모이는 방식은 사람마다 달라요. 아래에는 9가지 중 일부
-              유형이 랜덤으로 먼저 보여요.
+            <p className="mt-3 max-w-[350px] text-[15px] font-semibold leading-7 text-[#202020]">
+              사람마다 다른 돈이 모이는 방식 !
+              <br />
+              일부 유형을 먼저 소개합니다.
             </p>
           </div>
 
           <div className="-mx-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex snap-x snap-mandatory gap-4 px-5 pt-8">
-              {visibleAnimalTypeCards.map((card) => (
+              {landingAnimalTypeCards.map((card) => (
                 <AnimalTypeIntroCard key={card.animalKey} card={card} />
               ))}
             </div>
@@ -687,20 +676,17 @@ export default function Home() {
           data-section="birth-form"
         >
           <div>
-            <p className={landingTokens.sectionEyebrow}>
-              START
-            </p>
-            <h2 className="mt-2 text-[38px] font-black leading-[1.05] tracking-[-0.052em] text-[#33241D]">
-              리포트 발급을 위해 기본 정보를 입력해 주세요
+            <h2 className="text-[38px] font-bold leading-[1.05] tracking-[-0.052em] text-[#202020]">
+              내 사주는 어떻게?
             </h2>
-            <p className="mt-4 text-[16px] font-bold leading-7 text-[#82685D]">
+            <p className="mt-4 text-[16px] font-semibold leading-7 text-[#202020]">
               생년월일과 태어난 시간을 기준으로 사주와 오행 흐름을 계산해요.
             </p>
           </div>
 
           <BirthForm />
 
-          <p className="text-center text-[13px] font-semibold leading-6 text-[#82685D]">
+          <p className="text-center text-[13px] font-semibold leading-6 text-[#746F67]">
             본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다.
             <br />
             금융, 투자, 법률, 직업 선택에 대한 전문 조언이 아닙니다.

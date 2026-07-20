@@ -57,7 +57,7 @@ These are presentation and interaction priorities. They do not authorize changes
 
 ## 5. Recommended approach
 
-**Approve Approach B: flow and hierarchy redesign, with a constrained consistency pass.**
+**Selected approach: B — flow and hierarchy redesign, with a constrained consistency pass.**
 
 It is the smallest direction that resolves the issues users can actually encounter: finding the start point, understanding the free-result next step, recognizing what is preview versus paid/report reading, and moving through a long report. It deliberately does not replace the existing warm dossier identity, animal system, routes, or computation/content contracts.
 
@@ -160,7 +160,7 @@ The redesign must preserve all of the following unless a later, separately appro
 - Routes: `/`, `/input`, `/result`, `/report`, and their current query contracts.
 - All saju calculations, scoring, animal selection/mapping, result generation, and report-copy meaning.
 - Existing logging, session/local storage, payment/unlock behavior, and `admin22` exclusion behavior.
-- Existing animal imagery and the warm cream/green/terracotta-orange identity family.
+- Existing animal imagery and the warm honey/cream/rose identity family.
 - Current free-result information: percentage, animal, elemental cues, generated explanatory copy, and locked-preview intent.
 - Existing paid-report content, section sequence, and current expandable-section intent.
 - Existing report accessibility strengths: button semantics, `aria-expanded`, focus-visible styling, and reduced-motion behavior.
@@ -220,4 +220,12 @@ This is a sequencing guide, not an implementation plan. No files, components, or
 
 ---
 
-**Decision record:** pending user approval. Until Decision 1 is selected, this brief is a recommendation rather than authorization to create an implementation plan or modify the interface.
+**Decision record (2026-07-16):**
+
+- Decision 1: **B. Flow and hierarchy redesign** selected.
+- Decision 2: **Keep the two-column mosaic** selected for report reading.
+- Decision 3: **Contextual QA access** selected; retain the exact test-code contract while making the entry secondary.
+- Decision 4: **Trust and reading state** selected for the free-result to detailed-report transition.
+- Visual refinement within B: keep the honey/cream/rose surfaces and existing animal assets; replace brown-family text/ink usage with black; establish text emphasis through black opacity, size, and weight rather than brown text colors.
+
+No application code is authorized by this decision record alone. The approved design specification and implementation plan remain required before interface changes.

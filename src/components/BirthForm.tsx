@@ -30,14 +30,14 @@ const PICKER_VIEWPORT_MARGIN = 16;
 const DEFAULT_PICKER_TOP = 96;
 const formTokens = uiTokens.landing;
 const FIELD_GROUP_CLASS =
-  "space-y-3 border-t border-[rgba(51,36,29,0.12)] pt-5 first:border-t-0 first:pt-0";
+  "space-y-3 border-t border-[#DDD6C8] pt-5 first:border-t-0 first:pt-0";
 const INPUT_BOX_CLASS =
-  "w-full rounded-full border border-[rgba(217,142,115,0.34)] bg-[#FFF8ED] px-5 py-5 text-[17px] font-black text-[#33241D] outline-none transition placeholder:text-[#82685D] focus:border-[#D98E73] focus:ring-4 focus:ring-[rgba(217,142,115,0.16)]";
+  "w-full rounded-full border border-[rgba(32,32,32,0.34)] bg-[#EFE9DB] px-5 py-5 text-[17px] font-bold text-[#202020] outline-none transition placeholder:text-[#746F67] focus:border-[#202020] focus:ring-4 focus:ring-[rgba(32,32,32,0.16)]";
 const OPTION_BOX_CLASS =
-  "w-full rounded-full border border-[rgba(217,142,115,0.34)] bg-[#FFF8ED] px-4 py-5 text-left text-[16px] font-black text-[#33241D] outline-none transition active:translate-y-0.5 focus:border-[#D98E73] focus:ring-4 focus:ring-[rgba(217,142,115,0.16)]";
-const SELECTED_OPTION_CLASS = `text-[#FFF8ED] ${formTokens.primaryButtonSurface}`;
+  "w-full rounded-full border border-[rgba(32,32,32,0.34)] bg-[#EFE9DB] px-4 py-5 text-left text-[16px] font-bold text-[#202020] outline-none transition active:translate-y-0.5 focus:border-[#202020] focus:ring-4 focus:ring-[rgba(32,32,32,0.16)]";
+const SELECTED_OPTION_CLASS = `text-[#FFF9ED] ${formTokens.primaryButtonSurface}`;
 const MUTED_OPTION_CLASS =
-  "border border-[rgba(217,142,115,0.3)] bg-[rgba(255,248,237,0.78)] text-[#82685D]";
+  "border border-[rgba(32,32,32,0.3)] bg-[rgba(239,233,219,0.78)] text-[#746F67]";
 
 function getDaysInMonth(year: string, month: string) {
   if (!year || !month) return 31;
@@ -94,19 +94,26 @@ function PickerButton({
   value,
   placeholder,
   onClick,
+  buttonRef,
+  isOpen,
 }: {
   label: string;
   value: string;
   placeholder: string;
   onClick: (event: MouseEvent<HTMLButtonElement>) => void;
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+  isOpen: boolean;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       onClick={onClick}
+      aria-haspopup="dialog"
+      aria-expanded={isOpen}
       className={OPTION_BOX_CLASS}
     >
-      <span className={value ? "text-[#33241D]" : "text-[#82685D]"}>
+      <span className={value ? "text-[#202020]" : "text-[#746F67]"}>
         {value ? label : placeholder}
       </span>
     </button>
@@ -129,9 +136,11 @@ function PickerSheet({
   onClose: () => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const draftValueRef = useRef(selectedValue || options[0]?.value || "");
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const initialValue = selectedValue || options[0]?.value || "";
+  const draftValueRef = useRef(initialValue);
   const hasInitializedScrollRef = useRef(false);
-  const [highlightValue, setHighlightValue] = useState(draftValueRef.current);
+  const [highlightValue, setHighlightValue] = useState(initialValue);
   const sheetTop =
     typeof window === "undefined"
       ? DEFAULT_PICKER_TOP
@@ -166,6 +175,21 @@ function PickerSheet({
       window.scrollTo(0, scrollY);
     };
   }, []);
+
+  useEffect(() => {
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     // 시트가 열려 있는 동안 부모(BirthForm)가 다른 이유로 리렌더링되면
@@ -218,17 +242,21 @@ function PickerSheet({
         type="button"
         aria-label="닫기"
         onClick={onClose}
-        className="absolute inset-0 bg-[rgba(51,36,29,0.2)]"
+        className="absolute inset-0 bg-[rgba(0,0,0,0.2)]"
       />
 
       <div
-        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-[rgba(217,142,115,0.22)] bg-[#FFF8ED] shadow-[0_22px_50px_rgba(51,36,29,0.16)]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="picker-sheet-title"
+        className="absolute inset-x-0 mx-auto flex h-[420px] max-h-[calc(100svh-24px)] max-w-[430px] flex-col overflow-hidden rounded-[2rem] border border-[rgba(32,32,32,0.22)] bg-[#EFE9DB] shadow-[0_22px_50px_rgba(0,0,0,0.16)]"
         style={{ top: sheetTop }}
       >
-        <div className="flex shrink-0 items-center justify-between border-b border-[rgba(51,36,29,0.12)] bg-[#FFF8ED] px-5 py-4">
-          <h3 className="text-lg font-extrabold text-[#33241D]">{title}</h3>
+        <div className="flex shrink-0 items-center justify-between border-b border-[#DDD6C8] bg-[#EFE9DB] px-5 py-4">
+          <h3 id="picker-sheet-title" className="text-lg font-bold text-[#202020]">{title}</h3>
 
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             className={`rounded-full px-4 py-2 text-sm font-bold ${formTokens.primaryButtonSurface}`}
@@ -237,10 +265,10 @@ function PickerSheet({
           </button>
         </div>
 
-        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[rgba(243,213,139,0.34)]">
-          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[rgba(217,142,115,0.34)] bg-[rgba(231,197,184,0.34)]" />
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#FFF8ED] to-[rgba(255,248,237,0)]" />
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#FFF8ED] to-[rgba(255,248,237,0)]" />
+        <div className="relative mx-5 mt-5 h-[240px] overflow-hidden rounded-[26px] bg-[rgba(186,204,236,0.34)]">
+          <div className="pointer-events-none absolute inset-x-4 top-1/2 z-10 h-12 -translate-y-1/2 rounded-2xl border border-[rgba(32,32,32,0.34)] bg-[rgba(246,187,221,0.34)]" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-[#EFE9DB] to-[rgba(239,233,219,0)]" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 bg-gradient-to-t from-[#EFE9DB] to-[rgba(239,233,219,0)]" />
 
           <div
             ref={scrollRef}
@@ -260,8 +288,8 @@ function PickerSheet({
                   }}
                   className={`flex h-12 w-full snap-center items-center justify-center rounded-2xl text-[18px] font-extrabold transition ${
                     isSelected
-                      ? "text-[#33241D]"
-                      : "text-[#82685D]"
+                      ? "text-[#202020]"
+                      : "text-[#746F67]"
                   }`}
                 >
                   {option.label}
@@ -308,6 +336,7 @@ export default function BirthForm() {
   const [testCaseCode, setTestCaseCode] = useState("");
   const [openPicker, setOpenPicker] = useState<PickerKey>(null);
   const [pickerAnchorTop, setPickerAnchorTop] = useState(DEFAULT_PICKER_TOP);
+  const pickerTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const maxDay = getDaysInMonth(year, month);
 
@@ -373,8 +402,14 @@ export default function BirthForm() {
     picker: Exclude<PickerKey, null>,
     event: MouseEvent<HTMLButtonElement>
   ) => {
+    pickerTriggerRef.current = event.currentTarget;
     setPickerAnchorTop(event.currentTarget.getBoundingClientRect().top);
     setOpenPicker(picker);
+  };
+
+  const closePicker = () => {
+    setOpenPicker(null);
+    window.requestAnimationFrame(() => pickerTriggerRef.current?.focus());
   };
 
   const syncBirthDateText = (
@@ -493,14 +528,15 @@ export default function BirthForm() {
     <>
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 rounded-[36px] border border-[rgba(217,142,115,0.18)] bg-[rgba(255,248,237,0.9)] p-6 shadow-[0_18px_42px_rgba(51,36,29,0.1)]"
+        className="space-y-6 rounded-[36px] border border-[rgba(32,32,32,0.18)] bg-[rgba(239,233,219,0.9)] p-6 shadow-[0_18px_42px_rgba(0,0,0,0.1)]"
       >
         <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+          <label htmlFor="birth-date" className={formTokens.label}>
             태어난 날
           </label>
 
           <input
+            id="birth-date"
             type="text"
             inputMode="numeric"
             value={birthDateText}
@@ -520,22 +556,23 @@ export default function BirthForm() {
             }}
             placeholder="예: 1990-03-15 / 19900315"
             aria-invalid={birthDateError ? "true" : "false"}
+            aria-describedby={birthDateError ? "birth-date-error" : undefined}
             className={INPUT_BOX_CLASS}
           />
 
           {birthDateError && (
-            <p className="mb-2 text-xs font-semibold leading-5 text-[#D98E73]">
+            <p id="birth-date-error" className="mb-2 text-xs font-semibold leading-5 text-[#202020]">
               {birthDateError}
             </p>
           )}
         </div>
 
-        <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+        <fieldset className={FIELD_GROUP_CLASS}>
+          <legend className={formTokens.label}>
             날짜 기준
-          </label>
+          </legend>
 
-          <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(217,142,115,0.28)] bg-[rgba(255,248,237,0.78)] p-1">
+          <div className="grid grid-cols-2 gap-2 rounded-full border border-[rgba(32,32,32,0.28)] bg-[rgba(239,233,219,0.78)] p-1">
             {[
               { label: "양력", value: "solar" },
               { label: "음력", value: "lunar" },
@@ -544,10 +581,11 @@ export default function BirthForm() {
                 key={item.value}
                 type="button"
                 onClick={() => setCalendarType(item.value as CalendarType)}
-                className={`rounded-full px-3 py-4 text-sm font-black transition ${
+                aria-pressed={calendarType === item.value}
+                className={`rounded-full px-3 py-4 text-sm font-bold transition ${
                   calendarType === item.value
                     ? SELECTED_OPTION_CLASS
-                    : "text-[#82685D]"
+                    : "text-[#746F67]"
                 }`}
               >
                 {item.label}
@@ -555,10 +593,10 @@ export default function BirthForm() {
             ))}
           </div>
 
-          <p className="mt-2 text-xs leading-5 text-[#82685D]">
+          <p className="mt-2 text-xs leading-5 text-[#746F67]">
             음력은 윤달을 제외한 일반 음력 날짜 기준으로 변환합니다.
           </p>
-        </div>
+        </fieldset>
 
         <div className={FIELD_GROUP_CLASS}>
           <label className={formTokens.label}>
@@ -570,13 +608,15 @@ export default function BirthForm() {
             value={birthTime}
             placeholder="태어난 시간 선택"
             onClick={(event) => openPickerAt("time", event)}
+            buttonRef={pickerTriggerRef}
+            isOpen={openPicker === "time"}
           />
         </div>
 
-        <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+        <fieldset className={FIELD_GROUP_CLASS}>
+          <legend className={formTokens.label}>
             성별
-          </label>
+          </legend>
 
           <div className="grid grid-cols-3 gap-2">
             {[
@@ -588,7 +628,8 @@ export default function BirthForm() {
                 key={item.value}
                 type="button"
                 onClick={() => setGender(item.value)}
-                className={`rounded-full px-3 py-4 text-sm font-black transition ${
+                aria-pressed={gender === item.value}
+                className={`rounded-full px-3 py-4 text-sm font-bold transition ${
                   gender === item.value
                     ? SELECTED_OPTION_CLASS
                     : MUTED_OPTION_CLASS
@@ -598,20 +639,22 @@ export default function BirthForm() {
               </button>
             ))}
           </div>
-        </div>
+        </fieldset>
 
-        <div className={FIELD_GROUP_CLASS}>
-          <label className={formTokens.label}>
+        <details className={`${FIELD_GROUP_CLASS} text-[#746F67]`}>
+          <summary className="cursor-pointer text-sm font-semibold">테스트 코드 입력</summary>
+          <label htmlFor="test-case-code" className={`mt-3 block ${formTokens.label}`}>
             테스트 코드
           </label>
           <input
+            id="test-case-code"
             type="text"
             value={testCaseCode}
             onChange={(event) => setTestCaseCode(event.target.value)}
             placeholder="선택 입력"
-            className={INPUT_BOX_CLASS}
+            className={`${INPUT_BOX_CLASS} mt-2`}
           />
-        </div>
+        </details>
 
         <button type="submit" className={`${formTokens.button} mt-6`}>
           내 유형 확인하기
@@ -626,7 +669,7 @@ export default function BirthForm() {
           selectedValue={pickerConfig.selectedValue}
           anchorTop={pickerAnchorTop}
           onSelect={pickerConfig.onSelect}
-          onClose={() => setOpenPicker(null)}
+          onClose={closePicker}
         />
       )}
     </>

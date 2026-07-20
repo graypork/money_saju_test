@@ -13,55 +13,38 @@ import {
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
 import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
+import { getRandomAnimalMainPhoto } from "../../src/lib/animalAssets";
 import {
-  getPreferredAnimalMainPhoto,
-  getRandomAnimalMainPhoto,
-} from "../../src/lib/animalAssets";
+  getFreeResultByAnimalKey,
+  type FreeResultPreview,
+} from "../../src/content/resultCopy/freeResultBank";
 import { uiTokens } from "../../src/lib/uiTokens";
 
-const PAGE_BASE_CLASS =
-  `${uiTokens.page} break-keep px-5 pb-10 pt-4`;
+const PAGE_BASE_CLASS = `${uiTokens.page} break-keep px-5 pb-10 pt-4`;
 const PRIMARY_BUTTON_CLASS =
-  `flex min-h-14 w-full items-center justify-center rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#FFF8ED] transition active:translate-y-0.5 ${uiTokens.greenButtonSurface}`;
-const SECONDARY_BUTTON_CLASS =
-  `flex min-h-14 w-full items-center justify-center rounded-full px-5 py-4 text-center text-[16px] font-extrabold text-[#33241D] transition active:translate-y-0.5 ${uiTokens.secondaryButtonSurface}`;
+  `flex min-h-14 w-full items-center justify-center rounded-full px-5 py-4 text-center text-[16px] font-bold text-[#FFF9ED] transition active:translate-y-0.5 ${uiTokens.greenButtonSurface}`;
 const DARK_PANEL_CLASS =
-  "rounded-[28px] border border-[rgba(217,142,115,0.18)] bg-[#FFF8ED] p-5 text-[#33241D]";
-const DARK_LIST_ITEM_CLASS =
-  "rounded-[20px] border border-[rgba(217,142,115,0.2)] bg-[rgba(231,197,184,0.42)] px-4 py-3 text-[14px] font-extrabold leading-6 text-[#33241D]";
+  "rounded-[28px] border border-[rgba(32,32,32,0.18)] bg-[#EFE9DB] p-5 text-[#202020]";
 const COPY_VERSION = "animalTypeBank-v0.10.1";
 const LOGIC_VERSION = "score-v0.10.1";
-const ELEMENT_ORDER = ["wood", "fire", "earth", "metal", "water"] as const;
-const ELEMENT_LABEL: Record<(typeof ELEMENT_ORDER)[number], string> = {
-  wood: "목",
-  fire: "화",
-  earth: "토",
-  metal: "금",
-  water: "수",
-};
 
 function SiteHeader({
-  label,
   onBack,
 }: {
-  label: string;
   onBack?: () => void;
 }) {
   return (
-    <header className={`${uiTokens.header} flex items-center justify-between`}>
+    <header className={`${uiTokens.header} relative flex items-center justify-center`}>
       <button
         type="button"
         onClick={onBack}
         aria-label="뒤로 가기"
-        className="grid h-8 w-8 place-items-center rounded-full bg-[rgba(231,197,184,0.48)] text-lg font-black text-[#33241D]"
+        className="absolute left-5 grid h-8 w-8 place-items-center rounded-full bg-[rgba(246,187,221,0.48)] text-lg font-bold text-[#202020]"
       >
         ←
       </button>
-      <span className="text-[13px] font-black tracking-[-0.01em]">
+      <span className="text-[13px] font-semibold tracking-[-0.01em]">
         MONEY SAJU
-      </span>
-      <span className="text-[11px] font-black tracking-[0.12em] text-[#D98E73]">
-        {label}
       </span>
     </header>
   );
@@ -115,16 +98,6 @@ function summaryText(value: string, maxLength = 140) {
   return normalized.length > maxLength
     ? `${normalized.slice(0, maxLength - 1)}…`
     : normalized;
-}
-
-function sentenceSummary(value: string, maxLength = 180) {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  const sentences = normalized
-    .split(/(?<=[.!?。요다니다습니다])\s+/)
-    .filter(Boolean);
-  const summary = sentences.slice(0, 3).join(" ") || normalized;
-
-  return summaryText(summary, maxLength);
 }
 
 function getAssetBasename(path: string | null) {
@@ -282,221 +255,161 @@ function ResultAnimalImage({
   animalKey: string;
   title: string;
 }) {
-  const [photo, setPhoto] = useState(() => getPreferredAnimalMainPhoto(animalKey));
+  const [photo] = useState(() => getRandomAnimalMainPhoto(animalKey));
   const [failed, setFailed] = useState(false);
   const basename = getAssetBasename(photo);
 
-  useEffect(() => {
-    setFailed(false);
-    setPhoto(getRandomAnimalMainPhoto(animalKey));
-  }, [animalKey]);
-
   return (
-    <div className="relative overflow-visible bg-transparent">
-      <span className="pointer-events-none absolute right-[22%] top-[30%] h-3 w-3 rounded-full bg-[#D98E73]" />
-      <span className="pointer-events-none absolute right-[17%] top-[39%] h-1.5 w-1.5 rounded-full bg-[#E7C5B8]" />
-      <span className="pointer-events-none absolute right-[27%] top-[45%] h-2.5 w-2 rotate-[-12deg] rounded-[60%_40%_55%_45%] bg-[#F3D58B]" />
-      <div className="relative z-10 grid min-h-[380px] place-items-center overflow-visible">
-        {photo && !failed ? (
-          <img
-            src={photo}
-            alt={title}
-            draggable={false}
-            onError={() => setFailed(true)}
-            className="h-[380px] max-h-[380px] max-w-full object-contain"
-          />
-        ) : (
-          <div className="grid h-[320px] w-full place-items-center border border-dashed border-[rgba(217,142,115,0.24)] px-4 text-center font-mono text-[11px] font-bold leading-5 text-[rgba(130,104,93,0.78)]">
-            {basename}
-          </div>
-        )}
-      </div>
+    <div className="grid min-h-[240px] place-items-center overflow-hidden rounded-[28px] border border-[#DDD6C8] bg-[rgba(186,204,236,0.28)] p-4">
+      {photo && !failed ? (
+        <img
+          src={photo}
+          alt={title}
+          draggable={false}
+          onError={() => setFailed(true)}
+          className="h-[220px] max-w-full object-contain"
+        />
+      ) : (
+        <div className="grid h-[200px] w-full place-items-center border border-dashed border-[rgba(0,0,0,0.2)] px-4 text-center text-[11px] font-bold leading-5 text-[#746F67]">
+          {basename}
+        </div>
+      )}
     </div>
   );
 }
 
-function ElementBalanceSummary({ result }: { result: WealthResult }) {
-  const dominant = result.dominantElement;
-  const weak = result.weakElement;
-
-  return (
-    <ResultCard className={`${uiTokens.sectionRule} space-y-5`}>
-      <div>
-        <p className="text-[12px] font-black tracking-[0.1em] text-[#33241D]">
-          ELEMENT BALANCE
-        </p>
-        <h2 className="mt-2 text-[32px] font-black leading-[1.06] tracking-[-0.035em] text-[#33241D]">
-          오행 밸런스 요약
-        </h2>
-      </div>
-
-      <div className="grid gap-3">
-        {ELEMENT_ORDER.map((element) => {
-          const value = Math.max(0, Math.min(100, result.elements[element]));
-          const isDominant = element === dominant;
-
-          return (
-            <div key={element} className="grid gap-1.5">
-              <div className="flex items-center justify-between text-[13px] font-black">
-                <span className="text-[rgba(130,104,93,0.86)]">{ELEMENT_LABEL[element]}</span>
-                <span className={isDominant ? "text-[#D98E73]" : "text-[rgba(130,104,93,0.72)]"}>
-                  {Math.round(value)}
-                </span>
-              </div>
-              <div className="h-2.5 overflow-hidden rounded-full bg-[rgba(231,197,184,0.46)]">
-                <div
-                  className={`h-full rounded-full ${
-                    isDominant ? "bg-[#D98E73]" : "bg-[#E7C5B8]"
-                  }`}
-                  style={{ width: `${value}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className={DARK_PANEL_CLASS}>
-        <p className="text-[14px] font-extrabold text-[#33241D]">
-          강한 기운: {ELEMENT_LABEL[dominant]} · 약한 기운:{" "}
-          {ELEMENT_LABEL[weak]}
-        </p>
-        <p className="mt-2 text-[14px] font-semibold leading-6 text-[rgba(130,104,93,0.86)]">
-          {ELEMENT_LABEL[dominant]} 기운이 가장 또렷하고,{" "}
-          {ELEMENT_LABEL[weak]} 기운은 보완이 필요한 흐름으로 나타납니다.
-          무료 결과에서는 방향만 짧게 보여드립니다.
-        </p>
-      </div>
-    </ResultCard>
-  );
-}
-
-function SummaryBlock({
+function DecisionReason({
   label,
-  title,
   children,
 }: {
   label: string;
-  title: string;
   children: ReactNode;
 }) {
   return (
-    <ResultCard className={`${uiTokens.sectionRule} space-y-4`}>
-      <div>
-        <p className="text-[12px] font-black tracking-[0.1em] text-[#33241D]">
-          {label}
-        </p>
-        <h2 className="mt-2 text-[32px] font-black leading-[1.06] tracking-[-0.035em] text-[#33241D]">
-          {title}
-        </h2>
-      </div>
-      {children}
-    </ResultCard>
-  );
-}
-
-function LockedPreviewItem({ title }: { title: string }) {
-  return (
-    <li className="flex items-center justify-between gap-3 rounded-[20px] border border-[rgba(217,142,115,0.2)] bg-[rgba(231,197,184,0.42)] px-4 py-3">
-      <span className="text-[14px] font-extrabold text-[#33241D]">{title}</span>
-      <span className="rounded-full bg-[rgba(231,197,184,0.46)] px-3 py-1 text-[12px] font-black text-[#D98E73]">
-        잠금
-      </span>
+    <li className="border-t border-[#DDD6C8] py-4 first:border-t-0 first:pt-0">
+      <p className="text-[12px] font-semibold tracking-[0.08em] text-[#746F67]">
+        {label}
+      </p>
+      <p className="mt-2 text-[15px] font-semibold leading-6 text-[#202020]">
+        {children}
+      </p>
     </li>
   );
 }
 
-function DetailPreview({ reportHref }: { reportHref: string }) {
+function LockedReportPreview({ teaser }: { teaser: string }) {
   const lockedItems = [
-    "월급 밖 수익을 키우는 방식",
-    "내 통장에 구멍 나는 순간",
-    "강하게 써야 할 능력",
-    "놓치기 쉬운 패턴",
-    "신살 보조 해석",
-    "현실적인 실천 계획",
-    "유형별 마무리 노트",
+    "수익이 커지는 시점과 방식",
+    "돈이 새는 반복 패턴",
+    "지금 적용할 현실적인 전략",
   ];
 
   return (
-    <SummaryBlock label="DETAIL REPORT" title="상세 리포트에서 더 보는 것">
-      <p className="text-[15px] font-semibold leading-7 text-[rgba(130,104,93,0.86)]">
-        무료 결과는 큰 방향만 보여줍니다. 상세 리포트에서는 재물 흐름이
-        막히는 지점과 바로 바꿔볼 행동을 더 좁혀봅니다.
-      </p>
-      <div className={DARK_PANEL_CLASS}>
-        <ul className="grid gap-2">
-          {lockedItems.map((item) => (
-            <LockedPreviewItem key={item} title={item} />
-          ))}
-        </ul>
-      </div>
-      <div className="grid gap-4">
-        <a href={reportHref} className={PRIMARY_BUTTON_CLASS}>
-          상세 리포트 확인하기
-        </a>
-        <p className="px-2 text-center text-[13px] font-semibold leading-6 text-[rgba(130,104,93,0.72)]">
-          월급 밖 수익을 키우는 방식과 돈이 빠져나가는 구멍을 한 번 더
-          구체적으로 확인합니다.
+    <section className="space-y-4 border-t border-[#DDD6C8] pt-6">
+      <div>
+        <h2 className="text-[24px] font-bold leading-[1.15] tracking-[-0.04em] text-[#202020]">
+          상세 리포트에서 이어서 확인할 분석
+        </h2>
+        <p className="mt-3 text-[14px] font-semibold leading-6 text-[#202020]">
+          {teaser}
         </p>
       </div>
-    </SummaryBlock>
+
+      <ul className="overflow-hidden rounded-[24px] border border-[#DDD6C8] bg-[rgba(239,233,219,0.54)]">
+        {lockedItems.map((item, index) => (
+          <li
+            key={item}
+            className={`flex items-center justify-between gap-3 px-4 py-4 ${
+              index > 0 ? "border-t border-[#DDD6C8]" : ""
+            }`}
+          >
+            <span className="text-[14px] font-semibold text-[#746F67]">
+              {item}
+            </span>
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4 shrink-0 text-[#746F67]"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <rect x="3.5" y="7" width="9" height="6" rx="1.25" />
+              <path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7" />
+            </svg>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
-function StrengthCaution({
-  builtCopy,
+function CoreDecisionPreview({
+  result,
+  animalKey,
+  freeCopy,
+  reportHref,
+  onRestart,
 }: {
-  builtCopy: BuiltResultCopy;
+  result: WealthResult;
+  animalKey: string;
+  freeCopy: FreeResultPreview;
+  reportHref: string;
+  onRestart: () => void;
 }) {
-  const strength = sentenceSummary(builtCopy.firstImpression, 96);
-  const caution = builtCopy.repeatedPatterns[0] ?? sentenceSummary(builtCopy.elementReading, 96);
-
   return (
-    <SummaryBlock label="CORE POINT" title="강점과 주의 패턴">
-      <div className="grid gap-3">
-        <div className={DARK_PANEL_CLASS}>
-          <p className="text-[13px] font-black text-[#D98E73]">
-            잘 쓰면 강한 점
-          </p>
-          <h3 className="mt-2 text-[18px] font-black text-[#33241D]">
-            {builtCopy.archetype}
-          </h3>
-          <p className="mt-2 text-[14px] font-semibold leading-6 text-[rgba(130,104,93,0.86)]">
-            {strength}
-          </p>
-        </div>
-        <div className={DARK_PANEL_CLASS}>
-          <p className="text-[13px] font-black text-[#D98E73]">
-            내 통장에 구멍 나는 순간
-          </p>
-          <p className="mt-2 text-[15px] font-extrabold leading-6 text-[#33241D]">
-            {caution}
-          </p>
-        </div>
+    <ResultCard className={`${uiTokens.heroPanel} space-y-7`}>
+      <div>
+        <h1 className="text-[38px] font-bold leading-[0.98] tracking-[-0.06em] text-[#202020]">
+          핵심 판정
+        </h1>
       </div>
-    </SummaryBlock>
-  );
-}
 
-function MoneyFlowSummary({ builtCopy }: { builtCopy: BuiltResultCopy }) {
-  const scene = builtCopy.repeatedPatterns[1] ?? builtCopy.repeatedPatterns[0];
+      <div className="rounded-[28px] border border-[#DDD6C8] bg-[rgba(239,233,219,0.7)] p-5">
+        <p className="text-[15px] font-semibold text-[#746F67]">
+          {freeCopy.animalName}
+        </p>
+        <p className="mt-3 text-[22px] font-bold leading-8 tracking-[-0.04em] text-[#202020]">
+          {freeCopy.oneLine}
+        </p>
+        <p className="mt-5 text-[22px] font-bold leading-none tracking-[-0.04em] text-[#202020]">
+          재물 감각 상위 {result.topPercent}%
+        </p>
+      </div>
 
-  return (
-    <SummaryBlock label="MONEY FLOW" title="수익을 키우는 방식">
-      <p className="text-[15px] font-semibold leading-7 text-[rgba(130,104,93,0.86)]">
-        {sentenceSummary(builtCopy.moneyFlow, 260)}
-      </p>
-      {scene ? (
-        <div className={DARK_PANEL_CLASS}>
-          <p className="text-[13px] font-black text-[#D98E73]">
-            자주 보이는 장면
-          </p>
-          <p className="mt-2 text-[15px] font-extrabold leading-6 text-[#33241D]">
-            {scene}
-          </p>
+      <ResultAnimalImage animalKey={animalKey} title={freeCopy.animalName} />
+
+      <section className="space-y-4 border-t border-[#DDD6C8] pt-6">
+        <div>
+          <h2 className="text-[24px] font-bold leading-[1.15] tracking-[-0.04em] text-[#202020]">
+            판정의 근거
+          </h2>
         </div>
-      ) : null}
-    </SummaryBlock>
+        <ul>
+          <DecisionReason label="돈이 되는 힘">{freeCopy.strength}</DecisionReason>
+          <DecisionReason label="돈이 새는 지점">{freeCopy.moneyLeak}</DecisionReason>
+          <DecisionReason label="지금 할 일">{freeCopy.firstAction}</DecisionReason>
+        </ul>
+      </section>
+
+      <LockedReportPreview teaser={freeCopy.unlockTeaser} />
+
+      <div className="space-y-4 pt-1">
+        <a href={reportHref} className={PRIMARY_BUTTON_CLASS}>
+          상세 리포트에서 분석 이어보기
+        </a>
+        <button
+          type="button"
+          onClick={onRestart}
+          className="w-full py-2 text-center text-[14px] font-semibold text-[#746F67] underline-offset-4 hover:underline"
+        >
+          다시 테스트하기
+        </button>
+        <p className="px-2 text-center text-[12px] font-semibold leading-5 text-[#746F67]">
+          본 내용은 오락 및 자기이해 목적의 콘텐츠입니다.
+        </p>
+      </div>
+    </ResultCard>
   );
 }
 
@@ -506,15 +419,12 @@ function InvalidResult() {
   return (
     <main className={PAGE_BASE_CLASS}>
       <section className="relative z-10 mx-auto max-w-[430px] space-y-10 pt-1">
-        <SiteHeader label="RESULT" onBack={() => router.push("/")} />
+        <SiteHeader onBack={() => router.push("/")} />
         <ResultCard className={DARK_PANEL_CLASS}>
-          <p className="text-[12px] font-extrabold tracking-[0.08em] text-[#D98E73]">
-            RESULT
-          </p>
-          <h1 className="mt-3 text-[28px] font-extrabold leading-[1.25] text-[#33241D]">
+          <h1 className="text-[28px] font-bold leading-[1.25] text-[#202020]">
             아직 만들 결과가 없어요
           </h1>
-          <p className="mt-4 text-[15px] font-semibold leading-7 text-[rgba(130,104,93,0.86)]">
+          <p className="mt-4 text-[15px] font-semibold leading-7 text-[#202020]">
             생년월일과 태어난 시간을 먼저 선택하면 재물 동물 유형을 볼 수 있습니다.
           </p>
           <button
@@ -565,7 +475,7 @@ function ResultContent() {
   });
   const debugKey = `${birthDate}-${birthTime}-${calendarTypeParam}-${genderParam}`;
   const builtCopy = buildResultCopy(result);
-  const heroSummary = sentenceSummary(builtCopy.firstImpression, 96);
+  const freeCopy = getFreeResultByAnimalKey(builtCopy.animalKey);
   const reportHref = `/report?${searchParams.toString()}`;
 
   return (
@@ -582,69 +492,15 @@ function ResultContent() {
         testCaseCode={testCaseCode}
       />
 
-      <section className="relative z-10 mx-auto max-w-[430px] space-y-12 pb-8">
-        <SiteHeader label="RESULT" onBack={() => router.back()} />
-
-        <ResultCard className={`${uiTokens.heroPanel} space-y-6`}>
-          <div>
-            <p className="text-[12px] font-black tracking-[0.14em] text-[#D98E73]">
-              FREE RESULT
-            </p>
-            <h1 className="mt-4 text-[50px] font-black leading-[0.92] tracking-[-0.06em] text-[#33241D]">
-              {builtCopy.title}
-            </h1>
-            <p className="mt-5 text-[32px] font-black leading-none tracking-[-0.04em] text-[#D98E73]">
-              재물 감각 상위 {result.topPercent}%
-            </p>
-            <p className="mt-5 text-[17px] font-bold leading-7 text-[rgba(130,104,93,0.86)]">
-              {heroSummary}
-            </p>
-          </div>
-
-          <ResultAnimalImage
-            animalKey={builtCopy.animalKey}
-            title={builtCopy.title}
-          />
-
-          <div className="rounded-[28px] bg-[rgba(231,197,184,0.42)] p-5">
-            <p className="text-[18px] font-black leading-7 text-[#33241D]">
-              {builtCopy.archetype} · {builtCopy.rankText}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <a href={reportHref} className={PRIMARY_BUTTON_CLASS}>
-              상세 보기
-            </a>
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className={SECONDARY_BUTTON_CLASS}
-            >
-              다시 하기
-            </button>
-          </div>
-        </ResultCard>
-
-        <ElementBalanceSummary result={result} />
-        <MoneyFlowSummary builtCopy={builtCopy} />
-        <StrengthCaution builtCopy={builtCopy} />
-        <DetailPreview reportHref={reportHref} />
-
-        <div className="grid gap-3">
-          <p className="text-center text-[13px] font-semibold leading-6 text-[rgba(130,104,93,0.72)]">
-            본 테스트는 오락 및 자기이해 목적의 콘텐츠입니다. 금융, 투자,
-            법률, 직업 선택에 대한 전문 조언이 아닙니다.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className={SECONDARY_BUTTON_CLASS}
-          >
-            다시 테스트하기
-          </button>
-        </div>
+      <section className="relative z-10 mx-auto max-w-[430px] space-y-8 pb-8">
+        <SiteHeader onBack={() => router.back()} />
+        <CoreDecisionPreview
+          result={result}
+          animalKey={builtCopy.animalKey}
+          freeCopy={freeCopy}
+          reportHref={reportHref}
+          onRestart={() => router.push("/")}
+        />
       </section>
       <AppVersionBadge />
     </main>
@@ -655,7 +511,7 @@ export default function ResultPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#FFF8ED] p-10 text-sm font-bold text-[rgba(130,104,93,0.72)]">
+        <div className="min-h-screen bg-[#EFE9DB] p-10 text-sm font-bold text-[#746F67]">
           결과를 불러오는 중입니다...
         </div>
       }
