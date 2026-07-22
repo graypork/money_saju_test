@@ -6,6 +6,7 @@ const MAX_LIMIT = 1000;
 const DEFAULT_SHEET_NAME = "test_logs";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets";
+export const GOOGLE_SHEETS_VALUE_INPUT_OPTION = "RAW";
 
 const SHEET_HEADERS: Array<keyof TestLogPayload> = [
   "createdAt",
@@ -257,10 +258,14 @@ async function ensureHeaders(config: GoogleSheetsConfig) {
 
   if (hasHeaders) return;
 
-  await googleSheetsFetch(config, `/values/${encodeURIComponent(range)}?valueInputOption=RAW`, {
-    method: "PUT",
-    body: JSON.stringify({ values: [SHEET_HEADERS] }),
-  });
+  await googleSheetsFetch(
+    config,
+    `/values/${encodeURIComponent(range)}?valueInputOption=${GOOGLE_SHEETS_VALUE_INPUT_OPTION}`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ values: [SHEET_HEADERS] }),
+    },
+  );
 }
 
 function columnName(index: number) {
@@ -398,7 +403,7 @@ export function getTestLogStorage(): TestLogStorage {
 async function appendRows(config: GoogleSheetsConfig, range: string, values: string[][]) {
   await googleSheetsFetch(
     config,
-    `/values/${encodeURIComponent(range)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    `/values/${encodeURIComponent(range)}:append?valueInputOption=${GOOGLE_SHEETS_VALUE_INPUT_OPTION}&insertDataOption=INSERT_ROWS`,
     {
       method: "POST",
       body: JSON.stringify({ values }),

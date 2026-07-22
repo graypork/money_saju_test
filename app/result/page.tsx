@@ -108,7 +108,6 @@ function ResultLogSaver({
   result,
   builtCopy,
   birthDate,
-  rawBirthDate,
   birthTime,
   calendarType,
   gender,
@@ -117,7 +116,6 @@ function ResultLogSaver({
   result: WealthResult;
   builtCopy: BuiltResultCopy;
   birthDate: string;
-  rawBirthDate: string;
   birthTime: string;
   calendarType: string;
   gender: string;
@@ -147,7 +145,6 @@ function ResultLogSaver({
     const payload = {
       createdAt: new Date().toISOString(),
       birthDate,
-      rawBirthDate,
       calendarType,
       birthTime,
       gender,
@@ -187,9 +184,7 @@ function ResultLogSaver({
       },
       copyVersion: COPY_VERSION,
       logicVersion: LOGIC_VERSION,
-      userAgent: window.navigator.userAgent,
-      referrer: document.referrer,
-      path: `${window.location.pathname}${window.location.search}`,
+      path: window.location.pathname,
       testCaseCode,
     };
 
@@ -230,7 +225,6 @@ function ResultLogSaver({
     builtCopy,
     calendarType,
     gender,
-    rawBirthDate,
     result,
     testCaseCode,
   ]);
@@ -496,7 +490,6 @@ function ResultContent() {
         result={result}
         builtCopy={builtCopy}
         birthDate={birthDate}
-        rawBirthDate={rawBirthDate}
         birthTime={birthTime}
         calendarType={calendarTypeParam}
         gender={genderParam}

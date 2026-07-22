@@ -4,6 +4,7 @@ import {
   readCookieFromHeader,
   verifyAdminSessionToken,
 } from "../../../../src/lib/testLogs/adminAuth";
+import { isSameOriginRequest } from "../../../../src/lib/testLogs/requestSecurity";
 import {
   appendGoogleSheetsDebugRow,
   isStorageConfigError,
@@ -11,6 +12,20 @@ import {
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+};
+
+function json(body: unknown, status = 200, headers: HeadersInit = {}) {
+  return NextResponse.json(body, {
+    status,
+    headers: {
+      ...NO_STORE_HEADERS,
+      ...headers,
+    },
+  });
+}
 
 function hasAdminCookie(request: NextRequest) {
   const token =
@@ -23,36 +38,34 @@ function hasAdminCookie(request: NextRequest) {
 // Temporary admin-only debug endpoint for isolating Google Sheets append issues.
 export async function POST(request: NextRequest) {
   if (!hasAdminCookie(request)) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return json({ ok: false, error: "unauthorized" }, 401);
+  }
+
+  if (!isSameOriginRequest(request)) {
+    return json({ ok: false, error: "invalid_request" }, 400);
   }
 
   try {
     await appendGoogleSheetsDebugRow();
 
-    return NextResponse.json({ ok: true });
+    return json({ ok: true });
   } catch (error) {
     console.error("[testLogs] sheets-test failed", {
       message: error instanceof Error ? error.message : "unknown",
     });
 
     if (isStorageConfigError(error)) {
-      return NextResponse.json(
-        { ok: false, error: "storage_config_missing" },
-        { status: 503 },
-      );
+      return json({ ok: false, error: "server_error" }, 503);
     }
 
-    return NextResponse.json(
-      {
-        ok: false,
-        error: "sheets_test_failed",
-        message: error instanceof Error ? error.message : "unknown",
-      },
-      { status: 500 },
-    );
+    return json({ ok: false, error: "server_error" }, 500);
   }
 }
 
-export async function GET(request: NextRequest) {
-  return POST(request);
+export async function GET() {
+  return json(
+    { ok: false, error: "method_not_allowed" },
+    405,
+    { Allow: "POST" },
+  );
 }

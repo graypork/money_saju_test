@@ -8,10 +8,15 @@ import {
   getTestLogStorage,
   isStorageConfigError,
 } from "../../../../src/lib/testLogs/storage";
-import type { TestLogQuery, TestLogRecord } from "../../../../src/lib/testLogs/types";
+import { toTestLogCsv } from "../../../../src/lib/testLogs/csv";
+import type { TestLogQuery } from "../../../../src/lib/testLogs/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+};
 
 function hasAdminCookie(request: NextRequest) {
   const token =
@@ -34,68 +39,35 @@ function readQuery(request: NextRequest): TestLogQuery {
   };
 }
 
-function csvCell(value: unknown) {
-  const text = Array.isArray(value)
-    ? value.join(" / ")
-    : typeof value === "object" && value !== null
-      ? JSON.stringify(value)
-      : String(value ?? "");
-
-  return `"${text.replace(/"/g, '""')}"`;
-}
-
-function toCsv(logs: TestLogRecord[]) {
-  const columns: Array<[string, keyof TestLogRecord]> = [
-    ["저장 시간", "createdAt"],
-    ["생년월일", "birthDate"],
-    ["양/음력", "calendarType"],
-    ["생시", "birthTime"],
-    ["성별", "gender"],
-    ["animalKey", "animalKey"],
-    ["결과유형", "animalTitle"],
-    ["결과요약", "resultSummary"],
-    ["dayStem", "dayStem"],
-    ["element", "element"],
-    ["salList", "salList"],
-    ["copyVersion", "copyVersion"],
-    ["logicVersion", "logicVersion"],
-    ["userAgent", "userAgent"],
-    ["referrer", "referrer"],
-    ["path", "path"],
-  ];
-  const header = columns.map(([label]) => csvCell(label)).join(",");
-  const rows = logs.map((log) =>
-    columns.map(([, key]) => csvCell(log[key])).join(","),
-  );
-
-  return `\uFEFF${[header, ...rows].join("\n")}`;
-}
-
 export async function GET(request: NextRequest) {
   if (!hasAdminCookie(request)) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: "unauthorized" },
+      { status: 401, headers: NO_STORE_HEADERS },
+    );
   }
 
   try {
     const logs = await getTestLogStorage().list(readQuery(request));
 
-    return new NextResponse(toCsv(logs), {
+    return new NextResponse(toTestLogCsv(logs), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="money-saju-test-logs.csv"`,
+        ...NO_STORE_HEADERS,
       },
     });
   } catch (error) {
     if (isStorageConfigError(error)) {
       return NextResponse.json(
-        { ok: false, error: "storage_config_missing" },
-        { status: 503 },
+        { ok: false, error: "server_error" },
+        { status: 503, headers: NO_STORE_HEADERS },
       );
     }
 
     return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : "storage_error" },
-      { status: 500 },
+      { ok: false, error: "server_error" },
+      { status: 500, headers: NO_STORE_HEADERS },
     );
   }
 }

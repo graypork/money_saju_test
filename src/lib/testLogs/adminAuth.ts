@@ -13,7 +13,13 @@ function fromBase64Url(value: string) {
 }
 
 function getCookieSecret() {
-  return process.env.TEST_LOG_COOKIE_SECRET || process.env.TEST_LOG_ADMIN_KEY || "";
+  const dedicatedSecret = process.env.TEST_LOG_COOKIE_SECRET?.trim();
+
+  if (dedicatedSecret) return dedicatedSecret;
+
+  return process.env.NODE_ENV === "production"
+    ? ""
+    : process.env.TEST_LOG_ADMIN_KEY || "";
 }
 
 function sign(payload: string) {
@@ -43,6 +49,10 @@ export function createAdminSessionToken() {
   const signature = sign(payload);
 
   return `${payload}.${signature}`;
+}
+
+export function isAdminSessionSigningConfigured() {
+  return Boolean(getCookieSecret());
 }
 
 export function verifyAdminSessionToken(token?: string | null) {

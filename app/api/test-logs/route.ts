@@ -4,6 +4,7 @@ import {
   readCookieFromHeader,
   verifyAdminSessionToken,
 } from "../../../src/lib/testLogs/adminAuth";
+import { defaultTestLogRequestSecurity } from "../../../src/lib/testLogs/requestSecurity";
 import {
   getTestLogStorage,
   isAppendError,
@@ -13,6 +14,10 @@ import type { TestLogPayload, TestLogQuery } from "../../../src/lib/testLogs/typ
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+const NO_STORE_HEADERS = {
+  "Cache-Control": "no-store",
+};
 
 function hasAdminCookie(request: NextRequest) {
   const token =
@@ -36,109 +41,88 @@ function readQuery(request: NextRequest): TestLogQuery {
   };
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null;
-}
-
-function stringArray(value: unknown) {
-  if (!Array.isArray(value)) return [];
-
-  return value.map((item) => String(item)).filter(Boolean);
-}
-
-function recordValue(value: unknown): Record<string, unknown> {
-  return isRecord(value) ? value : {};
-}
-
-function isValidPayload(body: Record<string, unknown>) {
-  return Boolean(
-    body.createdAt &&
-      body.birthDate &&
-      body.animalKey &&
-      body.animalTitle &&
-      body.resultExplanationSnapshot,
-  );
-}
-
-function toPayload(body: Record<string, unknown>): TestLogPayload {
+function toPayload(body: {
+  createdAt: string;
+  birthDate: string;
+  calendarType: string;
+  birthTime: string;
+  gender: string;
+  animalKey: string;
+  animalTitle: string;
+  resultSummary: string;
+  firstImpressionSummary: string;
+  resultExplanationSnapshot: TestLogPayload["resultExplanationSnapshot"];
+  dayStem: string;
+  element: string;
+  salList: string[];
+  scoreSnapshot: Record<string, unknown>;
+  copyVersion: string;
+  logicVersion: string;
+  path: string;
+}): TestLogPayload {
   return {
-    createdAt: String(body.createdAt || new Date().toISOString()),
-    birthDate: String(body.birthDate || ""),
-    calendarType: String(body.calendarType || ""),
-    birthTime: String(body.birthTime || ""),
-    gender: String(body.gender || ""),
-    animalKey: String(body.animalKey || ""),
-    animalTitle: String(body.animalTitle || ""),
-    resultSummary: String(body.resultSummary || ""),
-    firstImpressionSummary: String(body.firstImpressionSummary || ""),
-    resultExplanationSnapshot:
-      recordValue(body.resultExplanationSnapshot) as TestLogPayload["resultExplanationSnapshot"],
-    dayStem: String(body.dayStem || ""),
-    element: String(body.element || ""),
-    salList: stringArray(body.salList),
-    scoreSnapshot: recordValue(body.scoreSnapshot),
-    copyVersion: String(body.copyVersion || ""),
-    logicVersion: String(body.logicVersion || ""),
-    userAgent: String(body.userAgent || ""),
-    referrer: String(body.referrer || ""),
-    path: String(body.path || ""),
+    createdAt: body.createdAt,
+    birthDate: body.birthDate,
+    calendarType: body.calendarType,
+    birthTime: body.birthTime,
+    gender: body.gender,
+    animalKey: body.animalKey,
+    animalTitle: body.animalTitle,
+    resultSummary: body.resultSummary,
+    firstImpressionSummary: body.firstImpressionSummary,
+    resultExplanationSnapshot: body.resultExplanationSnapshot,
+    dayStem: body.dayStem,
+    element: body.element,
+    salList: body.salList,
+    scoreSnapshot: body.scoreSnapshot,
+    copyVersion: body.copyVersion,
+    logicVersion: body.logicVersion,
+    userAgent: "",
+    referrer: "",
+    path: body.path,
   };
 }
 
-function storageErrorResponse(error: unknown) {
-  const message = error instanceof Error ? error.message : "storage_error";
+function publicJson(body: unknown, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: NO_STORE_HEADERS,
+  });
+}
 
+function storageErrorResponse(error: unknown) {
   if (isStorageConfigError(error)) {
-    return NextResponse.json(
-      { ok: false, error: "storage_config_missing", message },
-      { status: 503 },
-    );
+    return publicJson({ ok: false, error: "server_error" }, 503);
   }
 
-  return NextResponse.json(
-    { ok: false, error: "storage_error", message },
-    { status: 500 },
-  );
+  return publicJson({ ok: false, error: "server_error" }, 500);
 }
 
 export async function POST(request: NextRequest) {
-  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const validation = await defaultTestLogRequestSecurity.validate(request);
 
-  if (String(body.testCaseCode || "").trim() === "admin22") {
+  if (!validation.ok) {
+    return publicJson({ ok: false, error: validation.error }, validation.status);
+  }
+
+  if (validation.skipped) {
     console.log("[testLogs] save skipped", { reason: "test-case-code" });
-    return NextResponse.json({ ok: true, skipped: true, reason: "test-case-code" });
+    return publicJson({ ok: true, skipped: true, reason: "test-case-code" });
   }
 
   console.log("[testLogs] post received");
 
-  if (!isValidPayload(body)) {
-    return NextResponse.json(
-      { ok: false, error: "invalid_payload" },
-      { status: 400 },
-    );
-  }
-
   try {
-    const saved = await getTestLogStorage().create(toPayload(body));
+    await getTestLogStorage().create(toPayload(validation.payload));
 
-    return NextResponse.json({ ok: true, skipped: false, log: saved });
+    return publicJson({ ok: true, skipped: false });
   } catch (error) {
     console.error("[testLogs] append failed", {
       message: error instanceof Error ? error.message : "unknown",
     });
 
-    if (isStorageConfigError(error)) {
-      return NextResponse.json(
-        { ok: false, error: "storage_config_missing" },
-        { status: 503 },
-      );
-    }
-
     if (isAppendError(error)) {
-      return NextResponse.json(
-        { ok: false, error: "append_failed" },
-        { status: 500 },
-      );
+      return publicJson({ ok: false, error: "server_error" }, 500);
     }
 
     return storageErrorResponse(error);
@@ -147,13 +131,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   if (!hasAdminCookie(request)) {
-    return NextResponse.json({ ok: false, error: "unauthorized" }, { status: 401 });
+    return publicJson({ ok: false, error: "unauthorized" }, 401);
   }
 
   try {
     const logs = await getTestLogStorage().list(readQuery(request));
 
-    return NextResponse.json({ ok: true, logs });
+    return publicJson({ ok: true, logs });
   } catch (error) {
     console.error("[testLogs] list failed", {
       message: error instanceof Error ? error.message : "unknown",
