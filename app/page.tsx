@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { LandingVersionBadge } from "../src/components/AppVersionBadge";
 import BirthForm from "../src/components/BirthForm";
 import {
-  getLandingAnimalPreviewOptions,
+  getRandomLandingAnimalPreviews,
   type LandingAnimalPreview,
 } from "../src/lib/animalAssets";
 import { uiTokens } from "../src/lib/uiTokens";
@@ -44,74 +44,8 @@ const stackedExplanationCards = [
   },
 ];
 
-type AnimalTypeIntroCardData = {
-  animalKey: LandingAnimalPreview["animalKey"];
-  name: string;
-  description: string;
-};
-
-const animalTypeCards: AnimalTypeIntroCardData[] = [
-  {
-    animalKey: "deer",
-    name: "사슴형",
-    description: "신뢰와 완성도로 돈을 쌓는 유형",
-  },
-  {
-    animalKey: "tiger",
-    name: "호랑이형",
-    description: "큰 가능성에 과감히 올라타는 유형",
-  },
-  {
-    animalKey: "squirrel",
-    name: "다람쥐형",
-    description: "작은 기회를 모아 수익을 키우는 유형",
-  },
-  {
-    animalKey: "fox",
-    name: "여우형",
-    description: "감각과 설득으로 흐름을 만드는 유형",
-  },
-  {
-    animalKey: "ox",
-    name: "소형",
-    description: "꾸준한 반복으로 안정적인 돈을 만드는 유형",
-  },
-  {
-    animalKey: "otter",
-    name: "수달형",
-    description: "유연한 연결 속에서 기회를 잡는 유형",
-  },
-  {
-    animalKey: "rabbit",
-    name: "토끼형",
-    description: "섬세한 감각으로 안전하게 키우는 유형",
-  },
-  {
-    animalKey: "hawk",
-    name: "매형",
-    description: "빠른 판단으로 기회를 포착하는 유형",
-  },
-  {
-    animalKey: "swan",
-    name: "백조형",
-    description: "품격과 이미지로 가치를 높이는 유형",
-  },
-];
-const landingAnimalTypeCards = animalTypeCards.slice(0, 3);
-
-const landingAnimalPreviewOptions = getLandingAnimalPreviewOptions();
-const landingAnimalPreviewMap = new Map(
-  Array.from(
-    new Map(
-      landingAnimalPreviewOptions.map((preview) => [
-        preview.animalKey,
-        preview,
-      ])
-    ).values()
-  ).map((preview) => [preview.animalKey, preview])
-);
-
 const landingTokens = uiTokens.landing;
+const landingSectionRuleCompact = "border-t border-[#DDD6C8] pt-8";
 const explanationDeckSwipeThreshold = 78;
 const explanationDeckExitDuration = 380;
 const explanationDeckSnapDuration = 300;
@@ -126,43 +60,24 @@ const explanationDeckCardClass =
 const explanationDeckCardShadow =
   "0 22px 45px rgba(0,0,0,0.18), 0 8px 18px rgba(0,0,0,0.10)";
 
-function AnimalTypeIntroCard({ card }: { card: AnimalTypeIntroCardData }) {
+function AnimalTypeIntroCard({ preview }: { preview: LandingAnimalPreview }) {
   const [failed, setFailed] = useState(false);
-  const preview = landingAnimalPreviewMap.get(card.animalKey);
-  const photo = preview?.photo ?? "";
-  const basename =
-    photo.split("/").filter(Boolean).pop() ?? `${card.animalKey}-1.webp`;
+  const photo = preview.photo;
 
   return (
     <article
-      className="shrink-0 snap-start pt-10"
-      data-animal-intro-card={card.animalKey}
+      className="shrink-0 snap-start pt-0"
+      data-animal-intro-card={preview.animalKey}
     >
       <div className="relative w-[158px] min-[414px]:w-[166px]">
-        <div className="pointer-events-none absolute left-1/2 top-0 z-20 flex h-[112px] w-[124px] -translate-x-1/2 -translate-y-10 items-end justify-center overflow-visible">
+        <div className="relative h-[240px] rounded-[28px] border border-[rgba(246,187,221,0.9)] bg-[#EFE9DB] min-[414px]:h-[252px]">
           {photo && !failed ? (
-            <div className="relative isolate z-10 h-[108px] w-[120px] overflow-visible">
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute z-0 block"
-                style={{
-                  right: "50px",
-                  bottom: "11px",
-                  width: "126px",
-                  height: "30px",
-                  transform: "rotate(15deg) skewX(-10deg)",
-                  transformOrigin: "right center",
-                  borderRadius: "999px 70% 70% 999px",
-                  filter: "blur(0.8px)",
-                  background:
-                    "linear-gradient(to left, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.24) 45%, rgba(0,0,0,0.08) 100%)",
-                }}
-              />
+            <div className="pointer-events-none absolute left-1/2 top-1/2 z-20 h-[232px] w-[154px] -translate-x-1/2 -translate-y-1/2 min-[414px]:h-[242px] min-[414px]:w-[160px]">
               <Image
                 src={photo}
-                alt={`${card.name} 미리보기`}
+                alt=""
                 fill
-                sizes="120px"
+                sizes="(min-width: 414px) 160px, 154px"
                 draggable={false}
                 loading="eager"
                 unoptimized
@@ -171,20 +86,7 @@ function AnimalTypeIntroCard({ card }: { card: AnimalTypeIntroCardData }) {
                 style={{ objectPosition: "bottom center" }}
               />
             </div>
-          ) : (
-            <div className="relative z-10 grid h-[96px] w-[112px] place-items-center rounded-[24px] border border-dashed border-[rgba(32,32,32,0.34)] bg-[rgba(239,233,219,0.78)] px-2 text-center text-[10px] font-semibold leading-4 text-[#746F67]">
-              {basename}
-            </div>
-          )}
-        </div>
-
-        <div className="min-h-[174px] rounded-[28px] border border-[rgba(246,187,221,0.9)] bg-[#EFE9DB] px-4 pb-5 pt-[74px] shadow-[0_16px_30px_rgba(0,0,0,0.09)]">
-          <p className="text-[18px] font-bold leading-6 tracking-[-0.02em] text-[#202020]">
-            {card.name}
-          </p>
-          <p className="mt-2 text-[13px] font-semibold leading-[1.52] text-[#202020]">
-            {card.description}
-          </p>
+          ) : null}
         </div>
       </div>
     </article>
@@ -530,7 +432,7 @@ function StackedExplanationSection() {
       </div>
 
       <div
-        className="-mx-5 overflow-x-hidden overflow-y-visible pb-10 pt-2"
+        className="-mx-5 overflow-x-hidden overflow-y-visible pb-4 pt-2"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerEnd}
@@ -597,11 +499,22 @@ function StackedExplanationSection() {
 }
 
 export default function Home() {
+  const [landingAnimalPreviews, setLandingAnimalPreviews] =
+    useState<LandingAnimalPreview[]>([]);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setLandingAnimalPreviews(getRandomLandingAnimalPreviews());
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <main
       className={`${landingTokens.page} min-h-dvh px-5 pb-10 [word-break:keep-all]`}
     >
-      <section className="relative z-10 mx-auto max-w-[430px] space-y-16 pb-12 pt-8">
+      <section className="relative z-10 mx-auto max-w-[430px] space-y-6 pb-12 pt-8">
         <header className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[rgba(246,187,221,0.82)] bg-[#EFE9DB] text-[15px] font-bold text-[#202020] shadow-[0_8px_18px_rgba(0,0,0,0.08)]">
@@ -625,10 +538,10 @@ export default function Home() {
         </header>
 
         <section className="space-y-6" data-section="hero">
-          <h1 className="max-w-[360px] text-[clamp(46px,11vw,52px)] font-bold leading-[0.95] tracking-[-0.06em] text-[#202020]">
-            내 사주는 어떻게 
+          <h1 className="origin-left scale-y-[1.06] max-w-[360px] text-[clamp(46px,11vw,52px)] font-bold leading-[0.95] tracking-[-0.06em] text-[#202020]">
+            동물 유형으로 보는
             <br />
-            돈이 들어올까?
+            사주 재물운
             <br />
           </h1>
           <p className="max-w-[345px] text-[15px] font-semibold leading-[1.66] text-[#202020] min-[414px]:text-[16px]">
@@ -647,7 +560,7 @@ export default function Home() {
         <StackedExplanationSection />
 
         <section
-          className={`${landingTokens.sectionRule} space-y-6`}
+          className={`${landingSectionRuleCompact} space-y-4`}
           data-section="animal-intro"
         >
           <div>
@@ -662,9 +575,12 @@ export default function Home() {
           </div>
 
           <div className="-mx-5 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex snap-x snap-mandatory gap-4 px-5 pt-8">
-              {landingAnimalTypeCards.map((card) => (
-                <AnimalTypeIntroCard key={card.animalKey} card={card} />
+            <div className="flex snap-x snap-mandatory gap-4 px-5 pt-0">
+              {landingAnimalPreviews.map((preview) => (
+                <AnimalTypeIntroCard
+                  key={preview.animalKey}
+                  preview={preview}
+                />
               ))}
             </div>
           </div>
@@ -672,7 +588,7 @@ export default function Home() {
 
         <section
           id="birth-form"
-          className={`scroll-mt-6 ${landingTokens.sectionRule} space-y-6`}
+          className={`scroll-mt-6 ${landingSectionRuleCompact} space-y-6`}
           data-section="birth-form"
         >
           <div>

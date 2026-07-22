@@ -8,7 +8,11 @@ import {
   type CSSProperties,
   type MutableRefObject,
 } from "react";
-import { getAvailableAnimalMainPhotos } from "../lib/animalAssets";
+import {
+  getAnimalImagePath,
+  normalizeAnimalAssetKey,
+  resolveAnimalImageGender,
+} from "../lib/animalAssets";
 import type {
   PaidReport,
   PaidReportBlock,
@@ -20,6 +24,7 @@ import type {
 
 type PaidReportViewProps = {
   report: PaidReport;
+  gender?: string;
   onOverviewAction?: () => void;
 };
 
@@ -699,19 +704,19 @@ function ReportBody({ section }: { section: PaidReportSection }) {
   );
 }
 
-function assetBasename(path: string | null, animalKey: string) {
-  return path?.split("/").filter(Boolean).pop() ?? `${animalKey}-1.webp`;
-}
-
 function OverviewAnimalImage({
   animalKey,
+  gender,
   title,
 }: {
   animalKey: string;
+  gender?: string;
   title: string;
 }) {
-  const candidates = getAvailableAnimalMainPhotos(animalKey);
-  const photo = candidates[1 % Math.max(candidates.length, 1)] ?? null;
+  const imageGender = resolveAnimalImageGender(gender);
+  const assetKey = normalizeAnimalAssetKey(animalKey);
+  const photo =
+    assetKey && imageGender ? getAnimalImagePath(assetKey, imageGender) : null;
   const [failedPhoto, setFailedPhoto] = useState<string | null>(null);
   const failed = photo !== null && failedPhoto === photo;
 
@@ -721,11 +726,11 @@ function OverviewAnimalImage({
       alt={title}
       draggable={false}
       onError={() => setFailedPhoto(photo)}
-      className="pointer-events-none h-[92px] w-full object-contain"
+      className="pointer-events-none h-[min(60vw,252px)] w-full object-contain"
     />
   ) : (
     <div className="pointer-events-none grid h-[76px] w-full place-items-center border border-dashed border-[rgba(32,32,32,0.28)] px-2 text-center text-[10px] font-bold leading-4 text-[#202020]">
-      {assetBasename(photo, animalKey)}
+      성별을 선택한 뒤 동물 이미지를 보여드려요.
     </div>
   );
 }
@@ -984,11 +989,13 @@ function animateLayoutChange(
 
 function OverviewCard({
   report,
+  gender,
   placement,
   onAction,
   dimmed,
 }: {
   report: PaidReport;
+  gender?: string;
   placement: RenderPlacement;
   onAction?: () => void;
   dimmed: boolean;
@@ -999,7 +1006,11 @@ function OverviewCard({
         전체 리포트
       </p>
       <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-visible py-1">
-        <OverviewAnimalImage animalKey={report.animalKey} title={report.animalName} />
+        <OverviewAnimalImage
+          animalKey={report.animalKey}
+          gender={gender}
+          title={report.animalName}
+        />
       </div>
       <div className="min-w-0">
         <h2 className="break-words text-[22px] font-bold leading-[1.08] tracking-[-0.04em]">
@@ -1020,7 +1031,6 @@ function OverviewCard({
       }`}
       style={{
         backgroundColor: "#EFE9DB",
-        boxShadow: CARD_SHADOW,
         gridColumn: placement.gridColumn,
         gridRow: placement.gridRow,
         height: "100%",
@@ -1043,8 +1053,17 @@ function OverviewCard({
   );
 }
 
+function getSectionCardTitle(section: PaidReportSection, animalName: string) {
+  const prefix = `${animalName} `;
+
+  return section.title.startsWith(prefix)
+    ? section.title.slice(prefix.length)
+    : section.title;
+}
+
 function ReportSectionCard({
   section,
+  animalName,
   expanded,
   dimmed,
   nextSection,
@@ -1055,6 +1074,7 @@ function ReportSectionCard({
   setRef,
 }: {
   section: PaidReportSection;
+  animalName: string;
   expanded: boolean;
   dimmed: boolean;
   nextSection?: PaidReportSection;
@@ -1065,6 +1085,7 @@ function ReportSectionCard({
   setRef: (node: HTMLElement | null) => void;
 }) {
   const [isPlanOpen, setIsPlanOpen] = useState(false);
+  const sectionTitle = getSectionCardTitle(section, animalName);
 
   return (
     <article
@@ -1100,7 +1121,7 @@ function ReportSectionCard({
           >
             <ReportCardArrow expanded />
             <h2 className="break-words text-[32px] font-bold leading-[1.08] tracking-[-0.045em]">
-              {section.title}
+              {sectionTitle}
             </h2>
           </button>
           <div
@@ -1133,7 +1154,7 @@ function ReportSectionCard({
                 className="mt-2 flex w-full items-center justify-between gap-4 rounded-[18px] bg-[rgba(246,187,221,0.34)] px-4 py-4 text-left outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#202020]"
               >
                 <span className="text-[16px] font-bold leading-6 text-[#202020]">
-                  {nextSection.title}
+                  {getSectionCardTitle(nextSection, animalName)}
                 </span>
                 <span className="shrink-0 text-[13px] font-semibold text-[#202020]">
                   다음 분석 읽기 →
@@ -1157,7 +1178,7 @@ function ReportSectionCard({
                 : "break-words text-[21px] font-bold leading-[1.1] tracking-[-0.04em]"
             }
           >
-            {section.title}
+            {sectionTitle}
           </h2>
         </button>
       )}
@@ -1167,6 +1188,7 @@ function ReportSectionCard({
 
 export function PaidReportView({
   report,
+  gender,
   onOverviewAction,
 }: PaidReportViewProps) {
   const sections = report.sections;
@@ -1481,6 +1503,7 @@ export function PaidReportView({
       >
         <OverviewCard
           report={report}
+          gender={gender}
           placement={
             layout.placements.get("overview") ?? {
               gridColumn: "1",
@@ -1500,6 +1523,7 @@ export function PaidReportView({
             <ReportSectionCard
               key={section.id}
               section={section}
+              animalName={report.animalName}
               expanded={expandedSectionIndex === index}
               dimmed={expandedSectionIndex !== null && expandedSectionIndex !== index}
               nextSection={sections[index + 1]}

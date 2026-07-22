@@ -620,9 +620,9 @@ export default function BirthForm() {
 
           <div className="grid grid-cols-3 gap-2">
             {[
-              { label: "선택 안 함", value: "unknown" },
               { label: "남성", value: "male" },
               { label: "여성", value: "female" },
+              { label: "선택 안 함", value: "unknown" },
             ].map((item) => (
               <button
                 key={item.value}

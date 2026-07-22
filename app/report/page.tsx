@@ -161,7 +161,7 @@ function ReportContent() {
       <section className="relative z-10 mx-auto max-w-[430px] space-y-12 pb-8">
         <SiteHeader onBack={() => router.push(resultHref)} />
 
-        <PaidReportView report={report} />
+        <PaidReportView report={report} gender={genderParam} />
 
         <div className="grid gap-3">
           <button

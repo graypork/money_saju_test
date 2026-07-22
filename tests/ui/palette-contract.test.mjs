@@ -501,3 +501,154 @@ test("주간 플랜은 문서 행 disclosure로 렌더링된다", async () => {
     assert.equal(types.includes(marker), true, `paid report types missing ${marker}`);
   }
 });
+
+test("동물 이미지는 성별별 중앙 resolver와 기존 결과 흐름을 사용한다", async () => {
+  const [assets, landing, result, report, navigator] = await Promise.all([
+    readFile(new URL("../../src/lib/animalAssets.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../app/result/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../app/report/page.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../../src/components/PaidReportSectionNavigator.tsx", import.meta.url),
+      "utf8"
+    ),
+  ]);
+
+  for (const marker of [
+    'export type AnimalImageGender = "f" | "m"',
+    "animalImagePaths",
+    "resolveAnimalImageGender",
+    "getAnimalImagePath",
+    'female: "f"',
+    'male: "m"',
+    "hwak-f.webp",
+    "hwak-m.webp",
+  ]) {
+    assert.equal(assets.includes(marker), true, `animalAssets.ts is missing ${marker}`);
+  }
+
+  assert.equal(assets.includes("-1.webp"), false, "numbered animal photo paths remain");
+  assert.equal(assets.includes("animals/${key}"), false, "resolver must own asset paths");
+
+  for (const key of [
+    "deer",
+    "tiger",
+    "squirrel",
+    "fox",
+    "ox",
+    "otter",
+    "rabbit",
+    "hawk",
+    "swan",
+  ]) {
+    assert.equal(assets.includes(`${key}: {`), true, `missing ${key} gendered assets`);
+  }
+
+  for (const marker of [
+    "getRandomLandingAnimalPreviews",
+    "useState<LandingAnimalPreview[]>([])",
+    "setLandingAnimalPreviews(getRandomLandingAnimalPreviews())",
+    "data-animal-intro-card",
+    'alt=""',
+  ]) {
+    assert.equal(landing.includes(marker), true, `landing is missing ${marker}`);
+  }
+
+  assert.equal(landing.includes("card.description"), false, "landing card description remains");
+  assert.equal(landing.includes("card.name"), false, "landing card name remains");
+  assert.match(
+    landing,
+    /useEffect\(\(\) => \{\s+const frame = window\.requestAnimationFrame\(\(\) => \{\s+setLandingAnimalPreviews\(getRandomLandingAnimalPreviews\(\)\);/,
+    "landing random selection must wait until after hydration"
+  );
+
+  for (const source of [result, navigator]) {
+    assert.equal(source.includes("resolveAnimalImageGender"), true, "image consumer misses gender mapping");
+    assert.equal(source.includes("getAnimalImagePath"), true, "image consumer bypasses resolver");
+  }
+
+  assert.equal(report.includes("<PaidReportView report={report} gender={genderParam} />"), true, "report does not pass the existing gender query");
+});
+
+test("성별 미선택 결과는 기본 여성형 동물 이미지를 사용한다", async () => {
+  const [assets, form, result, navigator] = await Promise.all([
+    readFile(new URL("../../src/lib/animalAssets.ts", import.meta.url), "utf8"),
+    readFile(new URL("../../src/components/BirthForm.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../../app/result/page.tsx", import.meta.url), "utf8"),
+    readFile(
+      new URL("../../src/components/PaidReportSectionNavigator.tsx", import.meta.url),
+      "utf8"
+    ),
+  ]);
+
+  assert.equal(
+    assets.includes('unknown: "f"'),
+    true,
+    "unknown gender must resolve to the default female image"
+  );
+  assert.equal(
+    assets.includes("return genderMap[gender] ?? \"f\""),
+    true,
+    "missing gender must use the default female image"
+  );
+  assert.equal(
+    form.includes('if (gender !== "male" && gender !== "female")'),
+    false,
+    "BirthForm must not block an unselected gender"
+  );
+  assert.equal(
+    form.includes('{ label: "선택 안 함", value: "unknown" }'),
+    true,
+    "BirthForm must keep the unselected gender option"
+  );
+
+  for (const source of [result, navigator]) {
+    assert.equal(source.includes("animal.webp"), false, "file-name fallback remains");
+  }
+});
+
+test("유료 섹션 제목은 개요 카드 뒤에서 유형 접두어를 반복하지 않는다", async () => {
+  const source = await readFile(
+    new URL("../../src/components/PaidReportSectionNavigator.tsx", import.meta.url),
+    "utf8"
+  );
+
+  for (const marker of [
+    "function getSectionCardTitle",
+    "const prefix = `${animalName} `;",
+    "section.title.startsWith(prefix)",
+    "getSectionCardTitle(section, animalName)",
+    "getSectionCardTitle(nextSection, animalName)",
+  ]) {
+    assert.equal(source.includes(marker), true, `missing section title rule: ${marker}`);
+  }
+});
+
+test("무료 결과 동물 카드는 이미지의 세로 비율에 따라 크기가 정해진다", async () => {
+  const source = await readFile(
+    new URL("../../app/result/page.tsx", import.meta.url),
+    "utf8"
+  );
+
+  assert.equal(source.includes("min-h-[407px]"), false, "animal card must not force a fixed height");
+  assert.equal(source.includes("w-full h-auto object-contain"), true, "animal image must drive card height");
+});
+
+test("랜딩 제목은 가로폭을 유지한 채 세로 비율을 높이고 섹션 간격을 압축한다", async () => {
+  const source = await readFile(
+    new URL("../../app/page.tsx", import.meta.url),
+    "utf8"
+  );
+
+  for (const marker of [
+    "origin-left scale-y-[1.06]",
+    "const landingSectionRuleCompact = \"border-t border-[#DDD6C8] pt-8\"",
+    "mx-auto max-w-[430px] space-y-6",
+    "overflow-x-hidden overflow-y-visible pb-4 pt-2",
+    "${landingSectionRuleCompact} space-y-4",
+    "flex snap-x snap-mandatory gap-4 px-5 pt-0",
+    "shrink-0 snap-start pt-0",
+  ]) {
+    assert.equal(source.includes(marker), true, `landing rhythm is missing ${marker}`);
+  }
+});

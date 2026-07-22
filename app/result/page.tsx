@@ -13,7 +13,11 @@ import {
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
 import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
-import { getRandomAnimalMainPhoto } from "../../src/lib/animalAssets";
+import {
+  getAnimalImagePath,
+  normalizeAnimalAssetKey,
+  resolveAnimalImageGender,
+} from "../../src/lib/animalAssets";
 import {
   getFreeResultByAnimalKey,
   type FreeResultPreview,
@@ -98,10 +102,6 @@ function summaryText(value: string, maxLength = 140) {
   return normalized.length > maxLength
     ? `${normalized.slice(0, maxLength - 1)}…`
     : normalized;
-}
-
-function getAssetBasename(path: string | null) {
-  return path?.split("/").filter(Boolean).pop() ?? "animal-1.webp";
 }
 
 function ResultLogSaver({
@@ -250,28 +250,33 @@ function ResultCard({
 
 function ResultAnimalImage({
   animalKey,
+  gender,
   title,
 }: {
   animalKey: string;
+  gender: string;
   title: string;
 }) {
-  const [photo] = useState(() => getRandomAnimalMainPhoto(animalKey));
+  const imageGender = resolveAnimalImageGender(gender);
+  const assetKey = normalizeAnimalAssetKey(animalKey);
+  const [photo] = useState(() =>
+    assetKey && imageGender ? getAnimalImagePath(assetKey, imageGender) : null
+  );
   const [failed, setFailed] = useState(false);
-  const basename = getAssetBasename(photo);
 
   return (
-    <div className="grid min-h-[240px] place-items-center overflow-hidden rounded-[28px] border border-[#DDD6C8] bg-[rgba(186,204,236,0.28)] p-4">
+    <div className="grid w-full place-items-center overflow-hidden rounded-[28px] border border-[#DDD6C8] bg-[rgba(186,204,236,0.28)] p-3">
       {photo && !failed ? (
         <img
           src={photo}
           alt={title}
           draggable={false}
           onError={() => setFailed(true)}
-          className="h-[220px] max-w-full object-contain"
+          className="w-full h-auto object-contain"
         />
       ) : (
         <div className="grid h-[200px] w-full place-items-center border border-dashed border-[rgba(0,0,0,0.2)] px-4 text-center text-[11px] font-bold leading-5 text-[#746F67]">
-          {basename}
+          성별을 선택한 뒤 동물 이미지를 보여드려요.
         </div>
       )}
     </div>
@@ -347,12 +352,14 @@ function LockedReportPreview({ teaser }: { teaser: string }) {
 function CoreDecisionPreview({
   result,
   animalKey,
+  gender,
   freeCopy,
   reportHref,
   onRestart,
 }: {
   result: WealthResult;
   animalKey: string;
+  gender: string;
   freeCopy: FreeResultPreview;
   reportHref: string;
   onRestart: () => void;
@@ -377,7 +384,11 @@ function CoreDecisionPreview({
         </p>
       </div>
 
-      <ResultAnimalImage animalKey={animalKey} title={freeCopy.animalName} />
+      <ResultAnimalImage
+        animalKey={animalKey}
+        gender={gender}
+        title={freeCopy.animalName}
+      />
 
       <section className="space-y-4 border-t border-[#DDD6C8] pt-6">
         <div>
@@ -497,6 +508,7 @@ function ResultContent() {
         <CoreDecisionPreview
           result={result}
           animalKey={builtCopy.animalKey}
+          gender={genderParam}
           freeCopy={freeCopy}
           reportHref={reportHref}
           onRestart={() => router.push("/")}

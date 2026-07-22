@@ -9,29 +9,15 @@ export type AnimalKey =
   | "swan"
   | "otter";
 
-export type AnimalImageEntry = {
-  candidates: string[];
-  placeholder: string;
-};
-
-export type AnimalAsset = {
-  animalKey: AnimalKey;
-  displayName: string;
-  mainPhoto: string | null;
-  mainPhotoCandidates: string[];
-  thumb: string | null;
-  pawStamp: string | null;
-  accentColor: string;
-};
+export type AnimalImageGender = "f" | "m";
 
 export type LandingAnimalPreview = {
   animalKey: AnimalKey;
-  displayName: string;
+  gender: AnimalImageGender;
   photo: string;
-  accentColor: string;
 };
 
-const animalKeys: AnimalKey[] = [
+export const animalKeys: readonly AnimalKey[] = [
   "fox",
   "ox",
   "squirrel",
@@ -43,210 +29,103 @@ const animalKeys: AnimalKey[] = [
   "otter",
 ];
 
-const MAIN_PHOTO_COUNT = 4;
-const animalFileSlug: Record<AnimalKey, string> = {
-  fox: "fox",
-  ox: "ox",
-  squirrel: "squirrel",
-  hawk: "hwak",
-  tiger: "tiger",
-  rabbit: "rabbit",
-  deer: "deer",
-  swan: "swan",
-  otter: "otter",
-};
-
-function mainPath(key: AnimalKey, index: number) {
-  return `/assets/document-ui/animals/${animalFileSlug[key]}-${index}.webp`;
-}
-
-function animalThumbPath(key: AnimalKey) {
-  return `/assets/document-ui/animals/${key}-thumb.webp`;
-}
-
-function animalMarkPath(key: AnimalKey) {
-  return `/assets/document-ui/marks/${key}-mark.png`;
-}
-
-function imageEntry(key: AnimalKey, extraCandidates: string[] = []): AnimalImageEntry {
-  return {
-    candidates: [
-      ...Array.from({ length: MAIN_PHOTO_COUNT }, (_, index) =>
-        mainPath(key, index + 1)
-      ),
-      ...extraCandidates,
-    ],
-    placeholder: `${animalFileSlug[key]}-1.webp`,
-  };
-}
-
-export const animalMainImages: Record<AnimalKey, AnimalImageEntry> = {
-  fox: imageEntry("fox"),
-  ox: imageEntry("ox"),
-  squirrel: imageEntry("squirrel"),
-  hawk: imageEntry("hawk"),
-  tiger: imageEntry("tiger"),
-  rabbit: imageEntry("rabbit"),
-  deer: imageEntry("deer"),
-  swan: imageEntry("swan"),
-  otter: imageEntry("otter"),
-};
-
-const existingAnimalMainImagePaths = animalKeys.flatMap(
-  (key) => animalMainImages[key].candidates
-);
-
-export const existingAnimalDocumentAssetPaths = [...existingAnimalMainImagePaths];
-
-const existingAnimalMainImageSet = new Set<string>(existingAnimalMainImagePaths);
-
-const animalMeta: Record<
-  AnimalKey,
-  Pick<AnimalAsset, "displayName" | "accentColor">
-> = {
-  fox: {
-    displayName: "여우",
-    accentColor: "#C96E41",
-  },
-  ox: {
-    displayName: "소",
-    accentColor: "#8A6A3E",
-  },
-  squirrel: {
-    displayName: "다람쥐",
-    accentColor: "#A06C38",
-  },
-  hawk: {
-    displayName: "매",
-    accentColor: "#66707A",
+const animalImagePaths: Record<AnimalKey, Record<AnimalImageGender, string>> = {
+  deer: {
+    f: "/assets/document-ui/animals/deer-f.webp",
+    m: "/assets/document-ui/animals/deer-m.webp",
   },
   tiger: {
-    displayName: "호랑이",
-    accentColor: "#B8792D",
+    f: "/assets/document-ui/animals/tiger-f.webp",
+    m: "/assets/document-ui/animals/tiger-m.webp",
   },
-  rabbit: {
-    displayName: "토끼",
-    accentColor: "#7B9B67",
+  squirrel: {
+    f: "/assets/document-ui/animals/squirrel-f.webp",
+    m: "/assets/document-ui/animals/squirrel-m.webp",
   },
-  deer: {
-    displayName: "사슴",
-    accentColor: "#B8876E",
+  fox: {
+    f: "/assets/document-ui/animals/fox-f.webp",
+    m: "/assets/document-ui/animals/fox-m.webp",
   },
-  swan: {
-    displayName: "백조",
-    accentColor: "#8A98A6",
+  ox: {
+    f: "/assets/document-ui/animals/ox-f.webp",
+    m: "/assets/document-ui/animals/ox-m.webp",
   },
   otter: {
-    displayName: "수달",
-    accentColor: "#4F8D87",
+    f: "/assets/document-ui/animals/otter-f.webp",
+    m: "/assets/document-ui/animals/otter-m.webp",
+  },
+  rabbit: {
+    f: "/assets/document-ui/animals/rabbit-f.webp",
+    m: "/assets/document-ui/animals/rabbit-m.webp",
+  },
+  hawk: {
+    f: "/assets/document-ui/animals/hwak-f.webp",
+    m: "/assets/document-ui/animals/hwak-m.webp",
+  },
+  swan: {
+    f: "/assets/document-ui/animals/swan-f.webp",
+    m: "/assets/document-ui/animals/swan-m.webp",
   },
 };
-
-function shuffle<T>(items: T[]) {
-  return [...items].sort(() => Math.random() - 0.5);
-}
 
 export function normalizeAnimalAssetKey(value: unknown): AnimalKey | null {
   const key = String(value ?? "").trim().toLowerCase();
 
   if (key === "bull") return "ox";
-  if ((animalKeys as string[]).includes(key)) return key as AnimalKey;
+  if ((animalKeys as readonly string[]).includes(key)) return key as AnimalKey;
 
   return null;
 }
 
-export function getAvailableAnimalMainPhotos(value: unknown): string[] {
-  const key = normalizeAnimalAssetKey(value);
-  if (!key) return [];
+export function resolveAnimalImageGender(value: unknown): AnimalImageGender {
+  const gender = String(value ?? "").trim().toLowerCase();
+  const genderMap: Record<string, AnimalImageGender> = {
+    female: "f",
+    male: "m",
+    f: "f",
+    m: "m",
+    unknown: "f",
+  };
 
-  return animalMainImages[key].candidates.filter((candidate) =>
-    existingAnimalMainImageSet.has(candidate)
-  );
+  return genderMap[gender] ?? "f";
 }
 
-export function getPreferredAnimalMainPhoto(value: unknown): string | null {
-  const key = normalizeAnimalAssetKey(value);
-  if (!key) return null;
-
-  return (
-    getAvailableAnimalMainPhotos(key)[0] ??
-    animalMainImages[key].candidates[0] ??
-    null
-  );
+export function getAnimalImagePath(
+  animalKey: AnimalKey,
+  gender: AnimalImageGender
+): string {
+  return animalImagePaths[animalKey][gender];
 }
 
-export function getRandomAnimalMainPhoto(value: unknown): string | null {
-  const key = normalizeAnimalAssetKey(value);
-  if (!key) return null;
+function shuffle<T>(items: readonly T[], random = Math.random): T[] {
+  const shuffled = [...items];
 
-  const availableCandidates = getAvailableAnimalMainPhotos(key);
-  const candidates =
-    availableCandidates.length > 0
-      ? availableCandidates
-      : animalMainImages[key].candidates;
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex],
+      shuffled[index],
+    ];
+  }
 
-  return candidates[Math.floor(Math.random() * candidates.length)] ?? null;
-}
-
-export const animalAssetMap: Record<AnimalKey, AnimalAsset> = animalKeys.reduce(
-  (assets, key) => {
-    assets[key] = {
-      animalKey: key,
-      displayName: animalMeta[key].displayName,
-      mainPhoto: getPreferredAnimalMainPhoto(key),
-      mainPhotoCandidates: animalMainImages[key].candidates,
-      thumb: animalThumbPath(key),
-      pawStamp: animalMarkPath(key),
-      accentColor: animalMeta[key].accentColor,
-    };
-
-    return assets;
-  },
-  {} as Record<AnimalKey, AnimalAsset>
-);
-
-export const fallbackAnimalAsset: AnimalAsset = {
-  animalKey: "fox",
-  displayName: "동물",
-  mainPhoto: null,
-  mainPhotoCandidates: [],
-  thumb: null,
-  pawStamp: null,
-  accentColor: "#285C42",
-};
-
-export function getAnimalAsset(value: unknown): AnimalAsset {
-  const key = normalizeAnimalAssetKey(value);
-
-  return key ? animalAssetMap[key] : fallbackAnimalAsset;
-}
-
-export function getLandingAnimalPreviewOptions(): LandingAnimalPreview[] {
-  return animalKeys.flatMap((animalKey) => {
-    const asset = getAnimalAsset(animalKey);
-
-    return getAvailableAnimalMainPhotos(animalKey).map((photo) => ({
-      animalKey,
-      displayName: asset.displayName,
-      photo,
-      accentColor: asset.accentColor,
-    }));
-  });
+  return shuffled;
 }
 
 export function getRandomLandingAnimalPreviews(
-  count = 3
+  random = Math.random
 ): LandingAnimalPreview[] {
-  const previewsByAnimal = new Map<AnimalKey, LandingAnimalPreview[]>();
+  const selectedAnimals = shuffle(animalKeys, random).slice(0, 3);
+  const genderMix: readonly AnimalImageGender[] =
+    random() < 0.5 ? ["f", "f", "m"] : ["f", "m", "m"];
+  const selectedGenders = shuffle(genderMix, random);
 
-  getLandingAnimalPreviewOptions().forEach((preview) => {
-    const previews = previewsByAnimal.get(preview.animalKey) ?? [];
-    previews.push(preview);
-    previewsByAnimal.set(preview.animalKey, previews);
+  return selectedAnimals.map((animalKey, index) => {
+    const gender = selectedGenders[index] ?? "f";
+
+    return {
+      animalKey,
+      gender,
+      photo: getAnimalImagePath(animalKey, gender),
+    };
   });
-
-  return shuffle(Array.from(previewsByAnimal.entries()))
-    .slice(0, count)
-    .map(([, previews]) => shuffle(previews)[0])
-    .filter(Boolean);
 }
