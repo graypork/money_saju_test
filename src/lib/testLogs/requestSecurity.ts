@@ -1,6 +1,4 @@
 import type { NextRequest } from "next/server";
-import type { TestLogExplanationSnapshot } from "./types";
-
 const MAX_REQUEST_BYTES = 32 * 1024;
 const WINDOW_MS = 60_000;
 const FINGERPRINT_LIMIT = 10;
@@ -8,34 +6,11 @@ const PROCESS_LIMIT = 600;
 const MAX_TRACKED_FINGERPRINTS = 256;
 
 const TOP_LEVEL_FIELDS = new Set([
-  "createdAt",
   "birthDate",
   "calendarType",
   "birthTime",
   "gender",
-  "animalKey",
-  "animalTitle",
-  "resultSummary",
-  "firstImpressionSummary",
-  "resultExplanationSnapshot",
-  "dayStem",
-  "element",
-  "salList",
-  "scoreSnapshot",
-  "copyVersion",
-  "logicVersion",
-  "path",
   "testCaseCode",
-]);
-
-const EXPLANATION_FIELDS = new Set([
-  "title",
-  "subtitle",
-  "firstImpression",
-  "moneyPattern",
-  "elementText",
-  "salText",
-  "closingNote",
 ]);
 
 const CALENDAR_TYPES = new Set<"solar" | "lunar">(["solar", "lunar"]);
@@ -43,16 +18,7 @@ const GENDERS = new Set<"male" | "female" | "unknown">(["male", "female", "unkno
 const BIRTH_TIMES = new Set(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]);
 
 const MAX_SHORT_TEXT_BYTES = 128;
-const MAX_SUMMARY_BYTES = 512;
-const MAX_LONG_TEXT_BYTES = 4_096;
 const MAX_PATH_BYTES = 2_048;
-const MAX_SAL_COUNT = 12;
-const MAX_SAL_BYTES = 64;
-const MAX_SCORE_BYTES = 8_192;
-const MAX_SCORE_DEPTH = 5;
-const MAX_SCORE_NODES = 128;
-const MAX_SCORE_KEY_BYTES = 128;
-const MAX_SCORE_STRING_BYTES = 512;
 
 type PublicRequestError = "invalid_request" | "payload_too_large" | "rate_limited" | "unsupported_media_type";
 
@@ -67,31 +33,18 @@ type ValidationSkip = {
   skipped: true;
 };
 
-export type AcceptedPublicTestLogPayload = {
-  createdAt: string;
+export type AcceptedPublicTestLogSubmission = {
   birthDate: string;
   calendarType: "solar" | "lunar";
   birthTime: string;
   gender: "male" | "female" | "unknown";
-  animalKey: string;
-  animalTitle: string;
-  resultSummary: string;
-  firstImpressionSummary: string;
-  resultExplanationSnapshot: TestLogExplanationSnapshot;
-  dayStem: string;
-  element: string;
-  salList: string[];
-  scoreSnapshot: Record<string, unknown>;
-  copyVersion: string;
-  logicVersion: string;
-  path: string;
   testCaseCode: string;
 };
 
 type ValidationSuccess = {
   ok: true;
   skipped: false;
-  payload: AcceptedPublicTestLogPayload;
+  submission: AcceptedPublicTestLogSubmission;
 };
 
 export type PublicTestLogValidationResult = ValidationFailure | ValidationSkip | ValidationSuccess;
@@ -236,6 +189,14 @@ export function createTestLogRequestSecurity(options: RequestSecurityOptions = {
         return reject(400, "invalid_request");
       }
 
+      if (!hasSameOriginFetchMetadata(request)) {
+        return reject(400, "invalid_request");
+      }
+
+      if (!hasOnlyAllowedKeys(body, TOP_LEVEL_FIELDS)) {
+        return reject(400, "invalid_request");
+      }
+
       const testCaseCode = validateBoundedString(body.testCaseCode, {
         maxBytes: MAX_SHORT_TEXT_BYTES,
         optional: true,
@@ -256,9 +217,9 @@ export function createTestLogRequestSecurity(options: RequestSecurityOptions = {
         };
       }
 
-      const payload = validateAcceptedPayload(body, testCaseCode);
+      const submission = validateAcceptedSubmission(body, testCaseCode);
 
-      if (!payload) {
+      if (!submission) {
         return reject(400, "invalid_request");
       }
 
@@ -269,7 +230,7 @@ export function createTestLogRequestSecurity(options: RequestSecurityOptions = {
       return {
         ok: true,
         skipped: false,
-        payload,
+        submission,
       };
     },
   };
@@ -352,6 +313,13 @@ export function isSameOriginRequest(request: NextRequest) {
   return typeof origin === "string" && origin === request.nextUrl.origin;
 }
 
+function hasSameOriginFetchMetadata(request: NextRequest) {
+  const site = request.headers.get("sec-fetch-site");
+  const mode = request.headers.get("sec-fetch-mode");
+
+  return site === "same-origin" && (mode === "cors" || mode === "same-origin");
+}
+
 function buildFingerprint(request: NextRequest) {
   return buildRateLimitFingerprint(request, request.nextUrl.pathname);
 }
@@ -380,86 +348,34 @@ function readClientAddress(request: NextRequest) {
   return realAddress && /^[0-9a-f:.]+$/i.test(realAddress) ? realAddress : "";
 }
 
-function validateAcceptedPayload(
+function validateAcceptedSubmission(
   body: Record<string, unknown>,
   testCaseCode: string,
-): AcceptedPublicTestLogPayload | null {
-  if (!hasOnlyAllowedKeys(body, TOP_LEVEL_FIELDS)) {
-    return null;
-  }
-
-  const createdAt = validateIsoString(body.createdAt);
+): AcceptedPublicTestLogSubmission | null {
   const birthDate = validateBirthDate(body.birthDate);
   const calendarType = validateEnum(body.calendarType, CALENDAR_TYPES);
   const birthTime = validateEnum(body.birthTime, BIRTH_TIMES);
   const gender = validateEnum(body.gender, GENDERS);
-  const animalKey = validateRequiredString(body.animalKey, MAX_SHORT_TEXT_BYTES);
-  const animalTitle = validateRequiredString(body.animalTitle, MAX_SHORT_TEXT_BYTES);
-  const resultSummary = validateRequiredString(body.resultSummary, MAX_SUMMARY_BYTES);
-  const firstImpressionSummary = validateRequiredString(body.firstImpressionSummary, MAX_LONG_TEXT_BYTES);
-  const resultExplanationSnapshot = validateExplanationSnapshot(body.resultExplanationSnapshot);
-  const dayStem = validateRequiredString(body.dayStem, MAX_SHORT_TEXT_BYTES);
-  const element = validateRequiredString(body.element, MAX_SHORT_TEXT_BYTES);
-  const salList = validateSalList(body.salList);
-  const scoreSnapshot = validateScoreSnapshot(body.scoreSnapshot);
-  const copyVersion = validateRequiredString(body.copyVersion, MAX_SHORT_TEXT_BYTES);
-  const logicVersion = validateRequiredString(body.logicVersion, MAX_SHORT_TEXT_BYTES);
-  const path = normalizeLogPath(body.path);
   if (
-    !createdAt ||
     !birthDate ||
     !calendarType ||
     !birthTime ||
-    !gender ||
-    !animalKey ||
-    !animalTitle ||
-    !resultSummary ||
-    !firstImpressionSummary ||
-    !resultExplanationSnapshot ||
-    !dayStem ||
-    !element ||
-    !salList ||
-    !scoreSnapshot ||
-    !copyVersion ||
-    !logicVersion ||
-    !path
+    !gender
   ) {
     return null;
   }
 
   return {
-    createdAt,
     birthDate,
     calendarType,
     birthTime,
     gender,
-    animalKey,
-    animalTitle,
-    resultSummary,
-    firstImpressionSummary,
-    resultExplanationSnapshot,
-    dayStem,
-    element,
-    salList,
-    scoreSnapshot,
-    copyVersion,
-    logicVersion,
-    path,
     testCaseCode,
   };
 }
 
 function hasOnlyAllowedKeys(body: Record<string, unknown>, allowedKeys: Set<string>) {
   return Object.keys(body).every((key) => allowedKeys.has(key));
-}
-
-function validateIsoString(value: unknown) {
-  const stringValue = validateRequiredString(value, MAX_SHORT_TEXT_BYTES);
-
-  if (!stringValue) return null;
-  if (!/^\d{4}-\d{2}-\d{2}T/.test(stringValue)) return null;
-
-  return Number.isFinite(Date.parse(stringValue)) ? stringValue : null;
 }
 
 function validateBirthDate(value: unknown) {
@@ -517,136 +433,6 @@ function validateBoundedString(
   }
 
   return value;
-}
-
-function validateExplanationSnapshot(value: unknown): TestLogExplanationSnapshot | null {
-  if (!isPlainRecord(value) || !hasOnlyAllowedKeys(value, EXPLANATION_FIELDS)) {
-    return null;
-  }
-
-  const title = validateRequiredString(value.title, MAX_LONG_TEXT_BYTES);
-  const subtitle = validateRequiredString(value.subtitle, MAX_LONG_TEXT_BYTES);
-  const firstImpression = validateRequiredString(value.firstImpression, MAX_LONG_TEXT_BYTES);
-  const moneyPattern = validateRequiredString(value.moneyPattern, MAX_LONG_TEXT_BYTES);
-  const elementText = validateRequiredString(value.elementText, MAX_LONG_TEXT_BYTES);
-  const salText = validateBoundedString(value.salText, {
-    maxBytes: MAX_LONG_TEXT_BYTES,
-    optional: true,
-  });
-  const closingNote = validateRequiredString(value.closingNote, MAX_LONG_TEXT_BYTES);
-
-  if (!title || !subtitle || !firstImpression || !moneyPattern || !elementText || salText === null || !closingNote) {
-    return null;
-  }
-
-  return salText
-    ? {
-        title,
-        subtitle,
-        firstImpression,
-        moneyPattern,
-        elementText,
-        salText,
-        closingNote,
-      }
-    : {
-        title,
-        subtitle,
-        firstImpression,
-        moneyPattern,
-        elementText,
-        closingNote,
-      };
-}
-
-function validateSalList(value: unknown) {
-  if (!Array.isArray(value) || value.length > MAX_SAL_COUNT) {
-    return null;
-  }
-
-  const salList: string[] = [];
-
-  for (const item of value) {
-    const sal = validateRequiredString(item, MAX_SAL_BYTES);
-
-    if (!sal) {
-      return null;
-    }
-
-    salList.push(sal);
-  }
-
-  return salList;
-}
-
-function validateScoreSnapshot(value: unknown) {
-  if (!isPlainRecord(value)) {
-    return null;
-  }
-
-  try {
-    const serialized = JSON.stringify(value);
-
-    if (!serialized || Buffer.byteLength(serialized, "utf8") > MAX_SCORE_BYTES) {
-      return null;
-    }
-  } catch {
-    return null;
-  }
-
-  const state = { nodes: 0 };
-
-  return isSafeScoreValue(value, 0, state) ? value : null;
-}
-
-function isSafeScoreValue(
-  value: unknown,
-  depth: number,
-  state: {
-    nodes: number;
-  },
-): boolean {
-  if (depth > MAX_SCORE_DEPTH) {
-    return false;
-  }
-
-  state.nodes += 1;
-
-  if (state.nodes > MAX_SCORE_NODES) {
-    return false;
-  }
-
-  if (value === null) {
-    return true;
-  }
-
-  if (typeof value === "string") {
-    return Buffer.byteLength(value, "utf8") <= MAX_SCORE_STRING_BYTES;
-  }
-
-  if (typeof value === "number") {
-    return Number.isFinite(value);
-  }
-
-  if (typeof value === "boolean") {
-    return true;
-  }
-
-  if (Array.isArray(value)) {
-    return value.every((item) => isSafeScoreValue(item, depth + 1, state));
-  }
-
-  if (!isPlainRecord(value)) {
-    return false;
-  }
-
-  return Object.entries(value).every(([key, nestedValue]) => {
-    if (Buffer.byteLength(key, "utf8") > MAX_SCORE_KEY_BYTES) {
-      return false;
-    }
-
-    return isSafeScoreValue(nestedValue, depth + 1, state);
-  });
 }
 
 export function normalizeLogPath(value: unknown) {

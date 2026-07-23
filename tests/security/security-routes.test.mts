@@ -316,6 +316,8 @@ async function expectRouteResponse(
 function createSameOriginInit(origin: string, init: RequestInit = {}) {
   const headers = new Headers(init.headers);
   headers.set("origin", origin);
+  headers.set("sec-fetch-site", "same-origin");
+  headers.set("sec-fetch-mode", "cors");
 
   return {
     ...init,
@@ -333,7 +335,7 @@ function createCrossOriginInit(init: RequestInit = {}) {
   };
 }
 
-function createBasePublicPayload() {
+function createLegacyClientPayload() {
   return {
     createdAt: "2026-07-22T00:00:00.000Z",
     birthDate: "2000-01-01",
@@ -365,6 +367,16 @@ function createBasePublicPayload() {
     copyVersion: "copy-v1",
     logicVersion: "logic-v1",
     path: "/result?shared=1",
+    testCaseCode: "case-2",
+  };
+}
+
+function createBasePublicSubmission() {
+  return {
+    birthDate: "2000-01-01",
+    calendarType: "solar",
+    birthTime: "1",
+    gender: "female",
     testCaseCode: "case-2",
   };
 }
@@ -590,7 +602,7 @@ test("public test log POST rejects unknown fields before storage", async () => {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        ...createBasePublicPayload(),
+        ...createBasePublicSubmission(),
         unexpectedField: "should-not-pass",
       }),
     }),
@@ -618,7 +630,7 @@ test("public test log POST rejects discontinued personal-data fields", async () 
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        ...createBasePublicPayload(),
+        ...createBasePublicSubmission(),
         rawBirthDate: "20000101",
         userAgent: "Mozilla/5.0",
         referrer: "https://money-saju.example/result?birthDate=20000101",
@@ -699,13 +711,97 @@ test("public test log POST reaches storage only after accepting a valid payload"
         "content-type": "application/json",
         "x-forwarded-for": "203.0.113.10",
       },
-      body: JSON.stringify(createBasePublicPayload()),
+      body: JSON.stringify(createBasePublicSubmission()),
     }),
     {
       status: 503,
       body: {
         ok: false,
         error: "server_error",
+      },
+      contentTypeIncludes: "application/json",
+      cacheControlIncludes: "no-store",
+    },
+  );
+});
+
+test("public test log POST rejects client-supplied result fields", async () => {
+  assert.ok(server);
+
+  await expectRouteResponse(
+    server,
+    "/api/test-logs",
+    createSameOriginInit(server.origin, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-forwarded-for": "203.0.113.11",
+      },
+      body: JSON.stringify({
+        ...createLegacyClientPayload(),
+        animalKey: "forged-animal",
+        scoreSnapshot: { total: 100 },
+        resultSummary: "조작된 결과",
+      }),
+    }),
+    {
+      status: 400,
+      body: {
+        ok: false,
+        error: "invalid_request",
+      },
+      contentTypeIncludes: "application/json",
+      cacheControlIncludes: "no-store",
+    },
+  );
+});
+
+test("public test log POST rejects curl-style requests without browser fetch metadata", async () => {
+  assert.ok(server);
+
+  await expectRouteResponse(
+    server,
+    "/api/test-logs",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        origin: server.origin,
+        "x-forwarded-for": "203.0.113.12",
+      },
+      body: JSON.stringify(createBasePublicSubmission()),
+    },
+    {
+      status: 400,
+      body: {
+        ok: false,
+        error: "invalid_request",
+      },
+      contentTypeIncludes: "application/json",
+      cacheControlIncludes: "no-store",
+    },
+  );
+});
+
+test("public test log POST rejects multipart upload bodies", async () => {
+  assert.ok(server);
+
+  await expectRouteResponse(
+    server,
+    "/api/test-logs",
+    createSameOriginInit(server.origin, {
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data; boundary=upload-boundary",
+        "x-forwarded-for": "203.0.113.13",
+      },
+      body: "--upload-boundary\r\nContent-Disposition: form-data; name=\"file\"; filename=\"shell.php\"\r\n\r\n<?php echo 'x'; ?>\r\n--upload-boundary--\r\n",
+    }),
+    {
+      status: 415,
+      body: {
+        ok: false,
+        error: "unsupported_media_type",
       },
       contentTypeIncludes: "application/json",
       cacheControlIncludes: "no-store",

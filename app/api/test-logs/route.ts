@@ -10,7 +10,8 @@ import {
   isAppendError,
   isStorageConfigError,
 } from "../../../src/lib/testLogs/storage";
-import type { TestLogPayload, TestLogQuery } from "../../../src/lib/testLogs/types";
+import { createTrustedTestLogPayload } from "../../../src/lib/testLogs/resultLogPayload";
+import type { TestLogQuery } from "../../../src/lib/testLogs/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,48 +39,6 @@ function readQuery(request: NextRequest): TestLogQuery {
     birthTime: searchParams.get("birthTime") || undefined,
     dayStem: searchParams.get("dayStem") || undefined,
     limit,
-  };
-}
-
-function toPayload(body: {
-  createdAt: string;
-  birthDate: string;
-  calendarType: string;
-  birthTime: string;
-  gender: string;
-  animalKey: string;
-  animalTitle: string;
-  resultSummary: string;
-  firstImpressionSummary: string;
-  resultExplanationSnapshot: TestLogPayload["resultExplanationSnapshot"];
-  dayStem: string;
-  element: string;
-  salList: string[];
-  scoreSnapshot: Record<string, unknown>;
-  copyVersion: string;
-  logicVersion: string;
-  path: string;
-}): TestLogPayload {
-  return {
-    createdAt: body.createdAt,
-    birthDate: body.birthDate,
-    calendarType: body.calendarType,
-    birthTime: body.birthTime,
-    gender: body.gender,
-    animalKey: body.animalKey,
-    animalTitle: body.animalTitle,
-    resultSummary: body.resultSummary,
-    firstImpressionSummary: body.firstImpressionSummary,
-    resultExplanationSnapshot: body.resultExplanationSnapshot,
-    dayStem: body.dayStem,
-    element: body.element,
-    salList: body.salList,
-    scoreSnapshot: body.scoreSnapshot,
-    copyVersion: body.copyVersion,
-    logicVersion: body.logicVersion,
-    userAgent: "",
-    referrer: "",
-    path: body.path,
   };
 }
 
@@ -113,7 +72,7 @@ export async function POST(request: NextRequest) {
   console.log("[testLogs] post received");
 
   try {
-    await getTestLogStorage().create(toPayload(validation.payload));
+    await getTestLogStorage().create(createTrustedTestLogPayload(validation.submission));
 
     return publicJson({ ok: true, skipped: false });
   } catch (error) {

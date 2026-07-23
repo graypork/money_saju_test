@@ -12,7 +12,7 @@ import {
   type WealthResult,
 } from "../../src/lib/score";
 import AppVersionBadge from "../../src/components/AppVersionBadge";
-import { buildResultCopy, type BuiltResultCopy } from "../../src/lib/copyEngine";
+import { buildResultCopy } from "../../src/lib/copyEngine";
 import {
   getAnimalImagePath,
   normalizeAnimalAssetKey,
@@ -29,8 +29,6 @@ const PRIMARY_BUTTON_CLASS =
   `flex min-h-14 w-full items-center justify-center rounded-full px-5 py-4 text-center text-[16px] font-bold text-[#FFF9ED] transition active:translate-y-0.5 ${uiTokens.greenButtonSurface}`;
 const DARK_PANEL_CLASS =
   "rounded-[28px] border border-[rgba(32,32,32,0.18)] bg-[#EFE9DB] p-5 text-[#202020]";
-const COPY_VERSION = "animalTypeBank-v0.10.1";
-const LOGIC_VERSION = "score-v0.10.1";
 
 function SiteHeader({
   onBack,
@@ -96,25 +94,13 @@ function ResultDebugLogger({
   return null;
 }
 
-function summaryText(value: string, maxLength = 140) {
-  const normalized = value.replace(/\s+/g, " ").trim();
-
-  return normalized.length > maxLength
-    ? `${normalized.slice(0, maxLength - 1)}…`
-    : normalized;
-}
-
 function ResultLogSaver({
-  result,
-  builtCopy,
   birthDate,
   birthTime,
   calendarType,
   gender,
   testCaseCode,
 }: {
-  result: WealthResult;
-  builtCopy: BuiltResultCopy;
   birthDate: string;
   birthTime: string;
   calendarType: string;
@@ -133,7 +119,6 @@ function ResultLogSaver({
       birthTime,
       calendarType,
       gender,
-      builtCopy.animalKey,
     ].join(":");
 
     if (window.sessionStorage.getItem(logKey)) return;
@@ -141,50 +126,11 @@ function ResultLogSaver({
     window.sessionStorage.setItem(logKey, "pending");
     console.log("[testLogs] save requested");
 
-    const salList = result.salList?.map((sal) => sal.name) ?? [];
     const payload = {
-      createdAt: new Date().toISOString(),
       birthDate,
       calendarType,
       birthTime,
       gender,
-      animalKey: builtCopy.animalKey,
-      animalTitle: builtCopy.title,
-      resultSummary: `${builtCopy.title} · ${builtCopy.archetype} · ${builtCopy.rankText}`,
-      firstImpressionSummary: summaryText(builtCopy.firstImpression),
-      resultExplanationSnapshot: {
-        title: builtCopy.title,
-        subtitle: `${builtCopy.archetype} · ${builtCopy.rankText}`,
-        firstImpression: builtCopy.firstImpression,
-        moneyPattern: builtCopy.moneyFlow,
-        elementText: builtCopy.elementReading,
-        salText: builtCopy.salText,
-        closingNote: builtCopy.closingNote,
-      },
-      dayStem: result.saju.dayMaster,
-      element: result.saju.dayElement,
-      salList,
-      scoreSnapshot: {
-        topPercent: result.topPercent,
-        percentile: result.percentile,
-        rawWealthScore: result.rawWealthScore,
-        displayWealthScore: result.displayWealthScore,
-        wealthScore: result.wealthScore,
-        baseWealthScore: result.baseWealthScore,
-        sajuAdjustmentScore: result.sajuAdjustmentScore,
-        adjustedWealthScore: result.adjustedWealthScore,
-        baseTopPercent: result.baseTopPercent,
-        adjustedTopPercent: result.adjustedTopPercent,
-        dominantElement: result.dominantElement,
-        weakElement: result.weakElement,
-        usefulGod: result.usefulGod,
-        favorableElements: result.favorableElements,
-        unfavorableElements: result.unfavorableElements,
-        strengthType: result.strengthType,
-      },
-      copyVersion: COPY_VERSION,
-      logicVersion: LOGIC_VERSION,
-      path: window.location.pathname,
       testCaseCode,
     };
 
@@ -222,10 +168,8 @@ function ResultLogSaver({
   }, [
     birthDate,
     birthTime,
-    builtCopy,
     calendarType,
     gender,
-    result,
     testCaseCode,
   ]);
 
@@ -487,8 +431,6 @@ function ResultContent() {
     <main className={PAGE_BASE_CLASS}>
       <ResultDebugLogger debugKey={debugKey} debug={result.debug} />
       <ResultLogSaver
-        result={result}
-        builtCopy={builtCopy}
         birthDate={birthDate}
         birthTime={birthTime}
         calendarType={calendarTypeParam}
